@@ -24,7 +24,7 @@ def get_lora_config():
         target_modules=["q","k","v","o","ffn.0","ffn.2"],  # 目标模块（根据模型调整）
         lora_dropout=0.05,
         bias="none",
-        task_type="FEATURE_EXTRACTION",
+        task_type="SEQ_2_SEQ_LM",
     )
 
 def print_model_modules(model, max_depth=None, prefix=""):
@@ -123,8 +123,8 @@ class Trainer:
 
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
-        self.model.generator.model = get_peft_model(self.model.generator.model, lora_config)
-        self.model.generator.model.print_trainable_parameters() 
+        self.model.generator.model.blocks = get_peft_model(self.model.generator.model.blocks, lora_config)
+        self.model.generator.model.blocks.print_trainable_parameters() 
         
         self.model.generator = fsdp_wrap(
             self.model.generator,
