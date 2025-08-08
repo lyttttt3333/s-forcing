@@ -110,11 +110,11 @@ class Trainer:
             )
         self.model.generator.print_trainable_parameters() 
 
-        for name, param in self.model.generator.named_parameters():
-            if param.requires_grad:
-                print("✅ Trainable:", name)
-            else:
-                print("Not Trainable:", name)
+        # for name, param in self.model.generator.named_parameters():
+        #     if param.requires_grad:
+        #         print("✅ Trainable:", name)
+        #     else:
+        #         print("Not Trainable:", name)
 
         
 
