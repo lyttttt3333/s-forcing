@@ -109,6 +109,18 @@ class Trainer:
         # Save pretrained model state_dicts to CPU
         self.fake_score_state_dict_cpu = self.model.fake_score.state_dict()
 
+        # print(config)
+        if getattr(config, "generator_ckpt", False):
+            print(f"Loading pretrained generator from {config.generator_ckpt}")
+            state_dict = torch.load(config.generator_ckpt, map_location="cpu")
+            if "generator" in state_dict:
+                state_dict = state_dict["generator"]
+            elif "model" in state_dict:
+                state_dict = state_dict["model"]
+            self.model.generator.load_state_dict(
+                state_dict, strict=True
+            )
+
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
         self.model.generator = get_peft_model(self.model.generator, lora_config)
@@ -202,17 +214,7 @@ class Trainer:
 
         ##############################################################################################################
         # 7. (If resuming) Load the model and optimizer, lr_scheduler, ema's statedicts
-        print(config)
-        if getattr(config, "generator_ckpt", False):
-            print(f"Loading pretrained generator from {config.generator_ckpt}")
-            state_dict = torch.load(config.generator_ckpt, map_location="cpu")
-            if "generator" in state_dict:
-                state_dict = state_dict["generator"]
-            elif "model" in state_dict:
-                state_dict = state_dict["model"]
-            self.model.generator.load_state_dict(
-                state_dict, strict=True
-            )
+
 
         ##############################################################################################################
 
