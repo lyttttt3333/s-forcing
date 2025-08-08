@@ -24,8 +24,8 @@ class BaseModel(nn.Module):
                 self.denoising_step_list = timesteps[1000 - self.denoising_step_list]
 
     def _initialize_models(self, args, device):
-        self.real_model_name = getattr(args, "real_name", "Wan2.1-T2V-1.3B")
-        self.fake_model_name = getattr(args, "fake_name", "Wan2.1-T2V-1.3B")
+        self.real_model_name = getattr(args, "real_name", "Wan2.2-TI2V-5B")
+        self.fake_model_name = getattr(args, "fake_name", "Wan2.2-TI2V-5B")
 
 
         self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
