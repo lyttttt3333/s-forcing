@@ -30,55 +30,6 @@ def get_lora_config():
         task_type="FEATURE_EXTRACTION",
     )
 
-def print_model_modules(model, max_depth=None, prefix=""):
-    """
-    打印已加载模型的所有模块名称
-    
-    参数:
-        model: 已加载的PyTorch模型
-        max_depth: 最大递归深度（可选，避免输出过多）
-        prefix: 内部递归用的前缀（用户无需需传入）
-    """
-    # 获取当前深度
-    current_depth = len(prefix.split('.')) if prefix else 0
-    
-    # 如果设置了最大深度且超过，则停止递归
-    if max_depth is not None and current_depth >= max_depth:
-        return
-    
-    # 遍历所有直接子模块
-    for name, module in model.named_children():
-        # 构建当前模块的完整名称
-        current_name = f"{prefix}.{name}" if prefix else name
-        
-        # 打印模块名称和类型
-        print(f"模块名称: {current_name} | 类型: {module.__class__.__name__}")
-        
-        # 递归打印子模块
-        print_model_modules(module, max_depth, current_name)
-
-def print_module_trainable_status(model, indent=0):
-    """
-    递归打印模型所有子模块的可训练状态
-    
-    Args:
-        model: PyTorch模型或模块
-        indent: 缩进量，用于美化输出结构
-    """
-    # 打印当前模块名称和可训练状态
-    indent_str = "  " * indent
-    module_name = model.__class__.__name__
-    
-    # 检查模块是否有可训练参数
-    has_trainable = any(p.requires_grad for p in model.parameters()) if list(model.parameters()) else False
-    
-    print(f"{indent_str}- {module_name}: {'可训练' if has_trainable else '不可训练'}")
-    
-    # 递归处理子模块
-    for name, child in model.named_children():
-        print(f"{indent_str}  ├─ {name}:")
-        print_module_trainable_status(child, indent + 2)
-
 
 class Trainer:
     def __init__(self, config):
@@ -158,25 +109,6 @@ class Trainer:
                 low_cpu_mem_usage=False
             )
         self.model.generator.print_trainable_parameters() 
-        # for i in range(len(self.model.generator.model.blocks)):
-        #     # 获取原block
-        #     original_block = self.model.generator.model.blocks[i]
-            
-        #     # 创建封装后的peft_block
-        #     peft_block = PeftModel(
-        #         original_block, 
-        #         lora_config,
-        #         adapter_name="default",
-        #         autocast_adapter_dtype=True,
-        #         low_cpu_mem_usage=False
-        #     )
-        #     peft_block.print_trainable_parameters()
-            
-        #     # 直接替换原位置的block
-        #     self.model.generator.model.blocks[i] = peft_block
-            
-        #     # 手动删除原block引用并尝试释放内存
-        #     del original_block
 
         for name, param in self.model.generator.named_parameters():
             if param.requires_grad:
