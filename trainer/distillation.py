@@ -21,7 +21,7 @@ def get_lora_config():
     return LoraConfig(
         r=16,  # 低秩矩阵维度
         lora_alpha=32,
-        target_modules=["q_proj", "v_proj"],  # 目标模块（根据模型调整）
+        target_modules=["q","k","v","o","ffn.0","ffn.2"],  # 目标模块（根据模型调整）
         lora_dropout=0.05,
         bias="none",
         task_type="FEATURE_EXTRACTION",
@@ -110,7 +110,7 @@ class Trainer:
         self.fake_score_state_dict_cpu = self.model.fake_score.state_dict()
 
         lora_config = get_lora_config()
-        print_model_modules(self.model.generator)
+        # print_model_modules(self.model.generator)
         self.model.generator = get_peft_model(self.model.generator, lora_config)
         self.model.generator.print_trainable_parameters() 
         
