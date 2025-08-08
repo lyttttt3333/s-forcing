@@ -130,7 +130,7 @@ class Trainer:
         # self.model.generator.model.blocks.print_trainable_parameters() 
         peft_blocks = ModuleList()
         for block in self.model.generator.model.blocks:
-            peft_block = video_peft_wrapper(block, 
+            peft_block = PeftModel(block, 
                             lora_config,
                             adapter_name="default",
                             autocast_adapter_dtype=True,
