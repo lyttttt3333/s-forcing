@@ -27,12 +27,15 @@ class BaseModel(nn.Module):
         self.real_model_name = getattr(args, "real_name", "Wan2.1-T2V-1.3B")
         self.fake_model_name = getattr(args, "fake_name", "Wan2.1-T2V-1.3B")
 
+
         self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
         self.generator.model.requires_grad_(False)
 
+        print(f"########### Loading real_score")
         self.real_score = WanDiffusionWrapper(model_name=self.real_model_name, is_causal=False)
         self.real_score.model.requires_grad_(False)
 
+        print(f"########### Loading fake_score")
         self.fake_score = WanDiffusionWrapper(model_name=self.fake_model_name, is_causal=False)
         self.fake_score.model.requires_grad_(True)
 

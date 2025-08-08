@@ -124,6 +124,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         super().__init__()
 
         if is_causal:
+            print(f"########### Loading from wan_models/{model_name}/")
             self.model = CausalWanModel.from_pretrained(
                 f"wan_models/{model_name}/", local_attn_size=local_attn_size, sink_size=sink_size)
         else:
