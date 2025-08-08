@@ -3,8 +3,8 @@ generator_ckpt: checkpoints/ode_init.pt
 generator_fsdp_wrap_strategy: size
 real_score_fsdp_wrap_strategy: size
 fake_score_fsdp_wrap_strategy: size
-real_name: Wan2.1-TI2V-5B
-fake_name: Wan2.1-TI2V-5B
+real_name: Wan2.2-TI2V-5B
+fake_name: Wan2.2-TI2V-5B
 text_encoder_fsdp_wrap_strategy: size
 text_encoder_cpu_offload: true
 denoising_step_list:
