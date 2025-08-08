@@ -27,6 +27,33 @@ def get_lora_config():
         task_type="FEATURE_EXTRACTION",
     )
 
+def print_model_modules(model, max_depth=None, prefix=""):
+    """
+    打印已加载模型的所有模块名称
+    
+    参数:
+        model: 已加载的PyTorch模型
+        max_depth: 最大递归深度（可选，避免输出过多）
+        prefix: 内部递归用的前缀（用户无需需传入）
+    """
+    # 获取当前深度
+    current_depth = len(prefix.split('.')) if prefix else 0
+    
+    # 如果设置了最大深度且超过，则停止递归
+    if max_depth is not None and current_depth >= max_depth:
+        return
+    
+    # 遍历所有直接子模块
+    for name, module in model.named_children():
+        # 构建当前模块的完整名称
+        current_name = f"{prefix}.{name}" if prefix else name
+        
+        # 打印模块名称和类型
+        print(f"模块名称: {current_name} | 类型: {module.__class__.__name__}")
+        
+        # 递归打印子模块
+        print_model_modules(module, max_depth, current_name)
+
 
 class Trainer:
     def __init__(self, config):
@@ -83,6 +110,7 @@ class Trainer:
         self.fake_score_state_dict_cpu = self.model.fake_score.state_dict()
 
         lora_config = get_lora_config()
+        print_model_modules(self.model.generator)
         self.model.generator = get_peft_model(self.model.generator, lora_config)
         self.model.generator.print_trainable_parameters() 
         
