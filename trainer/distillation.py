@@ -4,6 +4,7 @@ import logging
 from utils.dataset import ShardingLMDBDataset, cycle
 from utils.dataset import TextDataset
 from utils.distributed import EMA_FSDP, fsdp_wrap, fsdp_state_dict, launch_distributed_job
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from utils.misc import (
     set_seed,
     merge_dict_list
