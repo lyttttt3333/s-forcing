@@ -57,6 +57,28 @@ def print_model_modules(model, max_depth=None, prefix=""):
         # 递归打印子模块
         print_model_modules(module, max_depth, current_name)
 
+def print_module_trainable_status(model, indent=0):
+    """
+    递归打印模型所有子模块的可训练状态
+    
+    Args:
+        model: PyTorch模型或模块
+        indent: 缩进量，用于美化输出结构
+    """
+    # 打印当前模块名称和可训练状态
+    indent_str = "  " * indent
+    module_name = model.__class__.__name__
+    
+    # 检查模块是否有可训练参数
+    has_trainable = any(p.requires_grad for p in model.parameters()) if list(model.parameters()) else False
+    
+    print(f"{indent_str}- {module_name}: {'可训练' if has_trainable else '不可训练'}")
+    
+    # 递归处理子模块
+    for name, child in model.named_children():
+        print(f"{indent_str}  ├─ {name}:")
+        print_module_trainable_status(child, indent + 2)
+
 
 class Trainer:
     def __init__(self, config):
@@ -124,6 +146,8 @@ class Trainer:
                 state_dict, strict=True
             )
 
+        print_module_trainable_status(self.model.generator)
+
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
         # self.model.generator.model.blocks = get_peft_model(self.model.generator.model.blocks, lora_config)
@@ -137,6 +161,8 @@ class Trainer:
                             low_cpu_mem_usage=False)
             peft_block.print_trainable_parameters() 
             peft_blocks.append(peft_block)
+
+        
 
         # 替换原来的blocks列表
         self.model.generator.model.blocks = peft_blocks
