@@ -10,6 +10,7 @@ from utils.misc import (
     merge_dict_list
 )
 import torch.distributed as dist
+from torch.nn import ModuleList
 from omegaconf import OmegaConf
 from model import CausVid, DMD, SiD
 import torch
@@ -123,8 +124,15 @@ class Trainer:
 
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
-        self.model.generator.model.blocks = get_peft_model(self.model.generator.model.blocks, lora_config)
-        self.model.generator.model.blocks.print_trainable_parameters() 
+        # self.model.generator.model.blocks = get_peft_model(self.model.generator.model.blocks, lora_config)
+        # self.model.generator.model.blocks.print_trainable_parameters() 
+        peft_blocks = ModuleList()
+        for block in self.model.generator.model.blocks:
+            peft_block = get_peft_model(block, lora_config)
+            peft_blocks.append(peft_block)
+
+        # 替换原来的blocks列表
+        self.model.generator.model.blocks = peft_blocks
         
         self.model.generator = fsdp_wrap(
             self.model.generator,
