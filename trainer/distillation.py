@@ -146,7 +146,7 @@ class Trainer:
                 state_dict, strict=True
             )
 
-        print_module_trainable_status(self.model.generator)
+
 
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
@@ -161,6 +161,12 @@ class Trainer:
                             low_cpu_mem_usage=False)
             peft_block.print_trainable_parameters() 
             peft_blocks.append(peft_block)
+
+        for name, param in model.generator.named_parameters():
+            if param.requires_grad:
+                print("✅ Trainable:", name)
+            else:
+                print("Not Trainable:", name)
 
         
 
