@@ -150,27 +150,27 @@ class Trainer:
 
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
-        # self.model.generator.model.blocks = get_peft_model(self.model.generator.model.blocks, lora_config)
-        # self.model.generator.model.blocks.print_trainable_parameters() 
-        for i in range(len(self.model.generator.model.blocks)):
-            # 获取原block
-            original_block = self.model.generator.model.blocks[i]
+        self.model.generator = get_peft_model(self.model.generator, lora_config)
+        self.model.generator.print_trainable_parameters() 
+        # for i in range(len(self.model.generator.model.blocks)):
+        #     # 获取原block
+        #     original_block = self.model.generator.model.blocks[i]
             
-            # 创建封装后的peft_block
-            peft_block = PeftModel(
-                original_block, 
-                lora_config,
-                adapter_name="default",
-                autocast_adapter_dtype=True,
-                low_cpu_mem_usage=False
-            )
-            peft_block.print_trainable_parameters()
+        #     # 创建封装后的peft_block
+        #     peft_block = PeftModel(
+        #         original_block, 
+        #         lora_config,
+        #         adapter_name="default",
+        #         autocast_adapter_dtype=True,
+        #         low_cpu_mem_usage=False
+        #     )
+        #     peft_block.print_trainable_parameters()
             
-            # 直接替换原位置的block
-            self.model.generator.model.blocks[i] = peft_block
+        #     # 直接替换原位置的block
+        #     self.model.generator.model.blocks[i] = peft_block
             
-            # 手动删除原block引用并尝试释放内存
-            del original_block
+        #     # 手动删除原block引用并尝试释放内存
+        #     del original_block
 
         # for name, param in self.model.generator.named_parameters():
         #     if param.requires_grad:
