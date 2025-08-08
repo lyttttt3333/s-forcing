@@ -172,12 +172,6 @@ class Trainer:
             # 手动删除原block引用并尝试释放内存
             del original_block
 
-        # 清理内存
-        import gc
-        import torch
-        gc.collect()
-        torch.cuda.empty_cache()
-
         # for name, param in self.model.generator.named_parameters():
         #     if param.requires_grad:
         #         print("✅ Trainable:", name)
