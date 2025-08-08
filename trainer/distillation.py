@@ -150,7 +150,13 @@ class Trainer:
 
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
-        self.model.generator = get_peft_model(self.model.generator, lora_config)
+        self.model.generator = PeftModel(
+                self.model.generator, 
+                lora_config,
+                adapter_name="default",
+                autocast_adapter_dtype=True,
+                low_cpu_mem_usage=False
+            )
         self.model.generator.print_trainable_parameters() 
         # for i in range(len(self.model.generator.model.blocks)):
         #     # 获取原block
