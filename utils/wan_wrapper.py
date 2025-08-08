@@ -225,8 +225,10 @@ class WanDiffusionWrapper(torch.nn.Module):
         concat_time_embeddings: Optional[bool] = False,
         clean_x: Optional[torch.Tensor] = None,
         aug_t: Optional[torch.Tensor] = None,
-        cache_start: Optional[int] = None
+        cache_start: Optional[int] = None,
+        input_ids = None,
     ) -> torch.Tensor:
+        print("############",input_ids)
         prompt_embeds = conditional_dict["prompt_embeds"]
 
         # [B, F] -> [B]
