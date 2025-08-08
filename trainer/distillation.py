@@ -24,7 +24,7 @@ def get_lora_config():
         target_modules=["q","k","v","o","ffn.0","ffn.2"],  # 目标模块（根据模型调整）
         lora_dropout=0.05,
         bias="none",
-        task_type="SEQ_2_SEQ_LM",
+        task_type="FEATURE_EXTRACTION",
     )
 
 def print_model_modules(model, max_depth=None, prefix=""):
