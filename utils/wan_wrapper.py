@@ -228,7 +228,6 @@ class WanDiffusionWrapper(torch.nn.Module):
         cache_start: Optional[int] = None,
         input_ids = None,
     ) -> torch.Tensor:
-        print("############",input_ids)
         prompt_embeds = conditional_dict["prompt_embeds"]
 
         # [B, F] -> [B]

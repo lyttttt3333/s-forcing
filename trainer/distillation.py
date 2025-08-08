@@ -123,8 +123,8 @@ class Trainer:
 
         lora_config = get_lora_config()
         # print_model_modules(self.model.generator)
-        self.model.generator = get_peft_model(self.model.generator, lora_config)
-        self.model.generator.print_trainable_parameters() 
+        self.model.generator.model = get_peft_model(self.model.generator.model, lora_config)
+        self.model.generator.model.print_trainable_parameters() 
         
         self.model.generator = fsdp_wrap(
             self.model.generator,
