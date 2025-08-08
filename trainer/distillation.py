@@ -162,7 +162,7 @@ class Trainer:
             peft_block.print_trainable_parameters() 
             peft_blocks.append(peft_block)
 
-        for name, param in model.generator.named_parameters():
+        for name, param in self.model.generator.named_parameters():
             if param.requires_grad:
                 print("✅ Trainable:", name)
             else:
