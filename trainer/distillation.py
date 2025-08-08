@@ -5,6 +5,8 @@ from utils.dataset import ShardingLMDBDataset, cycle
 from utils.dataset import TextDataset
 from utils.distributed import EMA_FSDP, fsdp_wrap, fsdp_state_dict, launch_distributed_job
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from utils.lora import PeftModel
+
 from utils.misc import (
     set_seed,
     merge_dict_list
@@ -128,7 +130,11 @@ class Trainer:
         # self.model.generator.model.blocks.print_trainable_parameters() 
         peft_blocks = ModuleList()
         for block in self.model.generator.model.blocks:
-            peft_block = get_peft_model(block, lora_config)
+            peft_block = video_peft_wrapper(block, 
+                            lora_config,
+                            adapter_name="default",
+                            autocast_adapter_dtype=True,
+                            low_cpu_mem_usage=False)
             peft_blocks.append(peft_block)
 
         # 替换原来的blocks列表
