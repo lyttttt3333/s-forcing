@@ -1,0 +1,53 @@
+data/*
+VBench/*
+err_[0-9]*.txt
+out_[0-9]*.txt
+
+# Python相关
+__pycache__/
+
+# 数据和模型
+data/
+checkpoints/
+wan_models/
+videos/
+result_figure/
+evaluation_results/
+
+# 日志和缓存
+wandb/
+*.log
+.cache/
+.DS_Store
+*.swp
+*.swo
+
+# 配置文件和环境变量
+.env
+.env.local
+*.conf
+*.cfg
+!configs/  # 保留配置文件夹
+
+# 执行脚本生成的文件
+*.sh.*
+*.out
+*.err
+
+# IDE相关
+.idea/
+.vscode/
+*.sublime-*
+*.idea/
+*.project
+*.cproject
+*.settings/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 其他
+self_forcing.egg-info/
+*.tar.gz
+*.zip
