@@ -178,11 +178,11 @@ class Trainer:
         #     # 手动删除原block引用并尝试释放内存
         #     del original_block
 
-        # for name, param in self.model.generator.named_parameters():
-        #     if param.requires_grad:
-        #         print("✅ Trainable:", name)
-        #     else:
-        #         print("Not Trainable:", name)
+        for name, param in self.model.generator.named_parameters():
+            if param.requires_grad:
+                print("✅ Trainable:", name)
+            else:
+                print("Not Trainable:", name)
 
         
 
