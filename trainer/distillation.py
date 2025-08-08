@@ -152,26 +152,26 @@ class Trainer:
         # print_model_modules(self.model.generator)
         # self.model.generator.model.blocks = get_peft_model(self.model.generator.model.blocks, lora_config)
         # self.model.generator.model.blocks.print_trainable_parameters() 
-        peft_blocks = ModuleList()
-        for block in self.model.generator.model.blocks:
-            peft_block = PeftModel(block, 
-                            lora_config,
-                            adapter_name="default",
-                            autocast_adapter_dtype=True,
-                            low_cpu_mem_usage=False)
-            peft_block.print_trainable_parameters() 
-            peft_blocks.append(peft_block)
+        # peft_blocks = ModuleList()
+        # for block in self.model.generator.model.blocks:
+        #     peft_block = PeftModel(block, 
+        #                     lora_config,
+        #                     adapter_name="default",
+        #                     autocast_adapter_dtype=True,
+        #                     low_cpu_mem_usage=False)
+        #     peft_block.print_trainable_parameters() 
+        #     peft_blocks.append(peft_block)
 
-        for name, param in self.model.generator.named_parameters():
-            if param.requires_grad:
-                print("✅ Trainable:", name)
-            else:
-                print("Not Trainable:", name)
+        # for name, param in self.model.generator.named_parameters():
+        #     if param.requires_grad:
+        #         print("✅ Trainable:", name)
+        #     else:
+        #         print("Not Trainable:", name)
 
         
 
         # 替换原来的blocks列表
-        self.model.generator.model.blocks = peft_blocks
+        # self.model.generator.model.blocks = peft_blocks
         
         self.model.generator = fsdp_wrap(
             self.model.generator,
