@@ -135,6 +135,7 @@ class Trainer:
                             adapter_name="default",
                             autocast_adapter_dtype=True,
                             low_cpu_mem_usage=False)
+            peft_block.print_trainable_parameters() 
             peft_blocks.append(peft_block)
 
         # 替换原来的blocks列表
