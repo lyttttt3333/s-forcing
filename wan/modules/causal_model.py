@@ -862,6 +862,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         for block_index, block in enumerate(self.blocks):
             if torch.is_grad_enabled() and self.gradient_checkpointing:
+                print("use_check_pointing")
                 kwargs.update(
                     {
                         "kv_cache": kv_cache[block_index],
