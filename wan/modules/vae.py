@@ -615,13 +615,14 @@ def _video_vae(pretrained_path=None, z_dim=None, device='cpu', **kwargs):
     """
     # params
     cfg = dict(
-        dim=96,
-        z_dim=z_dim,
+        dim=160,
+        z_dim=48,
         dim_mult=[1, 2, 4, 4],
         num_res_blocks=2,
         attn_scales=[],
         temperal_downsample=[False, True, True],
-        dropout=0.0)
+        dropout=0.0,
+    )
     cfg.update(**kwargs)
 
     # init model
