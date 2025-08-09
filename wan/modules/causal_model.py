@@ -204,6 +204,9 @@ class CausalWanSelfAttention(nn.Module):
             # If we are using local attention and the current KV cache size is larger than the local attention size, we need to truncate the KV cache
             kv_cache_size = kv_cache["k"].shape[1]
             num_new_tokens = roped_query.shape[1]
+            print("#######################")
+            print(kv_cache["k"].shape)
+            print(local_start_index, local_end_index)
             if self.local_attn_size != -1 and (current_end > kv_cache["global_end_index"].item()) and (
                     num_new_tokens + kv_cache["local_end_index"].item() > kv_cache_size):
                 # Calculate the number of new tokens added in this step
@@ -470,7 +473,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         self.text_dim = text_dim
         self.out_dim = out_dim
         self.num_heads = num_heads
-        print("############## num_head", num_heads)
         self.num_layers = num_layers
         self.local_attn_size = local_attn_size
         self.qk_norm = qk_norm
