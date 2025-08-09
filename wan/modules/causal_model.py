@@ -244,19 +244,54 @@ class CausalWanSelfAttention(nn.Module):
 
 class WanCrossAttention(CausalWanSelfAttention):
 
-    def forward(self, x, context, context_lens):
+    # def forward(self, x, context, context_lens):
+    #     r"""
+    #     Args:
+    #         x(Tensor): Shape [B, L1, C]
+    #         context(Tensor): Shape [B, L2, C]
+    #         context_lens(Tensor): Shape [B]
+    #     """
+    #     b, n, d = x.size(0), self.num_heads, self.head_dim
+
+    #     # compute query, key, value
+    #     q = self.norm_q(self.q(x)).view(b, -1, n, d)
+    #     k = self.norm_k(self.k(context)).view(b, -1, n, d)
+    #     v = self.v(context).view(b, -1, n, d)
+
+    #     # compute attention
+    #     x = flash_attention(q, k, v, k_lens=context_lens)
+
+    #     # output
+    #     x = x.flatten(2)
+    #     x = self.o(x)
+    #     return x
+
+    def forward(self, x, context, context_lens, crossattn_cache=None):
         r"""
         Args:
             x(Tensor): Shape [B, L1, C]
             context(Tensor): Shape [B, L2, C]
             context_lens(Tensor): Shape [B]
+            crossattn_cache (List[dict], *optional*): Contains the cached key and value tensors for context embedding.
         """
         b, n, d = x.size(0), self.num_heads, self.head_dim
 
         # compute query, key, value
         q = self.norm_q(self.q(x)).view(b, -1, n, d)
-        k = self.norm_k(self.k(context)).view(b, -1, n, d)
-        v = self.v(context).view(b, -1, n, d)
+
+        if crossattn_cache is not None:
+            if not crossattn_cache["is_init"]:
+                crossattn_cache["is_init"] = True
+                k = self.norm_k(self.k(context)).view(b, -1, n, d)
+                v = self.v(context).view(b, -1, n, d)
+                crossattn_cache["k"] = k
+                crossattn_cache["v"] = v
+            else:
+                k = crossattn_cache["k"]
+                v = crossattn_cache["v"]
+        else:
+            k = self.norm_k(self.k(context)).view(b, -1, n, d)
+            v = self.v(context).view(b, -1, n, d)
 
         # compute attention
         x = flash_attention(q, k, v, k_lens=context_lens)
