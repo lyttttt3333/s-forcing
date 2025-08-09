@@ -237,30 +237,35 @@ class Trainer:
 
     def save(self):
         print("Start gathering distributed model states...")
-        generator_state_dict = fsdp_state_dict(
-            self.model.generator)
-        critic_state_dict = fsdp_state_dict(
-            self.model.fake_score)
+        save_path = os.path.join(self.output_path, f"checkpoint_model_{self.step:06d}"
+        save_path_score = os.path.join(save_path, "fake_score_model")
+        save_path_generator = os.path.join(save_path_generator, "generator_model")
+        self.model.fake_score.save_pretrained(save_path_score)
+        self.model.generator.save_pretrained(save_path_generator)
+        # generator_state_dict = fsdp_state_dict(
+        #     self.model.generator)
+        # critic_state_dict = fsdp_state_dict(
+        #     self.model.fake_score)
 
-        if self.config.ema_start_step < self.step:
-            state_dict = {
-                "generator": generator_state_dict,
-                "critic": critic_state_dict,
-                "generator_ema": self.generator_ema.state_dict(),
-            }
-        else:
-            state_dict = {
-                "generator": generator_state_dict,
-                "critic": critic_state_dict,
-            }
+        # if self.config.ema_start_step < self.step:
+        #     state_dict = {
+        #         "generator": generator_state_dict,
+        #         "critic": critic_state_dict,
+        #         "generator_ema": self.generator_ema.state_dict(),
+        #     }
+        # else:
+        #     state_dict = {
+        #         "generator": generator_state_dict,
+        #         "critic": critic_state_dict,
+        #     }
 
-        if self.is_main_process:
-            os.makedirs(os.path.join(self.output_path,
-                        f"checkpoint_model_{self.step:06d}"), exist_ok=True)
-            torch.save(state_dict, os.path.join(self.output_path,
-                       f"checkpoint_model_{self.step:06d}", "model.pt"))
-            print("Model saved to", os.path.join(self.output_path,
-                  f"checkpoint_model_{self.step:06d}", "model.pt"))
+        # if self.is_main_process:
+        #     os.makedirs(os.path.join(self.output_path,
+        #                 f"checkpoint_model_{self.step:06d}"), exist_ok=True)
+        #     torch.save(state_dict, os.path.join(self.output_path,
+        #                f"checkpoint_model_{self.step:06d}", "model.pt"))
+        #     print("Model saved to", os.path.join(self.output_path,
+        #           f"checkpoint_model_{self.step:06d}", "model.pt"))
 
     def load_embed_dict(self, embed_dict_root, prompt_list):
         file_changed = False
