@@ -558,9 +558,71 @@ class WanModel(ModelMixin, ConfigMixin):
                 Epsilon value for normalization layers
         """
 
+        # super().__init__()
+
+        # assert model_type in ['t2v', 'i2v','ti2v'], print(f"Error type {model_type}")
+        # self.model_type = model_type
+
+        # self.patch_size = patch_size
+        # self.text_len = text_len
+        # self.in_dim = in_dim
+        # self.dim = dim
+        # self.ffn_dim = ffn_dim
+        # self.freq_dim = freq_dim
+        # self.text_dim = text_dim
+        # self.out_dim = out_dim
+        # self.num_heads = num_heads
+        # self.num_layers = num_layers
+        # self.window_size = window_size
+        # self.qk_norm = qk_norm
+        # self.cross_attn_norm = cross_attn_norm
+        # self.eps = eps
+        # self.local_attn_size = 21
+
+        # # embeddings
+        # self.patch_embedding = nn.Conv3d(
+        #     in_dim, dim, kernel_size=patch_size, stride=patch_size)
+        # self.text_embedding = nn.Sequential(
+        #     nn.Linear(text_dim, dim), nn.GELU(approximate='tanh'),
+        #     nn.Linear(dim, dim))
+
+        # self.time_embedding = nn.Sequential(
+        #     nn.Linear(freq_dim, dim), nn.SiLU(), nn.Linear(dim, dim))
+        # self.time_projection = nn.Sequential(
+        #     nn.SiLU(), nn.Linear(dim, dim * 6))
+
+        # # blocks
+        # cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
+        # self.blocks = nn.ModuleList([
+        #     WanAttentionBlock(cross_attn_type, dim, ffn_dim, num_heads,
+        #                       window_size, qk_norm, cross_attn_norm, eps)
+        #     for _ in range(num_layers)
+        # ])
+
+        # # head
+        # self.head = Head(dim, out_dim, patch_size, eps)
+
+        # # buffers (don't use register_buffer otherwise dtype will be changed in to())
+        # assert (dim % num_heads) == 0 and (dim // num_heads) % 2 == 0
+        # d = dim // num_heads
+        # self.freqs = torch.cat([
+        #     rope_params(1024, d - 4 * (d // 6)),
+        #     rope_params(1024, 2 * (d // 6)),
+        #     rope_params(1024, 2 * (d // 6))
+        # ],
+        #     dim=1)
+
+        # if model_type == 'i2v':
+        #     self.img_emb = MLPProj(1280, dim)
+
+        # # initialize weights
+        # self.init_weights()
+
+        # self.gradient_checkpointing = False
+
         super().__init__()
 
-        assert model_type in ['t2v', 'i2v','ti2v'], print(f"Error type {model_type}")
+        assert model_type in ['t2v', 'i2v', 'ti2v']
         self.model_type = model_type
 
         self.patch_size = patch_size
@@ -577,7 +639,6 @@ class WanModel(ModelMixin, ConfigMixin):
         self.qk_norm = qk_norm
         self.cross_attn_norm = cross_attn_norm
         self.eps = eps
-        self.local_attn_size = 21
 
         # embeddings
         self.patch_embedding = nn.Conv3d(
@@ -588,15 +649,12 @@ class WanModel(ModelMixin, ConfigMixin):
 
         self.time_embedding = nn.Sequential(
             nn.Linear(freq_dim, dim), nn.SiLU(), nn.Linear(dim, dim))
-        self.time_projection = nn.Sequential(
-            nn.SiLU(), nn.Linear(dim, dim * 6))
+        self.time_projection = nn.Sequential(nn.SiLU(), nn.Linear(dim, dim * 6))
 
         # blocks
-        cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
         self.blocks = nn.ModuleList([
-            WanAttentionBlock(cross_attn_type, dim, ffn_dim, num_heads,
-                              window_size, qk_norm, cross_attn_norm, eps)
-            for _ in range(num_layers)
+            WanAttentionBlock(dim, ffn_dim, num_heads, window_size, qk_norm,
+                              cross_attn_norm, eps) for _ in range(num_layers)
         ])
 
         # head
@@ -610,15 +668,10 @@ class WanModel(ModelMixin, ConfigMixin):
             rope_params(1024, 2 * (d // 6)),
             rope_params(1024, 2 * (d // 6))
         ],
-            dim=1)
-
-        if model_type == 'i2v':
-            self.img_emb = MLPProj(1280, dim)
+                               dim=1)
 
         # initialize weights
         self.init_weights()
-
-        self.gradient_checkpointing = False
 
     def _set_gradient_checkpointing(self, module, value=False):
         self.gradient_checkpointing = value

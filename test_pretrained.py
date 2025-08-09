@@ -7,7 +7,7 @@ from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 #     self.model = CausalWanModel.from_pretrained(
 #         f"wan_models/{model_name}/", local_attn_size=local_attn_size, sink_size=sink_size)
 # else:
-model_name = "Wan2.1-T2V-1.3B"
+model_name = "Wan2.2-TI2V-5B"
 model = WanModel.from_pretrained(f"wan_models/{model_name}/")
 
 # real_model_name = "Wan2.2-TI2V-5B"
