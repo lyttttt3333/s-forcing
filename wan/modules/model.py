@@ -133,6 +133,7 @@ class WanSelfAttention(nn.Module):
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
         b, s, n, d = *x.shape[:2], self.num_heads, self.head_dim
+        x = x.to(torch.bfloat16)
 
         # query, key, value function
         def qkv_fn(x):
