@@ -8,7 +8,7 @@ from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 #         f"wan_models/{model_name}/", local_attn_size=local_attn_size, sink_size=sink_size)
 # else:
 model_name = "Wan2.1-T2V-1.3B"
-self.model = WanModel.from_pretrained(f"wan_models/{model_name}/")
+model = WanModel.from_pretrained(f"wan_models/{model_name}/")
 
 # real_model_name = "Wan2.2-TI2V-5B"
 # self.real_score = WanDiffusionWrapper(model_name=real_model_name, is_causal=False)
