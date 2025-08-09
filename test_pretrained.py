@@ -25,7 +25,7 @@ def main():
     print(f"Loading model: {model_name}")
     
     # 加载模型
-    model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/", device_map=device)
+    model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/", device_map="auto")
     model.requires_grad_(False)
     
     # 查看当前进程的显存占用
