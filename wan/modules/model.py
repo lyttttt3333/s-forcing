@@ -132,7 +132,7 @@ class WanSelfAttention(nn.Module):
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
-        print("##########" x.dtype)
+        print("##########", x.dtype)
         b, s, n, d = *x.shape[:2], self.num_heads, self.head_dim
 
         # query, key, value function
