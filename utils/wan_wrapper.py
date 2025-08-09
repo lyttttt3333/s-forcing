@@ -65,8 +65,10 @@ class WanVAEWrapper(torch.nn.Module):
         self.std = torch.tensor(std, dtype=torch.float32)
 
         # init model
+        vae_path = "wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth"
+        print(f"Load from {vae_path}")
         self.model = _video_vae(
-            pretrained_path="wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth",
+            pretrained_path=vae_path,
         ).eval().requires_grad_(False)
 
     def encode_to_latent(self, pixel: torch.Tensor) -> torch.Tensor:
