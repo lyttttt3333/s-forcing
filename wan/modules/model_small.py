@@ -783,9 +783,14 @@ class WanModel(ModelMixin, ConfigMixin):
         x = self.unpatchify(x, grid_sizes)
 
         if classify_mode:
-            return torch.stack(x), final_x
+            out = torch.stack(x)
+            print("#############", out.shape)
+            out = self.up_adapter(out)
+            return out, final_x
 
-        return torch.stack(x)
+        out = torch.stack(x)
+        print("#############", out.shape)
+        return self.up_adapter(out)
 
     def _forward_classify(
         self,
