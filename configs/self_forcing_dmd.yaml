@@ -42,7 +42,7 @@ dfake_gen_update_ratio: 5
 image_or_video_shape:
 - 1
 - 21
-- 16
+- 48
 - 60
 - 104
 distribution_loss: dmd
