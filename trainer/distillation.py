@@ -112,7 +112,7 @@ class Trainer:
         else:
             resume_path = os.path.join(config.resume_path, "generator_model")
             print(f"Load from {resume_path}")
-            self.model.generator = PeftModel.from_pretrained(self.model.generator, config.resume_path, is_trainable=True)
+            self.model.generator = PeftModel.from_pretrained(self.model.generator, resume_path, is_trainable=True)
         self.model.generator.print_trainable_parameters() 
 
         if config.resume_path is None:
@@ -127,7 +127,7 @@ class Trainer:
         else:
             resume_path = os.path.join(config.resume_path, "fake_score_model")
             print(f"Load from {resume_path}")
-            self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, config.resume_path, is_trainable=True)
+            self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, resume_path, is_trainable=True)
         self.model.fake_score.print_trainable_parameters() 
 
         # for name, param in self.model.generator.named_parameters():
