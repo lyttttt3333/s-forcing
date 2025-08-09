@@ -47,8 +47,7 @@ def main():
     print(f"进程 {torch.distributed.get_rank() if torch.distributed.is_initialized() else 0} 显存使用情况:")
     print(f"  已分配: {allocated:.2f} GB")
     print(f"  已保留: {reserved:.2f} GB")
-    
-    input("Done")
+
 
 if __name__ == "__main__":
     main()

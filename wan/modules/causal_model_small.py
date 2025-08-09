@@ -468,17 +468,17 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         self.down_adapter = nn.Conv3d(
                                 in_channels=48,
                                 out_channels=16,
-                                kernel_size=1,  # 1x1x1卷积，仅调整通道数不改变空间维度
+                                kernel_size=9,  # 1x1x1卷积，仅调整通道数不改变空间维度
                                 stride=1,
-                                padding=0,
+                                padding=4,
                                 groups=1
                             )
         self.up_adapter = nn.Conv3d(
                                 in_channels=16,
                                 out_channels=48,
-                                kernel_size=1,  # 1x1x1卷积，仅调整通道数不改变空间维度
+                                kernel_size=9,  # 1x1x1卷积，仅调整通道数不改变空间维度
                                 stride=1,
-                                padding=0,
+                                padding=4,
                                 groups=1
                             )
 
@@ -857,7 +857,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
         out = torch.stack(x)
-        print("#############", out.shape)
         return self.up_adapter(out)
 
     def _forward_train(
@@ -1017,7 +1016,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
         out = torch.stack(x)
-        print("#############", out.shape)
         return self.up_adapter(out)
 
     def forward(

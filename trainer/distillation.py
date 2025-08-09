@@ -384,9 +384,7 @@ class Trainer:
                 initial_latent=image_latent if self.config.i2v else None
             )
 
-            input("begin to backward")
             generator_loss.backward()
-            input("end backward")
             generator_grad_norm = self.model.generator.clip_grad_norm_(
                 self.max_grad_norm_generator)
 
@@ -460,9 +458,7 @@ class Trainer:
                 extra = self.fwdbwd_one_step(batch, True)
                 extras_list.append(extra)
                 generator_log_dict = merge_dict_list(extras_list)
-                input("optimizer begin")
                 self.generator_optimizer.step()
-                input("optimizer ends")
                 if self.generator_ema is not None:
                     self.generator_ema.update(self.model.generator)
 
