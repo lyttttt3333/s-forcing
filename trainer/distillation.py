@@ -86,17 +86,17 @@ class Trainer:
         # Save pretrained model state_dicts to CPU
         self.fake_score_state_dict_cpu = self.model.fake_score.state_dict()
 
-        # print(config)
-        if getattr(config, "generator_ckpt", False):
-            print(f"Loading pretrained generator from {config.generator_ckpt}")
-            state_dict = torch.load(config.generator_ckpt, map_location="cpu")
-            if "generator" in state_dict:
-                state_dict = state_dict["generator"]
-            elif "model" in state_dict:
-                state_dict = state_dict["model"]
-            self.model.generator.load_state_dict(
-                state_dict, strict=True
-            )
+        # # print(config)
+        # if getattr(config, "generator_ckpt", False):
+        #     print(f"Loading pretrained generator from {config.generator_ckpt}")
+        #     state_dict = torch.load(config.generator_ckpt, map_location="cpu")
+        #     if "generator" in state_dict:
+        #         state_dict = state_dict["generator"]
+        #     elif "model" in state_dict:
+        #         state_dict = state_dict["model"]
+        #     self.model.generator.load_state_dict(
+        #         state_dict, strict=True
+        #     )
 
 
 
