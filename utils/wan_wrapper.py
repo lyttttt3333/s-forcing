@@ -85,6 +85,8 @@ class WanVAEWrapper(torch.nn.Module):
         # from [batch_size, num_channels, num_frames, height, width]
         # to [batch_size, num_frames, num_channels, height, width]
         output = output.permute(0, 2, 1, 3, 4)
+        print("##################")
+        print(output.shape)
         return output
 
     def decode_to_pixel(self, latent: torch.Tensor, use_cache: bool = False) -> torch.Tensor:
