@@ -66,7 +66,7 @@ class WanVAEWrapper(torch.nn.Module):
 
         # init model
         self.model = _video_vae(
-            pretrained_path="wan_models/Wan2.1-T2V-1.3B/Wan2.1_VAE.pth",
+            pretrained_path="wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth",
             z_dim=16,
         ).eval().requires_grad_(False)
 
