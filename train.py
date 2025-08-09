@@ -13,6 +13,7 @@ def main():
     parser.add_argument("--no_visualize", action="store_true")
     parser.add_argument("--logdir", type=str, default="logs/self_forcing_dmd", help="Path to the directory to save logs")
     parser.add_argument("--wandb-save-dir", type=str, default="", help="Path to the directory to save wandb logs")
+    parser.add_argument("--resume_path", type=str, default=None, help="Path to the directory to save wandb logs")
     parser.add_argument("--disable-wandb", action="store_true")
 
     args = parser.parse_args()
