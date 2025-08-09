@@ -241,15 +241,38 @@ class CausalWanSelfAttention(nn.Module):
         x = self.o(x)
         return x
 
+class WanCrossAttention(WanSelfAttention):
+
+    def forward(self, x, context, context_lens):
+        r"""
+        Args:
+            x(Tensor): Shape [B, L1, C]
+            context(Tensor): Shape [B, L2, C]
+            context_lens(Tensor): Shape [B]
+        """
+        b, n, d = x.size(0), self.num_heads, self.head_dim
+
+        # compute query, key, value
+        q = self.norm_q(self.q(x)).view(b, -1, n, d)
+        k = self.norm_k(self.k(context)).view(b, -1, n, d)
+        v = self.v(context).view(b, -1, n, d)
+
+        # compute attention
+        x = flash_attention(q, k, v, k_lens=context_lens)
+
+        # output
+        x = x.flatten(2)
+        x = self.o(x)
+        return x
+
 
 class CausalWanAttentionBlock(nn.Module):
 
     def __init__(self,
-                 cross_attn_type,
                  dim,
                  ffn_dim,
                  num_heads,
-                 local_attn_size=-1,
+                 local_attn_size=(-1,-1),
                  sink_size=0,
                  qk_norm=True,
                  cross_attn_norm=False,
@@ -269,11 +292,8 @@ class CausalWanAttentionBlock(nn.Module):
         self.norm3 = WanLayerNorm(
             dim, eps,
             elementwise_affine=True) if cross_attn_norm else nn.Identity()
-        self.cross_attn = WAN_CROSSATTENTION_CLASSES[cross_attn_type](dim,
-                                                                      num_heads,
-                                                                      (-1, -1),
-                                                                      qk_norm,
-                                                                      eps)
+        self.cross_attn = WanCrossAttention(dim, num_heads, (-1, -1), qk_norm,
+                                            eps)
         self.norm2 = WanLayerNorm(dim, eps)
         self.ffn = nn.Sequential(
             nn.Linear(dim, ffn_dim), nn.GELU(approximate='tanh'),
