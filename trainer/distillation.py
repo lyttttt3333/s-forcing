@@ -143,13 +143,13 @@ class Trainer:
             wrap_strategy=config.fake_score_fsdp_wrap_strategy
         )
 
-        self.model.text_encoder = fsdp_wrap(
-            self.model.text_encoder,
-            sharding_strategy=config.sharding_strategy,
-            mixed_precision=config.mixed_precision,
-            wrap_strategy=config.text_encoder_fsdp_wrap_strategy,
-            cpu_offload=getattr(config, "text_encoder_cpu_offload", False)
-        )
+        # self.model.text_encoder = fsdp_wrap(
+        #     self.model.text_encoder,
+        #     sharding_strategy=config.sharding_strategy,
+        #     mixed_precision=config.mixed_precision,
+        #     wrap_strategy=config.text_encoder_fsdp_wrap_strategy,
+        #     cpu_offload=getattr(config, "text_encoder_cpu_offload", False)
+        # )
 
         input("fsdp models done:")
 
