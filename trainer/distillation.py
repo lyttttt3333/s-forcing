@@ -374,6 +374,7 @@ class Trainer:
                 initial_latent=image_latent if self.config.i2v else None
             )
 
+            print("begin to backward")
             generator_loss.backward()
             generator_grad_norm = self.model.generator.clip_grad_norm_(
                 self.max_grad_norm_generator)
