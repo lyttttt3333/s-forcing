@@ -52,7 +52,7 @@ def causal_rope_apply(x, grid_sizes, freqs, start_frame=0):
 
         # append to collection
         output.append(x_i)
-    return torch.stack(output).type_as(x).unsqueeze(0)
+    return torch.stack(output).type_as(x)
 
 
 class CausalWanSelfAttention(nn.Module):
