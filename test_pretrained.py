@@ -9,6 +9,7 @@ from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 #     self.model = CausalWanModel.from_pretrained(
 #         f"wan_models/{model_name}/", local_attn_size=local_attn_size, sink_size=sink_size)
 # else:
+import os
 import torch
 import torch.distributed as dist
 
