@@ -17,6 +17,8 @@ import torch
 import math
 import torch.distributed as dist
 
+from .attention import flash_attention
+
 # wan 1.3B model has a weird channel / head configurations and require max-autotune to work with flexattention
 # see https://github.com/pytorch/pytorch/issues/133254
 # change to default for other models
