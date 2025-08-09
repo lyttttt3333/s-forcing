@@ -239,7 +239,7 @@ class Trainer:
         print("Start gathering distributed model states...")
         save_path = os.path.join(self.output_path, f"checkpoint_model_{self.step:06d}")
         save_path_score = os.path.join(save_path, "fake_score_model")
-        save_path_generator = os.path.join(save_path_generator, "generator_model")
+        save_path_generator = os.path.join(save_path, "generator_model")
         self.model.fake_score.save_pretrained(save_path_score)
         self.model.generator.save_pretrained(save_path_generator)
         # generator_state_dict = fsdp_state_dict(
