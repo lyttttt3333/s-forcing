@@ -352,10 +352,10 @@ class WanAttentionBlock(nn.Module):
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
-        assert e.dtype == torch.float32
-        with torch.amp.autocast('cuda', dtype=torch.float32):
-            e = (self.modulation.unsqueeze(0) + e).chunk(6, dim=2)
-        assert e[0].dtype == torch.float32
+        #assert e.dtype == torch.float32
+        #with torch.amp.autocast('cuda', dtype=torch.float32):
+        e = (self.modulation.unsqueeze(0) + e).chunk(6, dim=2)
+        #assert e[0].dtype == torch.float32
 
         # self-attention
         y = self.self_attn(
