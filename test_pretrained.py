@@ -3,16 +3,35 @@ from wan.modules.causal_model import CausalWanModel
 from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 
-vae = WanVAEWrapper()
+# vae = WanVAEWrapper()
 # if is_causal:
 #     print(f"########### Loading from wan_models/{model_name}/")
 #     self.model = CausalWanModel.from_pretrained(
 #         f"wan_models/{model_name}/", local_attn_size=local_attn_size, sink_size=sink_size)
 # else:
-# model_name = "Wan2.2-TI2V-5B"
-# model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/").to("cuda")
-# model.requires_grad_(False)
-# input("Done")
+import torch
+
+def main():
+    model_name = "Wan2.2-TI2V-5B"
+    print(f"Loading model: {model_name}")
+    
+    # 加载模型
+    model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/").to("cuda")
+    model.requires_grad_(False)
+    
+    # 查看当前进程的显存占用
+    allocated = torch.cuda.memory_allocated() / (1024 **3)  # 转换为GB
+    reserved = torch.cuda.memory_reserved() / (1024** 3)
+    
+    print(f" using device {model.device}")
+    print(f"进程 {torch.distributed.get_rank() if torch.distributed.is_initialized() else 0} 显存使用情况:")
+    print(f"  已分配: {allocated:.2f} GB")
+    print(f"  已保留: {reserved:.2f} GB")
+    
+    input("Done")
+
+if __name__ == "__main__":
+    main()
 
 # real_model_name = "Wan2.2-TI2V-5B"
 # self.real_score = WanDiffusionWrapper(model_name=real_model_name, is_causal=False)
