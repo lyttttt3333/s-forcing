@@ -151,8 +151,6 @@ class Trainer:
         #     cpu_offload=getattr(config, "text_encoder_cpu_offload", False)
         # )
 
-        input("fsdp models done:")
-
         if not config.no_visualize or config.load_raw_video:
             self.model.vae = self.model.vae.to(
                 device=self.device, dtype=torch.bfloat16 if config.mixed_precision else torch.float32)
