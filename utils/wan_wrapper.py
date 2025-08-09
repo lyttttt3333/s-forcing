@@ -242,6 +242,7 @@ class WanDiffusionWrapper(torch.nn.Module):
 
         logits = None
         # X0 prediction
+        print("##############",noisy_image_or_video.shape)
         if kv_cache is not None:
             flow_pred = self.model(
                 noisy_image_or_video.permute(0, 2, 1, 3, 4),
