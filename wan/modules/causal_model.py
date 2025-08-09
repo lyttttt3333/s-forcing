@@ -491,7 +491,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
         self.blocks = nn.ModuleList([
-            CausalWanAttentionBlock(cross_attn_type, dim, ffn_dim, num_heads,
+            CausalWanAttentionBlock(dim, ffn_dim, num_heads,
                                     local_attn_size, sink_size, qk_norm, cross_attn_norm, eps)
             for _ in range(num_layers)
         ])
