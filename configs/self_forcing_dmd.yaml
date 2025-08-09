@@ -41,13 +41,13 @@ negative_prompt: '色调艳丽，过曝，静态，细节模糊不清，字幕�
 dfake_gen_update_ratio: 5
 image_or_video_shape:
 - 1
-- 21
+- 15
 - 48
 - 60
 - 104
 distribution_loss: dmd
 trainer: score_distillation
-gradient_checkpointing: false
+gradient_checkpointing: true
 num_frame_per_block: 3
 load_raw_video: false
 model_kwargs:
