@@ -470,6 +470,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         self.text_dim = text_dim
         self.out_dim = out_dim
         self.num_heads = num_heads
+        print("############## num_head", num_heads)
         self.num_layers = num_layers
         self.local_attn_size = local_attn_size
         self.qk_norm = qk_norm
