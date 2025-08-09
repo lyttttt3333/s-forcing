@@ -240,6 +240,8 @@ class Trainer:
         save_path = os.path.join(self.output_path, f"checkpoint_model_{self.step:06d}")
         save_path_score = os.path.join(save_path, "fake_score_model")
         save_path_generator = os.path.join(save_path, "generator_model")
+        os.makedirs(save_path_score, exist_ok=True)
+        os.makedirs(save_path_generator, exist_ok=True)
         self.model.fake_score.save_pretrained(save_path_score)
         self.model.generator.save_pretrained(save_path_generator)
         # generator_state_dict = fsdp_state_dict(
