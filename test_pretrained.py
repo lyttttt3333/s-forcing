@@ -8,7 +8,7 @@ from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 #         f"wan_models/{model_name}/", local_attn_size=local_attn_size, sink_size=sink_size)
 # else:
 model_name = "Wan2.2-TI2V-5B"
-model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/")
+model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/").to("cuda")
 model.requires_grad_(False)
 input("Done")
 
