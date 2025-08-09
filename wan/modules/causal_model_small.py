@@ -776,7 +776,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # embeddings
         x = [self.down_adapter(u.unsqueeze(0)) for u in x]
-        x = [self.patch_embedding(u.unsqueeze(0)) for u in x]
+        x = [self.patch_embedding(u) for u in x]
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])
         x = [u.flatten(2).transpose(1, 2) for u in x]
