@@ -3,6 +3,8 @@ from wan.modules.causal_model import CausalWanModel
 from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+
 # vae = WanVAEWrapper()
 # if is_causal:
 #     print(f"########### Loading from wan_models/{model_name}/")
@@ -25,8 +27,17 @@ def main():
     print(f"Loading model: {model_name}")
     
     # 加载模型
-    model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/", device_map="auto")
-    model.requires_grad_(False)
+    model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/")
+    
+    local_rank = int(os.environ["LOCAL_RANK"])
+    torch.cuda.set_device(local_rank)  # 每个进程绑定到对应的 GPU（0~7）
+
+    # 3. FSDP 包装模型：自动分片并分配到对应 GPU
+    model = FSDP(
+        model,  # 传入 CPU 上的模型
+        device_id=torch.cuda.current_device(),  # 当前进程绑定的 GPU
+        sharding_strategy=ShardingStrategy.FULL_SHARD  # 全分片模式
+    )
     
     # 查看当前进程的显存占用
     allocated = torch.cuda.memory_allocated() / (1024 **3)  # 转换为GB
