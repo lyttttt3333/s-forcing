@@ -111,6 +111,16 @@ class Trainer:
             )
         self.model.generator.print_trainable_parameters() 
 
+
+        self.model.fake_score = PeftModel(
+                self.model.fake_score, 
+                lora_config,
+                adapter_name="default",
+                autocast_adapter_dtype=True,
+                low_cpu_mem_usage=False
+            )
+        self.model.fake_score.print_trainable_parameters() 
+
         # for name, param in self.model.generator.named_parameters():
         #     if param.requires_grad:
         #         print("✅ Trainable:", name)

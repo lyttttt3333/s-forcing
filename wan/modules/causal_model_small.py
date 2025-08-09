@@ -465,6 +465,23 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         self.time_projection = nn.Sequential(
             nn.SiLU(), nn.Linear(dim, dim * 6))
 
+        self.down_adapter = nn.Conv3d(
+                                in_channels=48,
+                                out_channels=16,
+                                kernel_size=1,  # 1x1x1卷积，仅调整通道数不改变空间维度
+                                stride=1,
+                                padding=0,
+                                groups=1
+                            )
+        self.up_adapter = nn.Conv3d(
+                                in_channels=16,
+                                out_channels=48,
+                                kernel_size=1,  # 1x1x1卷积，仅调整通道数不改变空间维度
+                                stride=1,
+                                padding=0,
+                                groups=1
+                            )
+
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
         self.blocks = nn.ModuleList([
@@ -758,6 +775,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             x = [torch.cat([u, v], dim=0) for u, v in zip(x, y)]
 
         # embeddings
+        x = [self.down_adapter(u.unsqueeze(0)) for u in x]
         x = [self.patch_embedding(u.unsqueeze(0)) for u in x]
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])

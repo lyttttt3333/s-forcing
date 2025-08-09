@@ -591,6 +591,22 @@ class WanModel(ModelMixin, ConfigMixin):
         self.time_projection = nn.Sequential(
             nn.SiLU(), nn.Linear(dim, dim * 6))
 
+        self.down_adapter = nn.Conv3d(
+                                in_channels=48,
+                                out_channels=16,
+                                kernel_size=1,  # 1x1x1卷积，仅调整通道数不改变空间维度
+                                stride=1,
+                                padding=0,
+                                groups=1
+                            )
+        self.up_adapter = nn.Conv3d(
+                                in_channels=16,
+                                out_channels=48,
+                                kernel_size=1,  # 1x1x1卷积，仅调整通道数不改变空间维度
+                                stride=1,
+                                padding=0,
+                                groups=1
+                            )
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
         self.blocks = nn.ModuleList([
