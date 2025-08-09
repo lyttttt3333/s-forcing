@@ -889,7 +889,7 @@ class WanModel(ModelMixin, ConfigMixin):
         # unpatchify
         x = self.unpatchify(x, grid_sizes, c=self.dim // 4)
         out = torch.stack(x)
-        print("#############" out.shape)
+        print("#############", out.shape)
         return self.up_adapter(out)
 
     def unpatchify(self, x, grid_sizes, c=None):
