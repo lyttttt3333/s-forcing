@@ -1014,7 +1014,9 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
-        return torch.stack(x)
+        out = torch.stack(x)
+        print("#############" out.shape)
+        return self.up_adapter(out)
 
     def forward(
         self,
