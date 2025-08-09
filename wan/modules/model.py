@@ -274,6 +274,30 @@ WAN_CROSSATTENTION_CLASSES = {
 }
 
 
+class WanCrossAttention(WanSelfAttention):
+
+    def forward(self, x, context, context_lens):
+        r"""
+        Args:
+            x(Tensor): Shape [B, L1, C]
+            context(Tensor): Shape [B, L2, C]
+            context_lens(Tensor): Shape [B]
+        """
+        b, n, d = x.size(0), self.num_heads, self.head_dim
+
+        # compute query, key, value
+        q = self.norm_q(self.q(x)).view(b, -1, n, d)
+        k = self.norm_k(self.k(context)).view(b, -1, n, d)
+        v = self.v(context).view(b, -1, n, d)
+
+        # compute attention
+        x = flash_attention(q, k, v, k_lens=context_lens)
+
+        # output
+        x = x.flatten(2)
+        x = self.o(x)
+        return x
+
 class WanAttentionBlock(nn.Module):
 
     def __init__(self,
