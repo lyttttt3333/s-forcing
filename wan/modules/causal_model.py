@@ -241,7 +241,7 @@ class CausalWanSelfAttention(nn.Module):
         x = self.o(x)
         return x
 
-class WanCrossAttention(WanSelfAttention):
+class WanCrossAttention(CausalWanSelfAttention):
 
     def forward(self, x, context, context_lens):
         r"""
