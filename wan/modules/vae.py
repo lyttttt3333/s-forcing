@@ -1460,7 +1460,7 @@ def _video_vae(pretrained_path=None, z_dim=None, device='cpu', **kwargs):
     # params
     cfg = dict(
         dim=160,
-        z_dim=16,
+        z_dim=48,
         dim_mult=[1, 2, 4, 4],
         num_res_blocks=2,
         attn_scales=[],
