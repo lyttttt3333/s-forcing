@@ -4,7 +4,7 @@ from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-
+from torch.distributed.fsdp import ShardingStrategy 
 # vae = WanVAEWrapper()
 # if is_causal:
 #     print(f"########### Loading from wan_models/{model_name}/")
