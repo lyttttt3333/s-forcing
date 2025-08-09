@@ -10,13 +10,21 @@ from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 #         f"wan_models/{model_name}/", local_attn_size=local_attn_size, sink_size=sink_size)
 # else:
 import torch
+import torch.distributed as dist
 
 def main():
+    dist.init_process_group(backend="nccl")  # 使用NCCL后端（适合GPU）
+    local_rank = int(os.environ["LOCAL_RANK"])  # 获取本地进程排名
+    
+    # 设置当前进程使用的设备
+    torch.cuda.set_device(local_rank)
+    device = torch.device(f"cuda:{local_rank}")
+
     model_name = "Wan2.2-TI2V-5B"
     print(f"Loading model: {model_name}")
     
     # 加载模型
-    model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/").to("cuda")
+    model = CausalWanModel.from_pretrained(f"wan_models/{model_name}/").to(device)
     model.requires_grad_(False)
     
     # 查看当前进程的显存占用
