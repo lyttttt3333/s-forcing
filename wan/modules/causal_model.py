@@ -52,7 +52,7 @@ def causal_rope_apply(x, grid_sizes, freqs, start_frame=0):
 
         # append to collection
         output.append(x_i)
-    return torch.stack(output).type_as(x)
+    return torch.stack(output).type_as(x).unsqueeze(0)
 
 
 class CausalWanSelfAttention(nn.Module):
@@ -204,9 +204,7 @@ class CausalWanSelfAttention(nn.Module):
             # If we are using local attention and the current KV cache size is larger than the local attention size, we need to truncate the KV cache
             kv_cache_size = kv_cache["k"].shape[1]
             num_new_tokens = roped_query.shape[1]
-            print("#######################")
-            print(kv_cache["k"].shape)
-            print(local_start_index, local_end_index)
+            
             if self.local_attn_size != -1 and (current_end > kv_cache["global_end_index"].item()) and (
                     num_new_tokens + kv_cache["local_end_index"].item() > kv_cache_size):
                 # Calculate the number of new tokens added in this step
