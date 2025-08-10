@@ -380,6 +380,7 @@ class DimensionReductionAdapter(nn.Module):
             self.norm = nn.LayerNorm(output_dim) 
         
     def forward(self, x):
+        print(x.shape)
         x = self.main_proj(x)
         if self.use_activation:
             x = self.activation(x)

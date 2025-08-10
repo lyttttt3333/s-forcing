@@ -318,7 +318,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
 
     def merge_context(self, prompt_embeds, state):
         self.model.state_proj.to(state.dtype)
-        print(state.shape)
         state_token = self.model.state_proj(state)
         unified_token = torch.cat([prompt_embeds, state], dim=1)
         return unified_token
