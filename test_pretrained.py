@@ -19,9 +19,9 @@ data = torch.arange(B * C * F * H * W).float().reshape(B, C, F, H, W).to("cuda")
 
 vae = WanVAEWrapper()
 # data = torch.zeros([48, 60, 104]).to("cuda")
-latent = vae.encode_to_latent(data)
+latent = vae.encode_to_latent([data])
 print(latent.shape)
-vae.decode_to_pixel(data)
+# vae.decode_to_pixel(data)
 
 
 # import os
