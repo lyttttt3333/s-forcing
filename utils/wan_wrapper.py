@@ -122,6 +122,7 @@ class WanVAEWrapper(torch.nn.Module):
         dtype=torch.float,
         device="cuda",
     ):
+        super().__init__()
         self.dtype = dtype
         self.device = device
 
