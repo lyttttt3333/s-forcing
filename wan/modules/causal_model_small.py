@@ -505,7 +505,9 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                                 groups=1
                             )
 
-        self.state_proj = DimensionReductionAdapter()
+        self.state_proj =nn.Sequential(
+            nn.SiLU(), nn.Linear(2048, 1536))
+        #DimensionReductionAdapter()
 
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
