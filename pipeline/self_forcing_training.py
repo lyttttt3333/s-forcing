@@ -170,7 +170,8 @@ class SelfForcingTrainingPipeline:
                             timestep=timestep,
                             kv_cache=self.kv_cache1,
                             crossattn_cache=self.crossattn_cache,
-                            current_start=current_start_frame * self.frame_seq_length
+                            current_start=current_start_frame * self.frame_seq_length,
+                            memory_condition = True
                         )
                         next_timestep = self.denoising_step_list[index + 1]
                         noisy_input = self.scheduler.add_noise(
@@ -190,7 +191,8 @@ class SelfForcingTrainingPipeline:
                                 timestep=timestep,
                                 kv_cache=self.kv_cache1,
                                 crossattn_cache=self.crossattn_cache,
-                                current_start=current_start_frame * self.frame_seq_length
+                                current_start=current_start_frame * self.frame_seq_length,
+                                memory_condition = True
                             )
                     else:
                         _, denoised_pred = self.generator(
@@ -199,7 +201,8 @@ class SelfForcingTrainingPipeline:
                             timestep=timestep,
                             kv_cache=self.kv_cache1,
                             crossattn_cache=self.crossattn_cache,
-                            current_start=current_start_frame * self.frame_seq_length
+                            current_start=current_start_frame * self.frame_seq_length,
+                            memory_condition = True
                         )
                     break
             

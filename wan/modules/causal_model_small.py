@@ -482,6 +482,9 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         self.text_embedding = nn.Sequential(
             nn.Linear(text_dim, dim), nn.GELU(approximate='tanh'),
             nn.Linear(dim, dim))
+        self.state_proj = nn.Sequential(
+            nn.Linear(2048, dim), nn.GELU(approximate='tanh'),
+            nn.Linear(dim, dim))
 
         self.time_embedding = nn.Sequential(
             nn.Linear(freq_dim, dim), nn.SiLU(), nn.Linear(dim, dim))
@@ -505,8 +508,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                                 groups=1
                             )
 
-        self.state_proj =nn.Sequential(
-            nn.SiLU(), nn.Linear(2048, 1536))
+
         #DimensionReductionAdapter()
 
         # blocks
@@ -764,7 +766,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         kv_cache: dict = None,
         crossattn_cache: dict = None,
         current_start: int = 0,
-        cache_start: int = 0
+        cache_start: int = 0,
+        memory_condition = False
     ):
         r"""
         Run the diffusion model with kv caching.
@@ -827,16 +830,29 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # context
         context_lens = None
-        context = self.text_embedding(
-            torch.stack([
-                torch.cat(
-                    [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
-                for u in context
-            ]))
+        if not memory_condition:
+            context = self.text_embedding(
+                torch.stack([
+                    torch.cat(
+                        [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
+                    for u in context
+                ]))
 
-        if clip_fea is not None:
-            context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
-            context = torch.concat([context_clip, context], dim=1)
+            if clip_fea is not None:
+                context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
+                context = torch.concat([context_clip, context], dim=1)
+        else:
+            text_context, state_context = context
+            text_context = self.text_embedding(
+                    torch.stack([
+                        torch.cat(
+                            [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
+                        for u in text_context
+                    ]))
+            state_context = self.state_proj(
+                    torch.stack([ u for u in state_context ]))
+            context = torch.concat([text_context, state_context], dim=1)
+
 
         # arguments
         kwargs = dict(
@@ -896,6 +912,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         aug_t=None,
         clip_fea=None,
         y=None,
+        memory_condition = False
     ):
         r"""
         Forward pass through the diffusion model
@@ -978,17 +995,30 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
 
         # context
+        # context
         context_lens = None
-        context = self.text_embedding(
-            torch.stack([
-                torch.cat(
-                    [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
-                for u in context
-            ]))
+        if not memory_condition:
+            context = self.text_embedding(
+                torch.stack([
+                    torch.cat(
+                        [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
+                    for u in context
+                ]))
 
-        if clip_fea is not None:
-            context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
-            context = torch.concat([context_clip, context], dim=1)
+            if clip_fea is not None:
+                context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
+                context = torch.concat([context_clip, context], dim=1)
+        else:
+            text_context, state_context = context
+            text_context = self.text_embedding(
+                    torch.stack([
+                        torch.cat(
+                            [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
+                        for u in text_context
+                    ]))
+            state_context = self.state_proj(
+                    torch.stack([ u for u in state_context ]))
+            context = torch.concat([text_context, state_context], dim=1)
 
         if clean_x is not None:
             clean_x = [self.patch_embedding(u.unsqueeze(0)) for u in clean_x]

@@ -226,12 +226,15 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         concat_time_embeddings: Optional[bool] = False,
         clean_x: Optional[torch.Tensor] = None,
         aug_t: Optional[torch.Tensor] = None,
-        cache_start: Optional[int] = None
+        cache_start: Optional[int] = None,
+        memory_condition = False
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
-        state = conditional_dict["state"]
-
-        context = self.merge_context(prompt_embeds, state)
+        if memory_condition:
+            state = conditional_dict["state"]
+            context = (prompt_embeds, state)
+        else:
+            context = prompt_embeds
 
         # [B, F] -> [B]
         if self.uniform_timestep:
@@ -249,7 +252,8 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                 kv_cache=kv_cache,
                 crossattn_cache=crossattn_cache,
                 current_start=current_start,
-                cache_start=cache_start
+                cache_start=cache_start,
+                memory_condition = memory_condition,
             ).permute(0, 2, 1, 3, 4)
         else:
             
@@ -261,6 +265,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                     seq_len=self.seq_len,
                     clean_x=clean_x.permute(0, 2, 1, 3, 4),
                     aug_t=aug_t,
+                    memory_condition = memory_condition,
                 ).permute(0, 2, 1, 3, 4)
             else:
                 if classify_mode:
@@ -272,14 +277,16 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                         register_tokens=self._register_tokens,
                         cls_pred_branch=self._cls_pred_branch,
                         gan_ca_blocks=self._gan_ca_blocks,
-                        concat_time_embeddings=concat_time_embeddings
+                        concat_time_embeddings=concat_time_embeddings,
+                        memory_condition = memory_condition,
                     )
                     flow_pred = flow_pred.permute(0, 2, 1, 3, 4)
                 else:
                     flow_pred = self.model(
                         noisy_image_or_video.permute(0, 2, 1, 3, 4),
                         t=input_timestep, context=context,
-                        seq_len=self.seq_len
+                        seq_len=self.seq_len,
+                        memory_condition = memory_condition,
                     ).permute(0, 2, 1, 3, 4)
 
         pred_x0 = self._convert_flow_pred_to_x0(
