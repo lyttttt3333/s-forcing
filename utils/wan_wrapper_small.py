@@ -284,7 +284,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
             timestep=timestep.flatten(0, 1)
         ).unflatten(0, flow_pred.shape[:2])
 
-        
 
         if logits is not None:
             return flow_pred, pred_x0, logits

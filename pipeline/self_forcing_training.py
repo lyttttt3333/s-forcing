@@ -193,6 +193,9 @@ class SelfForcingTrainingPipeline:
                         )
                     break
 
+            print("###################")
+            print(denoised_pred.shape)
+
             # Step 3.2: record the model's output
             output[:, current_start_frame:current_start_frame + current_num_frames] = denoised_pred
 
