@@ -226,6 +226,7 @@ class SelfForcingModel(BaseModel):
             denoising_step_list=self.denoising_step_list,
             scheduler=self.scheduler,
             generator=self.generator,
+            vae=self.vae,
             num_frame_per_block=self.num_frame_per_block,
             independent_first_frame=self.args.independent_first_frame,
             same_step_across_blocks=self.args.same_step_across_blocks,
