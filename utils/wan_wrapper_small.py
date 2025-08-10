@@ -239,7 +239,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         logits = None
         # X0 prediction
         if kv_cache is not None:
-            print(" 1 branch")
             flow_pred = self.model(
                 noisy_image_or_video.permute(0, 2, 1, 3, 4),
                 t=input_timestep, context=prompt_embeds,
@@ -252,7 +251,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         else:
             
             if clean_x is not None:
-                print(" 2 branch")
                 # teacher forcing
                 flow_pred = self.model(
                     noisy_image_or_video.permute(0, 2, 1, 3, 4),
@@ -262,7 +260,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                     aug_t=aug_t,
                 ).permute(0, 2, 1, 3, 4)
             else:
-                print(" 3 branch")
                 if classify_mode:
                     flow_pred, logits = self.model(
                         noisy_image_or_video.permute(0, 2, 1, 3, 4),

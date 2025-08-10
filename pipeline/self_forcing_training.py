@@ -137,8 +137,6 @@ class SelfForcingTrainingPipeline:
         start_gradient_frame_index = num_output_frames - 21
 
         # for block_index in range(num_blocks):
-        print("############## cond dict")
-        print(conditional_dict)
         for block_index, current_num_frames in enumerate(all_num_frames):
             noisy_input = noise[
                 :, current_start_frame - num_input_frames:current_start_frame + current_num_frames - num_input_frames]
