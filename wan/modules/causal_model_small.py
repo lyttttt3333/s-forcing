@@ -377,7 +377,7 @@ class DimensionReductionAdapter(nn.Module):
         self.use_activation = use_activation
         if use_activation:
             self.activation = nn.GELU()  
-            self.norm = nn.LayerNorm(output_dim) 
+            self.norm = nn.LayerNorm(output_dim, output_dim) 
         
     def forward(self, x):
         x = self.main_proj(x)
