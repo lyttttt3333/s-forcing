@@ -54,7 +54,7 @@ def get_args_parser():
 
 
 def main(args):
-    add_path_to_dust3r(args.weights)
+    # add_path_to_dust3r(args.weights)
 
     if args.size == 512:
         resolution = (512, 384)
