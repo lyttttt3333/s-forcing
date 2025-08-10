@@ -879,10 +879,10 @@ def _video_vae(pretrained_path=None, z_dim=48, dim=160, device="cpu", **kwargs):
     # load checkpoint
     logging.info(f"loading {pretrained_path}")
     print(f"begin to load {pretrained_path}")
-    state_dict = torch.load(pretrained_path, map_location=device)
+    # state_dict = torch.load(pretrained_path, map_location=device)
     print(f"Done: loading {pretrained_path}")
     model.load_state_dict(
-        state_dict, assign=True)
+        torch.load(pretrained_path, map_location=device), assign=True)
 
     return model
 
