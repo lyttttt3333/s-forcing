@@ -9,7 +9,7 @@ import numpy as np
 # import open3d as o3d
 import os.path as osp
 from torch.utils.data import DataLoader
-from add_ckpt_path import add_path_to_dust3r
+# from add_ckpt_path import add_path_to_dust3r
 from accelerate import Accelerator
 from torch.utils.data._utils.collate import default_collate
 import tempfile
