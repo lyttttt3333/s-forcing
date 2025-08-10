@@ -285,6 +285,7 @@ class SelfForcingTrainingPipeline:
     def updata_3d_state(self, conditional_dict, latent_to_decode):
         device = latent_to_decode.device
         dtype = latent_to_decode.dtype
+        print(latent_to_decode.shape)
         pixel_video_clip = self.vae.decode_to_pixel(latent_to_decode)
         state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
         self.state_cache = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
