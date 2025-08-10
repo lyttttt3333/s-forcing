@@ -251,7 +251,7 @@ class WanVAEWrapper(torch.nn.Module):
     def encode_to_latent(self, videos):
         try:
             if not isinstance(videos, list):
-                raise TypeError("videos should be a list")
+                videos = [videos]
             with amp.autocast(dtype=self.dtype):
                 return [
                     self.model.encode(u.unsqueeze(0),
@@ -265,7 +265,7 @@ class WanVAEWrapper(torch.nn.Module):
     def decode_to_pixel(self, zs):
         try:
             if not isinstance(zs, list):
-                raise TypeError("zs should be a list")
+                zs = [zs]
             with amp.autocast(dtype=self.dtype):
                 return [
                     self.model.decode(u.unsqueeze(0),
