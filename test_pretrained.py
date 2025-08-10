@@ -9,7 +9,7 @@ import torch
 
 
 vae = WanVAEWrapper()
-data = torch.zeros([48, 60, 104])
+data = torch.zeros([48, 60, 104]).to("cuda")
 vae.decode_to_pixel(data)
 
 
