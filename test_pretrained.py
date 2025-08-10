@@ -7,21 +7,14 @@ from torch.distributed.fsdp import ShardingStrategy
 
 import torch
 
-B = 1          # batch size
-C = 3          # RGB
-F = 12         # 帧数
-H = 480        # 高
-W = 854        # 宽 (16:9)
-
-# 构造 fake video
-data = torch.arange(B * C * F * H * W).float().reshape(B, C, F, H, W).to("cuda")
 
 
 vae = WanVAEWrapper()
-# data = torch.zeros([48, 60, 104]).to("cuda")
-latent = vae.encode_to_latent([data])
+data = torch.zeros([48, 1, 60, 104]).to("cuda")
+# latent = vae.encode_to_latent([data])
 print(latent.shape)
-# vae.decode_to_pixel(data)
+video = vae.decode_to_pixel([data])
+print(video[0].shape)
 
 
 # import os
