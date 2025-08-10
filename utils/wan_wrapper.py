@@ -235,7 +235,7 @@ class WanVAEWrapper(torch.nn.Module):
         )
         self.scale = [mean, 1.0 / std]
 
-        vae_path = "wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth"
+        vae_pth = "wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth"
 
         # init model
         self.model = (
