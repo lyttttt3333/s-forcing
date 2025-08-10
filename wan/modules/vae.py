@@ -859,7 +859,7 @@ class WanVAE_(nn.Module):
         self._enc_feat_map = [None] * self._enc_conv_num
 
 
-def _video_vae(pretrained_path=None, z_dim=16, dim=160, device="cpu", **kwargs):
+def _video_vae(pretrained_path=None, z_dim=48, dim=160, device="cpu", **kwargs):
     # params
     cfg = dict(
         dim=dim,
@@ -867,7 +867,7 @@ def _video_vae(pretrained_path=None, z_dim=16, dim=160, device="cpu", **kwargs):
         dim_mult=[1, 2, 4, 4],
         num_res_blocks=2,
         attn_scales=[],
-        temperal_downsample=[True, True, True],
+        temperal_downsample=[False, True, True],
         dropout=0.0,
     )
     cfg.update(**kwargs)
