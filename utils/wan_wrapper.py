@@ -50,68 +50,231 @@ class WanTextEncoder(torch.nn.Module):
         }
 
 
+# class WanVAEWrapper(torch.nn.Module):
+#     def __init__(self):
+#         super().__init__()
+#         mean = [
+#             -0.7571, -0.7089, -0.9113, 0.1075, -0.1745, 0.9653, -0.1517, 1.5508,
+#             0.4134, -0.0715, 0.5517, -0.3632, -0.1922, -0.9497, 0.2503, -0.2921
+#         ]
+#         std = [
+#             2.8184, 1.4541, 2.3275, 2.6558, 1.2196, 1.7708, 2.6052, 2.0743,
+#             3.2687, 2.1526, 2.8652, 1.5579, 1.6382, 1.1253, 2.8251, 1.9160
+#         ]
+#         self.mean = torch.tensor(mean, dtype=torch.float32)
+#         self.std = torch.tensor(std, dtype=torch.float32)
+
+#         # init model
+#         vae_path = "wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth"
+#         print(f"Load from {vae_path}")
+#         self.model = _video_vae(
+#             pretrained_path=vae_path,
+#         ).eval().requires_grad_(False)
+
+#     def encode_to_latent(self, pixel: torch.Tensor) -> torch.Tensor:
+#         # pixel: [batch_size, num_channels, num_frames, height, width]
+#         device, dtype = pixel.device, pixel.dtype
+#         scale = [self.mean.to(device=device, dtype=dtype),
+#                  1.0 / self.std.to(device=device, dtype=dtype)]
+
+#         output = [
+#             self.model.encode(u.unsqueeze(0), scale).float().squeeze(0)
+#             for u in pixel
+#         ]
+#         output = torch.stack(output, dim=0)
+#         # from [batch_size, num_channels, num_frames, height, width]
+#         # to [batch_size, num_frames, num_channels, height, width]
+#         output = output.permute(0, 2, 1, 3, 4)
+#         return output
+
+#     def decode_to_pixel(self, latent: torch.Tensor, use_cache: bool = False) -> torch.Tensor:
+#         # from [batch_size, num_frames, num_channels, height, width]
+#         # to [batch_size, num_channels, num_frames, height, width]
+#         zs = latent.permute(0, 2, 1, 3, 4)
+#         if use_cache:
+#             assert latent.shape[0] == 1, "Batch size must be 1 when using cache"
+
+#         device, dtype = latent.device, latent.dtype
+#         scale = [self.mean.to(device=device, dtype=dtype),
+#                  1.0 / self.std.to(device=device, dtype=dtype)]
+
+#         if use_cache:
+#             decode_function = self.model.cached_decode
+#         else:
+#             decode_function = self.model.decode
+
+#         output = []
+#         for u in zs:
+#             output.append(decode_function(u.unsqueeze(0), scale).float().clamp_(-1, 1).squeeze(0))
+#         output = torch.stack(output, dim=0)
+#         # from [batch_size, num_channels, num_frames, height, width]
+#         # to [batch_size, num_frames, num_channels, height, width]
+#         output = output.permute(0, 2, 1, 3, 4)
+#         return output
 class WanVAEWrapper(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        mean = [
-            -0.7571, -0.7089, -0.9113, 0.1075, -0.1745, 0.9653, -0.1517, 1.5508,
-            0.4134, -0.0715, 0.5517, -0.3632, -0.1922, -0.9497, 0.2503, -0.2921
-        ]
-        std = [
-            2.8184, 1.4541, 2.3275, 2.6558, 1.2196, 1.7708, 2.6052, 2.0743,
-            3.2687, 2.1526, 2.8652, 1.5579, 1.6382, 1.1253, 2.8251, 1.9160
-        ]
-        self.mean = torch.tensor(mean, dtype=torch.float32)
-        self.std = torch.tensor(std, dtype=torch.float32)
+    def __init__(
+        self,
+        z_dim=48,
+        c_dim=160,
+        vae_pth=None,
+        dim_mult=[1, 2, 4, 4],
+        temperal_downsample=[False, True, True],
+        dtype=torch.float,
+        device="cuda",
+    ):
+        self.dtype = dtype
+        self.device = device
+
+        mean = torch.tensor(
+            [
+                -0.2289,
+                -0.0052,
+                -0.1323,
+                -0.2339,
+                -0.2799,
+                0.0174,
+                0.1838,
+                0.1557,
+                -0.1382,
+                0.0542,
+                0.2813,
+                0.0891,
+                0.1570,
+                -0.0098,
+                0.0375,
+                -0.1825,
+                -0.2246,
+                -0.1207,
+                -0.0698,
+                0.5109,
+                0.2665,
+                -0.2108,
+                -0.2158,
+                0.2502,
+                -0.2055,
+                -0.0322,
+                0.1109,
+                0.1567,
+                -0.0729,
+                0.0899,
+                -0.2799,
+                -0.1230,
+                -0.0313,
+                -0.1649,
+                0.0117,
+                0.0723,
+                -0.2839,
+                -0.2083,
+                -0.0520,
+                0.3748,
+                0.0152,
+                0.1957,
+                0.1433,
+                -0.2944,
+                0.3573,
+                -0.0548,
+                -0.1681,
+                -0.0667,
+            ],
+            dtype=dtype,
+            device=device,
+        )
+        std = torch.tensor(
+            [
+                0.4765,
+                1.0364,
+                0.4514,
+                1.1677,
+                0.5313,
+                0.4990,
+                0.4818,
+                0.5013,
+                0.8158,
+                1.0344,
+                0.5894,
+                1.0901,
+                0.6885,
+                0.6165,
+                0.8454,
+                0.4978,
+                0.5759,
+                0.3523,
+                0.7135,
+                0.6804,
+                0.5833,
+                1.4146,
+                0.8986,
+                0.5659,
+                0.7069,
+                0.5338,
+                0.4889,
+                0.4917,
+                0.4069,
+                0.4999,
+                0.6866,
+                0.4093,
+                0.5709,
+                0.6065,
+                0.6415,
+                0.4944,
+                0.5726,
+                1.2042,
+                0.5458,
+                1.6887,
+                0.3971,
+                1.0600,
+                0.3943,
+                0.5537,
+                0.5444,
+                0.4089,
+                0.7468,
+                0.7744,
+            ],
+            dtype=dtype,
+            device=device,
+        )
+        self.scale = [mean, 1.0 / std]
+
+        vae_path = "wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth"
 
         # init model
-        vae_path = "wan_models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth"
-        print(f"Load from {vae_path}")
-        self.model = _video_vae(
-            pretrained_path=vae_path,
-        ).eval().requires_grad_(False)
+        self.model = (
+            _video_vae(
+                pretrained_path=vae_pth,
+                z_dim=z_dim,
+                dim=c_dim,
+                dim_mult=dim_mult,
+                temperal_downsample=temperal_downsample,
+            ).eval().requires_grad_(False).to(device))
 
-    def encode_to_latent(self, pixel: torch.Tensor) -> torch.Tensor:
-        # pixel: [batch_size, num_channels, num_frames, height, width]
-        device, dtype = pixel.device, pixel.dtype
-        scale = [self.mean.to(device=device, dtype=dtype),
-                 1.0 / self.std.to(device=device, dtype=dtype)]
+    def encode_to_latent(self, videos):
+        try:
+            if not isinstance(videos, list):
+                raise TypeError("videos should be a list")
+            with amp.autocast(dtype=self.dtype):
+                return [
+                    self.model.encode(u.unsqueeze(0),
+                                      self.scale).float().squeeze(0)
+                    for u in videos
+                ]
+        except TypeError as e:
+            logging.info(e)
+            return None
 
-        output = [
-            self.model.encode(u.unsqueeze(0), scale).float().squeeze(0)
-            for u in pixel
-        ]
-        output = torch.stack(output, dim=0)
-        # from [batch_size, num_channels, num_frames, height, width]
-        # to [batch_size, num_frames, num_channels, height, width]
-        output = output.permute(0, 2, 1, 3, 4)
-        return output
-
-    def decode_to_pixel(self, latent: torch.Tensor, use_cache: bool = False) -> torch.Tensor:
-        # from [batch_size, num_frames, num_channels, height, width]
-        # to [batch_size, num_channels, num_frames, height, width]
-        zs = latent.permute(0, 2, 1, 3, 4)
-        if use_cache:
-            assert latent.shape[0] == 1, "Batch size must be 1 when using cache"
-
-        device, dtype = latent.device, latent.dtype
-        scale = [self.mean.to(device=device, dtype=dtype),
-                 1.0 / self.std.to(device=device, dtype=dtype)]
-
-        if use_cache:
-            decode_function = self.model.cached_decode
-        else:
-            decode_function = self.model.decode
-
-        output = []
-        for u in zs:
-            output.append(decode_function(u.unsqueeze(0), scale).float().clamp_(-1, 1).squeeze(0))
-        output = torch.stack(output, dim=0)
-        # from [batch_size, num_channels, num_frames, height, width]
-        # to [batch_size, num_frames, num_channels, height, width]
-        output = output.permute(0, 2, 1, 3, 4)
-        return output
-
+    def decode_to_pixel(self, zs):
+        try:
+            if not isinstance(zs, list):
+                raise TypeError("zs should be a list")
+            with amp.autocast(dtype=self.dtype):
+                return [
+                    self.model.decode(u.unsqueeze(0),
+                                      self.scale).float().clamp_(-1,
+                                                                 1).squeeze(0)
+                    for u in zs
+                ]
+        except TypeError as e:
+            logging.info(e)
+            return None
 
 class WanDiffusionWrapper(torch.nn.Module):
     def __init__(
