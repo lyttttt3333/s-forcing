@@ -9,7 +9,7 @@ import torch
 
 
 vae = WanVAEWrapper()
-data = torch.zeros([1, 3, 48, 60, 104])
+data = torch.zeros([3, 48, 60, 104])
 vae.decode_to_pixel(data)
 
 
