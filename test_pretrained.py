@@ -10,7 +10,7 @@ import torch
 
 
 vae = WanVAEWrapper()
-data = torch.zeros([48, 1, 60, 104]).to("cuda")
+data = torch.zeros([48, 3, 60, 104]).to("cuda")
 # latent = vae.encode_to_latent([data])
 print(data.shape)
 video = vae.decode_to_pixel([data])
