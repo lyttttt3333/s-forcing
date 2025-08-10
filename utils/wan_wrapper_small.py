@@ -317,6 +317,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         self.get_scheduler()
 
     def merge_context(self, prompt_embeds, state):
+        self.model.state_proj.to(state.dtype)
         state_token = self.model.state_proj(state)
         unified_token = torch.cat([prompt_embeds, state], dim=1)
         return unified_token
