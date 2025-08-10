@@ -229,6 +229,9 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         cache_start: Optional[int] = None
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
+        state = conditional_dict["state"]
+
+        context = self.merge_context(prompt_embeds, state)
 
         # [B, F] -> [B]
         if self.uniform_timestep:
@@ -241,7 +244,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         if kv_cache is not None:
             flow_pred = self.model(
                 noisy_image_or_video.permute(0, 2, 1, 3, 4),
-                t=input_timestep, context=prompt_embeds,
+                t=input_timestep, context=context,
                 seq_len=self.seq_len,
                 kv_cache=kv_cache,
                 crossattn_cache=crossattn_cache,
@@ -254,7 +257,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                 # teacher forcing
                 flow_pred = self.model(
                     noisy_image_or_video.permute(0, 2, 1, 3, 4),
-                    t=input_timestep, context=prompt_embeds,
+                    t=input_timestep, context=context,
                     seq_len=self.seq_len,
                     clean_x=clean_x.permute(0, 2, 1, 3, 4),
                     aug_t=aug_t,
@@ -263,7 +266,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                 if classify_mode:
                     flow_pred, logits = self.model(
                         noisy_image_or_video.permute(0, 2, 1, 3, 4),
-                        t=input_timestep, context=prompt_embeds,
+                        t=input_timestep, context=context,
                         seq_len=self.seq_len,
                         classify_mode=True,
                         register_tokens=self._register_tokens,
@@ -275,7 +278,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                 else:
                     flow_pred = self.model(
                         noisy_image_or_video.permute(0, 2, 1, 3, 4),
-                        t=input_timestep, context=prompt_embeds,
+                        t=input_timestep, context=context,
                         seq_len=self.seq_len
                     ).permute(0, 2, 1, 3, 4)
 
@@ -312,3 +315,8 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         We can gradually add more methods here if needed.
         """
         self.get_scheduler()
+
+    def merge_context(prompt_embeds, state):
+        state_token = self.model.state_proj(state)
+        unified_token = torch.cat([prompt_embeds, state], dim=1)
+        return unified_token

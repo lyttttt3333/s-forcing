@@ -367,6 +367,28 @@ class CausalHead(nn.Module):
         return x
 
 
+class DimensionReductionAdapter(nn.Module):
+    def __init__(self, input_dim=2048, output_dim=1536, use_activation=True):
+        super().__init__()
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+
+        self.main_proj = nn.Linear(input_dim, output_dim)
+        
+        self.use_activation = use_activation
+        if use_activation:
+            self.activation = nn.GELU()  
+            self.norm = nn.LayerNorm(output_dim) 
+        
+    def forward(self, x):
+        x = self.main_proj(x)
+        if self.use_activation:
+            x = self.activation(x)
+            x = self.norm(x)
+        return x
+
+
+
 class CausalWanModel(ModelMixin, ConfigMixin):
     r"""
     Wan diffusion backbone supporting both text-to-video and image-to-video.
@@ -482,6 +504,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                                 padding=4,
                                 groups=1
                             )
+
+        self.state_proj = DimensionReductionAdapter()
 
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'

@@ -10,6 +10,7 @@ class SelfForcingTrainingPipeline:
                  denoising_step_list: List[int],
                  scheduler: SchedulerInterface,
                  generator: WanDiffusionWrapper,
+                 vae,
                  num_frame_per_block=3,
                  independent_first_frame: bool = False,
                  same_step_across_blocks: bool = False,
@@ -20,6 +21,7 @@ class SelfForcingTrainingPipeline:
         super().__init__()
         self.scheduler = scheduler
         self.generator = generator
+        self.vae = vae
         self.denoising_step_list = denoising_step_list
         if self.denoising_step_list[-1] == 0:
             self.denoising_step_list = self.denoising_step_list[:-1]  # remove the zero timestep for inference
@@ -89,6 +91,9 @@ class SelfForcingTrainingPipeline:
         self._initialize_crossattn_cache(
             batch_size=batch_size, dtype=noise.dtype, device=noise.device
         )
+
+        self.state_cache = None
+
         # if self.kv_cache1 is None:
         #     self._initialize_kv_cache(
         #         batch_size=batch_size,
@@ -112,6 +117,11 @@ class SelfForcingTrainingPipeline:
         #             [0], dtype=torch.long, device=noise.device)
 
         # Step 2: Cache context feature
+
+        self.state_init(conditional_dict)
+
+        self.crossattn_cache = None
+
         current_start_frame = 0
         if initial_latent is not None:
             timestep = torch.ones([batch_size, 1], device=noise.device, dtype=torch.int64) * 0
@@ -192,9 +202,9 @@ class SelfForcingTrainingPipeline:
                             current_start=current_start_frame * self.frame_seq_length
                         )
                     break
-
-            print("################### denoise out")
-            print(denoised_pred.shape)
+            
+            self.updata_3d_state(conditional_dict, denoised_pred.detach())
+                
 
             # Step 3.2: record the model's output
             output[:, current_start_frame:current_start_frame + current_num_frames] = denoised_pred
@@ -268,3 +278,17 @@ class SelfForcingTrainingPipeline:
                 "is_init": False
             })
         self.crossattn_cache = crossattn_cache
+
+    def updata_3d_state(self, conditional_dict, latent_to_decode):
+        device = latent_to_decode.device
+        dtype = latent_to_decode.dtype
+        pixel_video_clip = self.vae.decode_to_pixel(latent_to_decode)
+        state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        self.state_cache = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        conditional_dict["state"] = state
+
+    def state_init(self, conditional_dict):
+        device = conditional_dict["prompt_embeds"].device
+        dtype = conditional_dict["prompt_embeds"].dtype
+        state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        conditional_dict["state"] = state
