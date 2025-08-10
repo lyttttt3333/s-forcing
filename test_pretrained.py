@@ -5,6 +5,8 @@ from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
 
+import torch
+
 
 vae = WanVAEWrapper()
 data = torch.zeros([1, 3, 48, 60, 104])
