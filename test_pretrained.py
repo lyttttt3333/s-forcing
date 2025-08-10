@@ -1,7 +1,6 @@
 from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 from wan.modules.causal_model import CausalWanModel
 from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
-from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
