@@ -71,11 +71,6 @@ def main(args):
     model_name = args.model_name
     if model_name == "StreamVGGT":
         from streamvggt.models.streamvggt import StreamVGGT
-        from streamvggt.utils.pose_enc import pose_encoding_to_extri_intri
-        from streamvggt.utils.geometry import unproject_depth_map_to_point_map
-        from eval.mv_recon.criterion import Regr3D_t_ScaleShiftInv, L21
-        from dust3r.utils.geometry import geotrf
-        from copy import deepcopy
         model = StreamVGGT()
         ckpt = torch.load(args.weights, map_location=device)
         model.load_state_dict(ckpt, strict=False)
