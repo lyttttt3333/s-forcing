@@ -292,7 +292,7 @@ class SelfForcingTrainingPipeline:
             state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
             self.state_cache = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
         elif memory_token is not None:
-            state = memory_token[idx].unsuqueeze(0)
+            state = memory_token[idx].unsqueeze(0)
             self.state_cache = None
         conditional_dict["state"] = state
 
@@ -301,5 +301,5 @@ class SelfForcingTrainingPipeline:
         dtype = conditional_dict["prompt_embeds"].dtype
         # state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
         memory_token.to(device).to(dtype)
-        state = memory_token[0].unsuqueeze(0)
+        state = memory_token[0].unsqueeze(0)
         conditional_dict["state"] = state
