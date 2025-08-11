@@ -22,7 +22,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     df = pd.read_csv(input_csv)
-    total_rows = 20#len(df)
+    total_rows = len(df)
 
     device = "cuda"
 
