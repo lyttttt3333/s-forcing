@@ -3,8 +3,7 @@
 set -e
 workdir='..'
 model_name='StreamVGGT'
-ckpt_name='checkpoints'
-model_weights="/lustre/fsw/portfolios/av/users/shiyil/jfxiao/StreamVGGT/ckpt/${ckpt_name}.pth"
+model_weights="/lustre/fsw/portfolios/av/users/shiyil/jfxiao/StreamVGGT/ckpt/checkpoints.pth"
 
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 output_dir="/lustre/fsw/portfolios/av/users/shiyil/jfxiao/StreamVGGT/eval_results/mv_recon/${model_name}_${ckpt_name}"

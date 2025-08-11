@@ -183,6 +183,7 @@ def main():
     input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
     output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/memory_tokens"
     tmp_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/tmp_frames"
+    weight_path = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/StreamVGGT/ckpt/checkpoints.pth"
     os.makedirs(output_dir, exist_ok=True)
     video_files = [
         os.path.join(input_dir, f)
@@ -196,7 +197,7 @@ def main():
     device = accelerator.device
     from streamvggt.models.streamvggt import StreamVGGT
     model = StreamVGGT()
-    ckpt = torch.load(args.weights, map_location=device)
+    ckpt = torch.load(weight_path, map_location=device)
     model.load_state_dict(ckpt, strict=False)
     model.eval()
     model = model.to("cuda").to(torch.bfloat16)
