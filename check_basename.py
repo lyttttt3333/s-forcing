@@ -46,8 +46,8 @@ memory_token_dir = '/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-0805
 frame_token_dir = '/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/frame_token'
 
 text_pth_path = glob.glob(text_token_dir + '/*.pth')[0]
-print("Text token shape:", torch.load(text_pth_path).shape)
+print("Text token shape:", torch.load(text_pth_path, map_location="cpu").shape)
 memory_pth_path = glob.glob(memory_token_dir + '/*.pth')[0]
-print("Memory token shape:", torch.load(memory_pth_path).shape)
+print("Memory token shape:", torch.load(memory_pth_path, map_location="cpu").shape)
 frame_pth_path = glob.glob(frame_token_dir + '/*.pth')[0]
-print("Frame token shape:", torch.load(frame_pth_path).shape)
+print("Frame token shape:", torch.load(frame_pth_path, map_location="cpu").shape)
