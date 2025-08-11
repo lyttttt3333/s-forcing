@@ -10,14 +10,12 @@ import torch
 
 
 vae = WanVAEWrapper()
-latent = torch.zeros([48, 3, 960, 1664]).to("cuda")
+latent = torch.zeros([48, 3, 60, 104]).to("cuda")
 video = vae.decode_to_pixel([latent])
 image = video[0][:,-1,:,:]
 print(image.shape)
 
 
-def get_next_state_token(vggt_model, image):
-    return 
 
 
 # import os
