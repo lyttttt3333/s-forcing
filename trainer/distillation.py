@@ -358,6 +358,7 @@ class Trainer:
             path = batch[key]
             tensor = torch.load(path, map_location=self.device).to(self.dtype)
             batch[key] = tensor
+            priny(key, tensor.shape)
         return batch
 
 
