@@ -39,7 +39,7 @@
 # print("处理完成，结果已保存到 output.csv")
 
 import torch
-from glob import glob
+import glob
 
 text_token_dir = '/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/text_token'
 memory_token_dir = '/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/memory_token'
