@@ -1,6 +1,7 @@
 import cv2
 from PIL import Image
 import torch
+import torch.distributed as dist
 
 from utils.wan_wrapper import WanVAEWrapper
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
