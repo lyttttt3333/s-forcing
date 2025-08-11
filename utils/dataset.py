@@ -51,7 +51,7 @@ class MixedDataset(Dataset):
 
     def __getitem__(self, idx):
         base_name = self.base_name_list[idx]
-        text_token_path = os.path.join(slef.root_dir, "text_token")
+        text_token_path = os.path.join(self.root_dir, "text_token")
         text_token_path = os.path.join(text_token_path, base_name + ".pth")
         memory_token_path = os.path.join(self.root_dir, "memory_token")
         memory_token_path = os.path.join(memory_token_path, base_name + ".pth")
