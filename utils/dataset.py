@@ -62,6 +62,7 @@ class MixedDataset(Dataset):
             "memory_token": memory_token_path,
             "frame_token": frame_token_path,
         }
+        print(batch)
         return batch
     
     def get_prompts(self):
