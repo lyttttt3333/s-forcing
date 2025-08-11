@@ -7,6 +7,9 @@ from utils.wan_wrapper import WanVAEWrapper
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
 
+import torchvision.transforms.functional as TF
+from PIL import Image
+
 
 def best_output_size(w, h, dw, dh, expected_area):
     # float output size
