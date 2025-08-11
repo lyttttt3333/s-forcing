@@ -202,7 +202,7 @@ def main():
     model.eval()
     model = model.to("cuda").to(torch.bfloat16)
     del ckpt
-    print(f"Load at {model.aggregator.device}")
+    print(f"Load at {device}")
 
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
