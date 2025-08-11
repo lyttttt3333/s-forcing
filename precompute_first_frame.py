@@ -70,7 +70,7 @@ def encode_images(vae, img, device):
     print("before")
     print(img.shape)
     img.to(torch.bfloat16)
-    z = vae.encode([img])
+    z = vae.encode_to_latent([img])
     return z 
 
 dist.init_process_group(backend="nccl")
