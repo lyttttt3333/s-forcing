@@ -90,7 +90,7 @@ def main():
         os.path.join(input_dir, f)
         for f in os.listdir(input_dir)
         if f.lower().endswith(".mp4")
-    ][:20]
+    ]
     video_files.sort()
 
     vae = WanVAEWrapper().to(torch.float16).to(device)
