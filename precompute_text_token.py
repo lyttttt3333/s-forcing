@@ -29,7 +29,7 @@ def main():
     text_encoder = WanTextEncoder().to(torch.float16).to(device)
     for i in range(rank, total_rows, world_size):
         row = df.iloc[i]
-        prompt = row['prompt']
+        prompt = str(row['prompt']) if pd.notna(row['prompt']) else ""
         video = row['video']
         tokens = get_text_token(text_encoder, prompt).to(torch.bfloat16)
         basename = video.split(".")[0]
