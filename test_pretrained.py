@@ -11,10 +11,11 @@ import torch
 
 vae = WanVAEWrapper()
 video = torch.zeros([3, 9, 512, 512]).to("cuda")
-latent = vae.encode_to_latent([video])[0]
-print(latent.shape)
-video = vae.decode_to_pixel([latent])
-print(video[0].shape)
+with torch.no_grad():
+    latent = vae.encode_to_latent([video])[0]
+    print(latent.shape)
+    video = vae.decode_to_pixel([latent])
+    print(video[0].shape)
 
 
 # import os
