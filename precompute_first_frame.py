@@ -68,9 +68,17 @@ def encode_images(vae, img, device):
     z = vae.encode([img])
     return z 
 
+dist.init_process_group(backend="nccl")
+
+rank = dist.get_rank()
+world_size = dist.get_world_size()
+torch.cuda.set_device(rank)
+device = "cuda"
+
 video_path = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos/fff82aff-7041-43f2-8e1c-96436a87797e.mp4"
-vae = WanVAEWrapper().to(torch.float16)
+vae = WanVAEWrapper().to(torch.float16).to(device)
+
 
 image = get_first_frame_as_pil(video_path)
-latent = encode_images(vae, image)
+latent = encode_images(vae, image, device)
 print(latent)
