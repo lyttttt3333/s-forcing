@@ -2,6 +2,7 @@ import os
 import cv2
 import torch
 import torch.distributed as dist
+from accelerate import Accelerator
 
 from uuid import uuid4
 from PIL import Image
