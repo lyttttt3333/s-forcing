@@ -356,7 +356,7 @@ class Trainer:
     def load_batch(self, batch):
         for key in batch.keys():
             path = batch[key]
-            tensor = torch.load(path).to(self.device).to(self.dtype)
+            tensor = torch.load(path, map_location=self.device).to(self.dtype)
             batch[key] = tensor
         return batch
 
