@@ -18,15 +18,9 @@ import uuid
 import json
 from collections import defaultdict
 
-def create_fake_frames(num_frames=3, img_channels=3, img_height=518, img_width=392):
+def create_fake_frames(num_frames=7, img_channels=3, img_height=518, img_width=392):
     images = torch.zeros((num_frames, img_channels, img_height, img_width), dtype=torch.bfloat16).to("cuda")
-    frames = []
-    for i in range(images.shape[0]):
-        image = images[i].unsqueeze(0)
-        frames.append(image)
-        print(frames.shape)
-    
-    return frames
+    return images
 
 def get_args_parser():
     parser = argparse.ArgumentParser("3D Reconstruction evaluation", add_help=False)
@@ -84,7 +78,8 @@ def main(args):
     with torch.no_grad():
         with torch.cuda.amp.autocast(dtype = torch.bfloat16):
             with torch.no_grad():
-                for i, frame in enumerate(frames):
+                for i in enumerate(frames.shape[0]):
+                    frame = frames[i]
                     print(frame.shape)
                     aggregated_token, patch_start_idx, past_key_values = model.inference(frame, i, past_key_values=past_key_values)
                     print(aggregated_token.shape)
