@@ -9,8 +9,8 @@ import torch
 
 
 
-vae = WanVAEWrapper().to(torch.bfloat16)
-latent = torch.zeros([48, 3, 32, 32]).to("cuda").to(torch.bfloat16)
+vae = WanVAEWrapper().to(torch.float16)
+latent = torch.zeros([48, 3, 32, 32]).to("cuda").to(torch.float16)
 with torch.no_grad():
     # latent = vae.encode_to_latent([video])[0]
     print(latent.shape)
