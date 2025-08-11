@@ -27,7 +27,6 @@ def main():
     device = "cuda"
 
     text_encoder = WanTextEncoder().to(torch.float16).to(device)
-    # 分片处理csv
     for i in range(rank, total_rows, world_size):
         row = df.iloc[i]
         prompt = row['prompt']
@@ -35,7 +34,7 @@ def main():
         tokens = get_text_token(text_encoder, prompt).to(torch.bfloat16)
         basename = video.split(".")[0]
         save_path = os.path.join(output_dir, f"{basename}.pth")
-        torch.save(tokens.cpu(), save_path)
+        torch.save(tokens, save_path)
         print(f"[GPU {rank}] done {basename}")
 
 if __name__ == "__main__":
