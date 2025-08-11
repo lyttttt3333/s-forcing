@@ -33,7 +33,7 @@ for video_path in video_list:
 
 print("final video list length:", len(base_name_list))
 
-output_df = pd.DataFrame({'basename': basename_list})
+output_df = pd.DataFrame({'basename': base_name_list})
 output_df.to_csv(output_path, index=False, encoding='utf-8-sig')
 
 print("处理完成，结果已保存到 output.csv")
