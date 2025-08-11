@@ -70,7 +70,7 @@ def encode_images(vae, img, device):
     print("before")
     print(img.shape)
     img.to(torch.bfloat16)
-    z = vae.encode_to_latent([img])
+    z = vae.encode_to_latent([img])[0]
     return z 
 
 dist.init_process_group(backend="nccl")
@@ -86,4 +86,4 @@ vae = WanVAEWrapper().to(torch.float16).to(device)
 
 image = get_first_frame_as_pil(video_path)
 latent = encode_images(vae, image, device)
-print(latent)
+print(latent.shape)
