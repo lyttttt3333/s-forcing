@@ -375,7 +375,8 @@ class Trainer:
         # Step 1: Get the next batch of text prompts
         if self.config.i2v:
             clean_latent = None
-            image_latent = frame_token # batch["ode_latent"][:, -1][:, 0:1, ]
+            image_latent = frame_token[1].unsqueeze(0).unsqueeze(0) 
+            # batch["ode_latent"][:, -1][:, 0:1, ]
         else:
             clean_latent = None
             image_latent = None

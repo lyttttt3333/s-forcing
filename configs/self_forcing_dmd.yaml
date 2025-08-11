@@ -46,8 +46,8 @@ image_or_video_shape:
 - 1
 - 21
 - 48
-- 60
-- 104
+- 44
+- 78
 distribution_loss: dmd
 trainer: score_distillation
 gradient_checkpointing: true
