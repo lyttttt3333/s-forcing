@@ -46,6 +46,7 @@ def encode_images(vae, img, device):
     ih, iw = img.height, img.width
     patch_size = (1, 2, 2)
     vae_stride = (4, 16, 16)
+    max_area=704 * 1280
     dh, dw = patch_size[1] * vae_stride[1], patch_size[
         2] * vae_stride[2]
     ow, oh = best_output_size(iw, ih, dw, dh, max_area)
