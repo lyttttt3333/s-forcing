@@ -1,6 +1,7 @@
 from utils.lmdb import get_array_shape_from_lmdb, retrieve_row_from_lmdb
 from torch.utils.data import Dataset
 import numpy as np
+import pandas as pd
 import torch
 import lmdb
 import json
@@ -37,6 +38,34 @@ class TextDataset(Dataset):
     
     def get_prompts(self):
         return self.prompt_list
+
+class MixedDataset(Dataset):
+    def __init__(self, meta_path, root_dir):
+
+        df = pd.read_csv(meta_path)
+        self.base_name_list = df["base_name"].astype(str).tolist()
+        self.root_dir = root_dir
+
+    def __len__(self):
+        return len(self.base_name_list)
+
+    def __getitem__(self, idx):
+        base_name = self.base_name_list[idx]
+        text_token_path = os.path.join(slef.root_dir, "text_token")
+        text_token_path = os.path.join(text_token_path, base_name + ".pth")
+        memory_token_path = os.path.join(self.root_dir, "memory_token")
+        memory_token_path = os.path.join(memory_token_path, base_name + ".pth")
+        frame_token_path = os.path.join(self.root_dir, "frame_token")
+        frame_token_path = os.path.join(frame_token_path, base_name + ".pth")
+        batch = {
+            "text_token": text_token_path,
+            "memory_token": memory_token_path,
+            "frame_token": frame_token_path,
+        }
+        return batch
+    
+    def get_prompts(self):
+        return self.base_name_list
 
 
 class ODERegressionLMDBDataset(Dataset):

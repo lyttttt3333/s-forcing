@@ -117,7 +117,8 @@ class SelfForcingModel(BaseModel):
         self,
         image_or_video_shape,
         conditional_dict: dict,
-        initial_latent: torch.tensor = None
+        initial_latent: torch.tensor = None,
+        memory_token: torch.tensor = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Optionally simulate the generator's input from noise using backward simulation
@@ -136,6 +137,8 @@ class SelfForcingModel(BaseModel):
         assert getattr(self.args, "backward_simulation", True), "Backward simulation needs to be enabled"
         if initial_latent is not None:
             conditional_dict["initial_latent"] = initial_latent
+        if memory_token is not None:
+            conditional_dict["memory_token"] = memory_token
         if self.args.i2v:
             noise_shape = [image_or_video_shape[0], image_or_video_shape[1] - 1, *image_or_video_shape[2:]]
         else:

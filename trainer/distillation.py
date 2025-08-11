@@ -2,7 +2,7 @@ import gc
 import logging
 
 from utils.dataset import ShardingLMDBDataset, cycle
-from utils.dataset import TextDataset
+from utils.dataset import TextDataset, MixedDataset
 from utils.distributed import EMA_FSDP, fsdp_wrap, fsdp_state_dict, launch_distributed_job
 from peft import PeftModel, LoraConfig, get_peft_model, prepare_model_for_kbit_training
 # from utils.lora import PeftModel
@@ -192,7 +192,9 @@ class Trainer:
 
         # Step 3: Initialize the dataloader
         if self.config.i2v:
-            dataset = ShardingLMDBDataset(config.data_path, max_pair=int(1e8))
+            meta_path = self.config.meta_path
+            root_dir = self.config.root_dir
+            dataset = MixedDataset(meta_path, root_dir)
         else:
             dataset = TextDataset(config.data_path)
         sampler = torch.utils.data.distributed.DistributedSampler(
@@ -339,30 +341,41 @@ class Trainer:
             
 
 
-    def text_embedding_precompute(self, text_prompts):
-        prompt = text_prompts[0]
-        embed = self.embed_dict[prompt].to(device=self.device, dtype=self.dtype)
-        # embed = torch.zeros([1, 512, 4096]).to(device=self.device, dtype=self.dtype)
-        return {'prompt_embeds': embed}
+    # def text_embedding_precompute(self, text_prompts):
+    #     prompt = text_prompts[0]
+    #     embed = self.embed_dict[prompt].to(device=self.device, dtype=self.dtype)
+    #     # embed = torch.zeros([1, 512, 4096]).to(device=self.device, dtype=self.dtype)
+    #     return {'prompt_embeds': embed}
 
-    def get_unconditional_dict(self, text_prompts):
-        # prompt = text_prompts[0]
-        embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
-        # embed = torch.zeros([1, 512, 4096]).to(device=self.device, dtype=self.dtype)
-        return {'prompt_embeds': embed}
+    # def get_unconditional_dict(self):
+    #     # prompt = text_prompts[0]
+    #     embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
+    #     # embed = torch.zeros([1, 512, 4096]).to(device=self.device, dtype=self.dtype)
+    #     return {'prompt_embeds': embed}
+
+    def load_batch(self, batch):
+        for key in batch.keys():
+            path = batch[key]
+            tensor = torch.load(path).to(self.device).to(self.dtype)
+            batch[key] = tensor
+        return batch
+
 
     def fwdbwd_one_step(self, batch, train_generator):
+        batch = self.load_batch(batch)
+        frame_token = batch["frame_token"]
+        text_token = batch["text_token"]
+        memory_token = batch["memory_token"]
+
         self.model.eval()  # prevent any randomness (e.g. dropout)
 
         if self.step % 20 == 0:
             torch.cuda.empty_cache()
 
         # Step 1: Get the next batch of text prompts
-        text_prompts = batch["prompts"]
         if self.config.i2v:
             clean_latent = None
-            image_latent = batch["ode_latent"][:, -1][:, 0:1, ].to(
-                device=self.device, dtype=self.dtype)
+            image_latent = frame_token # batch["ode_latent"][:, -1][:, 0:1, ]
         else:
             clean_latent = None
             image_latent = None
@@ -373,21 +386,10 @@ class Trainer:
 
         # Step 2: Extract the conditional infos
         with torch.no_grad():
-            # conditional_dict = self.model.text_encoder(
-            #     text_prompts=text_prompts)
-            conditional_dict = self.text_embedding_precompute(
-                text_prompts=text_prompts)
+            conditional_dict = {'prompt_embeds': text_token}
 
-            # if not getattr(self, "unconditional_dict", None):
-            #     unconditional_dict = self.model.text_encoder(
-            #         text_prompts=[self.config.negative_prompt] * batch_size)
-            #     unconditional_dict = {k: v.detach()
-            #                           for k, v in unconditional_dict.items()}
-            #     self.unconditional_dict = unconditional_dict  # cache the unconditional_dict
-            # else:
-            #     unconditional_dict = self.unconditional_dict
-            unconditional_dict = self.get_unconditional_dict(
-                text_prompts=[self.config.negative_prompt] * batch_size)
+            embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
+            unconditional_dict = {'prompt_embeds': embed}
 
         # Step 3: Store gradients for the generator (if training the generator)
         if train_generator:
@@ -396,7 +398,8 @@ class Trainer:
                 conditional_dict=conditional_dict,
                 unconditional_dict=unconditional_dict,
                 clean_latent=clean_latent,
-                initial_latent=image_latent if self.config.i2v else None
+                initial_latent=image_latent if self.config.i2v else None,
+                memory_token=memory_token
             )
 
             generator_loss.backward()

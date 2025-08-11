@@ -63,6 +63,7 @@ class SelfForcingTrainingPipeline:
             self,
             noise: torch.Tensor,
             initial_latent: Optional[torch.Tensor] = None,
+            memory_token: Optional[torch.Tensor] = None,
             return_sim_step: bool = False,
             **conditional_dict
     ) -> torch.Tensor:
@@ -118,7 +119,7 @@ class SelfForcingTrainingPipeline:
 
         # Step 2: Cache context feature
 
-        self.state_init(conditional_dict)
+        self.state_init(conditional_dict, memory_token)
 
         self.crossattn_cache = None
 
@@ -206,7 +207,7 @@ class SelfForcingTrainingPipeline:
                         )
                     break
             
-            self.updata_3d_state(conditional_dict, denoised_pred.detach())
+            self.updata_3d_state(conditional_dict, idx = block_index, memory_token = memory_token)
                 
 
             # Step 3.2: record the model's output
@@ -282,17 +283,23 @@ class SelfForcingTrainingPipeline:
             })
         self.crossattn_cache = crossattn_cache
 
-    def updata_3d_state(self, conditional_dict, latent_to_decode):
-        device = latent_to_decode.device
-        dtype = latent_to_decode.dtype
-        latent_to_decode = latent_to_decode[0].transpose(1,0)
-        pixel_video_clip = self.vae.decode_to_pixel([latent_to_decode])
-        state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
-        self.state_cache = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+    def updata_3d_state(self, conditional_dict, idx, latent_to_decode = None, memory_token = None):
+        if latent_to_decode is not None:
+            device = latent_to_decode.device
+            dtype = latent_to_decode.dtype
+            latent_to_decode = latent_to_decode[0].transpose(1,0)
+            pixel_video_clip = self.vae.decode_to_pixel([latent_to_decode])
+            state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+            self.state_cache = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        elif memory_token is not None:
+            state = memory_token[idx].unsuqueeze(0)
+            self.state_cache = None
         conditional_dict["state"] = state
 
-    def state_init(self, conditional_dict):
+    def state_init(self, conditional_dict, memory_token):
         device = conditional_dict["prompt_embeds"].device
         dtype = conditional_dict["prompt_embeds"].dtype
-        state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        # state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        memory_token.to(device).to(dtype)
+        state = memory_token[0].unsuqueeze(0)
         conditional_dict["state"] = state

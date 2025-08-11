@@ -199,7 +199,8 @@ class DMD(SelfForcingModel):
         conditional_dict: dict,
         unconditional_dict: dict,
         clean_latent: torch.Tensor,
-        initial_latent: torch.Tensor = None
+        initial_latent: torch.Tensor = None,
+        memory_token: torch.Tensor = None
     ) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noise and compute the DMD loss.
@@ -219,7 +220,8 @@ class DMD(SelfForcingModel):
         pred_image, gradient_mask, denoised_timestep_from, denoised_timestep_to = self._run_generator(
             image_or_video_shape=image_or_video_shape,
             conditional_dict=conditional_dict,
-            initial_latent=initial_latent
+            initial_latent=initial_latent,
+            memory_token=memory_token,
         )
 
         # Step 2: Compute the DMD loss
