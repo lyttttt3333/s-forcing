@@ -4,7 +4,7 @@ import os
 # 1. 读取CSV
 input_path = '/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/metadata.csv' 
 output_path = '/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/meta.csv' 
-df = pd.read_csv('input.csv')
+df = pd.read_csv(input_path)
 
 # 2. 获取video列
 video_list = df['video'].tolist()
@@ -34,6 +34,6 @@ for video_path in video_list:
 print("final video list length:", len(base_name_list))
 
 output_df = pd.DataFrame({'basename': basename_list})
-output_df.to_csv('meta.csv', index=False, encoding='utf-8-sig')
+output_df.to_csv(output_path, index=False, encoding='utf-8-sig')
 
 print("处理完成，结果已保存到 output.csv")
