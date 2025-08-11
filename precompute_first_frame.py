@@ -73,17 +73,32 @@ def encode_images(vae, img, device):
     z = vae.encode_to_latent([img])[0]
     return z 
 
-dist.init_process_group(backend="nccl")
 
-rank = dist.get_rank()
-world_size = dist.get_world_size()
-torch.cuda.set_device(rank)
-device = "cuda"
+def main():
+    dist.init_process_group(backend="nccl")
 
-video_path = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos/fff82aff-7041-43f2-8e1c-96436a87797e.mp4"
-vae = WanVAEWrapper().to(torch.float16).to(device)
+    rank = dist.get_rank()
+    world_size = dist.get_world_size()
+    torch.cuda.set_device(rank)
+    device = "cuda"
 
+    input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
+    output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/first_frame"
+    os.makedirs(output_dir, exist_ok=True)
+    video_files = [
+        os.path.join(input_dir, f)
+        for f in os.listdir(input_dir)
+        if f.lower().endswith(".mp4")
+    ][:20]
+    video_files.sort()
 
-image = get_first_frame_as_pil(video_path)
-latent = encode_images(vae, image, device)
-print(latent.shape)
+    vae = WanVAEWrapper().to(torch.float16).to(device)
+
+    for i in range(rank, len(video_files), world_size):
+        video_path = video_files[i]
+        base_name = os.path.basename(video_path).split(".")[0]
+        save_path = os.path.join(output_dir,f"{base_name}.pth")
+        image = get_first_frame_as_pil(video_path)
+        latent = encode_images(vae, image, device).to(torch.bfloat16)
+        torch.save(latent, save_path)
+        print(f"[GPU {rank}] done {base_name}")
