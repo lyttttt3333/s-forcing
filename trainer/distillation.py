@@ -242,7 +242,7 @@ class Trainer:
         self.previous_time = None
 
         embed_dict_path = "ref_lib"
-        self.load_embed_dict(embed_dict_path, dataset.get_prompts())
+        self.load_embed_dict(embed_dict_path)
 
     def save(self):
         print("Start gathering distributed model states...")
@@ -278,39 +278,38 @@ class Trainer:
         #     print("Model saved to", os.path.join(self.output_path,
         #           f"checkpoint_model_{self.step:06d}", "model.pt"))
 
-    def load_embed_dict(self, embed_dict_root, prompt_list):
+    def load_embed_dict(self, embed_dict_root):
         file_changed = False
         self.model.text_encoder = None
-        embed_dict_path = os.path.join(embed_dict_root, "embed_dict.pt")
         global_dict_path = os.path.join(embed_dict_root, "global_embed_dict.pt")
 
-        if not os.path.exists(embed_dict_path):
-            self.embed_dict = {}
-        else:
-            self.embed_dict = torch.load(embed_dict_path, map_location="cpu")
+        # if not os.path.exists(embed_dict_path):
+        #     self.embed_dict = {}
+        # else:
+        #     self.embed_dict = torch.load(embed_dict_path, map_location="cpu")
 
-        if not os.path.exists(embed_dict_path):
-            for prompt in prompt_list:
-                if prompt not in self.embed_dict:
-                    if self.model.text_encoder is None:
-                        self.model.load_text_model()
-                        self.model.text_encoder = fsdp_wrap(
-                            self.model.text_encoder,
-                            sharding_strategy=self.config.sharding_strategy,
-                            mixed_precision=self.config.mixed_precision,
-                            wrap_strategy=self.config.text_encoder_fsdp_wrap_strategy,
-                            cpu_offload=getattr(self.config, "text_encoder_cpu_offload", False)
-                        )
-                    embed = self.model.text_encoder(
-                        text_prompts=[prompt])["prompt_embeds"]
-                    self.embed_dict[prompt] = embed.detach().to("cpu", dtype=self.dtype)
-                    print("Embed dict updated with", prompt)
-                    file_changed = True
+        # if not os.path.exists(embed_dict_path):
+        #     for prompt in prompt_list:
+        #         if prompt not in self.embed_dict:
+        #             if self.model.text_encoder is None:
+        #                 self.model.load_text_model()
+        #                 self.model.text_encoder = fsdp_wrap(
+        #                     self.model.text_encoder,
+        #                     sharding_strategy=self.config.sharding_strategy,
+        #                     mixed_precision=self.config.mixed_precision,
+        #                     wrap_strategy=self.config.text_encoder_fsdp_wrap_strategy,
+        #                     cpu_offload=getattr(self.config, "text_encoder_cpu_offload", False)
+        #                 )
+        #             embed = self.model.text_encoder(
+        #                 text_prompts=[prompt])["prompt_embeds"]
+        #             self.embed_dict[prompt] = embed.detach().to("cpu", dtype=self.dtype)
+        #             print("Embed dict updated with", prompt)
+        #             file_changed = True
 
-        if self.is_main_process and file_changed:
-            os.makedirs(os.path.dirname(embed_dict_path), exist_ok=True)
-            torch.save(self.embed_dict, embed_dict_path)
-            print("Embed dict saved to", embed_dict_path)
+        # if self.is_main_process and file_changed:
+        #     os.makedirs(os.path.dirname(embed_dict_path), exist_ok=True)
+        #     torch.save(self.embed_dict, embed_dict_path)
+        #     print("Embed dict saved to", embed_dict_path)
 
         if not os.path.exists(global_dict_path):
             self.global_embed_dict = {}
