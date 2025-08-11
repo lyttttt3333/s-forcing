@@ -50,6 +50,8 @@ def main():
         video_path = video_files[i]
         base_name = os.path.basename(video_path)
         frames_tensor = extract_frames_from_video(video_path)
+        print(frames_tensor.shape)
+        break
         if frames_tensor.numel() > 0:
             frames_tensor = frames_tensor.to(rank, non_blocking=True)
             print(f"[GPU {rank}] begin {base_name}")
