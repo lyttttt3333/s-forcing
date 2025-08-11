@@ -206,7 +206,7 @@ def main():
 
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
-        base_name = os.path.basename(video_path)
+        base_name = os.path.basename(video_path).split([.])[0]
         frames_tensor = extract_frames_from_video(
                 video_path=video_path,
                 preprocess_function=load_and_preprocess_images,  
