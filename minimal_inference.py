@@ -84,6 +84,7 @@ def main(args):
         with torch.cuda.amp.autocast(dtype = torch.bfloat16):
             with torch.no_grad():
                 for i, frame in enumerate(frames):
+                    print(frame.shape)
                     aggregated_token, patch_start_idx, past_key_values = model.inference(frame, i, past_key_values=past_key_values)
                     print(aggregated_token.shape)
 
