@@ -24,6 +24,7 @@ def create_fake_frames(num_frames=3, img_channels=3, img_height=518, img_width=3
     for i in range(images.shape[0]):
         image = images[i].unsqueeze(0)
         frames.append(image)
+        print(frames.shape)
     
     return frames
 
