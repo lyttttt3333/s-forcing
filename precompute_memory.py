@@ -202,7 +202,6 @@ def main():
     model.eval()
     model = model.to("cuda").to(torch.bfloat16)
     del ckpt
-    print(f"Load at {device}")
 
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
@@ -215,7 +214,6 @@ def main():
                 max_frames=7
             )
         frames_tensor = frames_tensor.to(rank, non_blocking=True)
-        print(f"[GPU {rank}] begin {base_name}")
         save_path = os.path.join(output_dir,f"{base_name}.pth")
         output_tokens = generate_tokens(model, frames_tensor).to(torch.bfloat16)
         torch.save(output_tokens, save_path)
