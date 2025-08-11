@@ -217,9 +217,8 @@ def main():
         frames_tensor = frames_tensor.to(rank, non_blocking=True)
         print(f"[GPU {rank}] begin {base_name}")
         save_path = os.path.join(output_dir,f"{base_name}.pth")
-        output_tokens = generate_tokens(model, frames_tensor)
-        print(output_tokens.shape, output_tokens.dtype)
-        # torch.save(output_tokens, save_path)
+        output_tokens = generate_tokens(model, frames_tensor).to(torch.bfloat16)
+        torch.save(output_tokens, save_path)
         print(f"[GPU {rank}] done {base_name}")
 
     dist.destroy_process_group()
