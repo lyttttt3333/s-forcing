@@ -58,7 +58,7 @@ def generate_tokens(model, frames):
                     frame = frames[i].unsqueeze(0)
                     aggregated_token, patch_start_idx, past_key_values = model.inference(frame, i, past_key_values=past_key_values)
                     output_tokens.append(aggregated_token)
-    output_tokens = torch.cat(output_tokens, dim=1)
+    output_tokens = torch.cat(output_tokens, dim=0)
     return output_tokens
 
 def save_tokens(output_tokens, save_path):
