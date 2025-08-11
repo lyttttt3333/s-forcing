@@ -3,31 +3,163 @@ import cv2
 import torch
 import torch.distributed as dist
 
+from uuid import uuid4
+from PIL import Image
+from torchvision import transforms as TF
+
+from torchvision.transforms import ToPILImage
+to_pil = ToPILImage()
+
 def extract_memory_tokens(frames_tensor):
     return frames_tensor.mean(dim=0)
 
-def extract_frames_from_video(video_path, interval=18, max_frames=7):
+def load_and_preprocess_images(image_path_list, mode="crop"):
+    if len(image_path_list) == 0:
+        raise ValueError("At least 1 image is required")
+
+    # Validate mode
+    if mode not in ["crop", "pad"]:
+        raise ValueError("Mode must be either 'crop' or 'pad'")
+
+    images = []
+    shapes = set()
+    to_tensor = TF.ToTensor()
+    target_size = 518
+
+    # First process all images and collect their shapes
+    for image_path in image_path_list:
+
+        # Open image
+        img = Image.open(image_path)
+
+        # If there's an alpha channel, blend onto white background:
+        if img.mode == "RGBA":
+            # Create white background
+            background = Image.new("RGBA", img.size, (255, 255, 255, 255))
+            # Alpha composite onto the white background
+            img = Image.alpha_composite(background, img)
+
+        # Now convert to "RGB" (this step assigns white for transparent areas)
+        img = img.convert("RGB")
+
+        width, height = img.size
+
+        if mode == "pad":
+            # Make the largest dimension 518px while maintaining aspect ratio
+            if width >= height:
+                new_width = target_size
+                new_height = round(height * (new_width / width) / 14) * 14  # Make divisible by 14
+            else:
+                new_height = target_size
+                new_width = round(width * (new_height / height) / 14) * 14  # Make divisible by 14
+        else:  # mode == "crop"
+            # Original behavior: set width to 518px
+            new_width = target_size
+            # Calculate height maintaining aspect ratio, divisible by 14
+            new_height = round(height * (new_width / width) / 14) * 14
+
+        # Resize with new dimensions (width, height)
+        img = img.resize((new_width, new_height), Image.Resampling.BICUBIC)
+        img = to_tensor(img)  # Convert to tensor (0, 1)
+
+        # Center crop height if it's larger than 518 (only in crop mode)
+        if mode == "crop" and new_height > target_size:
+            start_y = (new_height - target_size) // 2
+            img = img[:, start_y: start_y + target_size, :]
+
+        # For pad mode, pad to make a square of target_size x target_size
+        if mode == "pad":
+            h_padding = target_size - img.shape[1]
+            w_padding = target_size - img.shape[2]
+
+            if h_padding > 0 or w_padding > 0:
+                pad_top = h_padding // 2
+                pad_bottom = h_padding - pad_top
+                pad_left = w_padding // 2
+                pad_right = w_padding - pad_left
+
+                # Pad with white (value=1.0)
+                img = torch.nn.functional.pad(
+                    img, (pad_left, pad_right, pad_top, pad_bottom), mode="constant", value=1.0
+                )
+
+        shapes.add((img.shape[1], img.shape[2]))
+        images.append(img)
+
+    # Check if we have different shapes
+    # In theory our model can also work well with different shapes
+    if len(shapes) > 1:
+        print(f"Warning: Found images with different shapes: {shapes}")
+        # Find maximum dimensions
+        max_height = max(shape[0] for shape in shapes)
+        max_width = max(shape[1] for shape in shapes)
+
+        # Pad images if necessary
+        padded_images = []
+        for img in images:
+            h_padding = max_height - img.shape[1]
+            w_padding = max_width - img.shape[2]
+
+            if h_padding > 0 or w_padding > 0:
+                pad_top = h_padding // 2
+                pad_bottom = h_padding - pad_top
+                pad_left = w_padding // 2
+                pad_right = w_padding - pad_left
+
+                img = torch.nn.functional.pad(
+                    img, (pad_left, pad_right, pad_top, pad_bottom), mode="constant", value=1.0
+                )
+            padded_images.append(img)
+        images = padded_images
+
+    images = torch.stack(images)  # concatenate images
+
+    # Ensure correct shape when single image
+    if len(image_path_list) == 1:
+        # Verify shape is (1, C, H, W)
+        if images.dim() == 3:
+            images = images.unsqueeze(0)
+
+    return images
+
+
+def delete_saved_paths(paths):
+    for p in paths:
+        try:
+            if os.path.exists(p):
+                os.remove(p)
+        except Exception as e:
+            print(f"删除 {p} 失败: {e}")
+
+def extract_frames_from_video(video_path, preprocess_function, tmp_dir="tmp_frames", interval=18, max_frames=7):
+    rank = dist.get_rank() if dist.is_initialized() else 0
+    save_dir = os.path.join(tmp_dir, f"rank_{rank}")
+    os.makedirs(save_dir, exist_ok=True)
+
     cap = cv2.VideoCapture(video_path)
     frame_count = 0
-    frames = []
+    saved_paths = []
 
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         if frame_count % interval == 0:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            tensor_frame = torch.from_numpy(frame).permute(2, 0, 1).float() / 255.0
-            frames.append(tensor_frame)
-            if len(frames) >= max_frames:
+            img_name = f"{os.path.splitext(os.path.basename(video_path))[0]}_{len(saved_paths)+1}_{uuid4().hex[:8]}.jpg"
+            img_path = os.path.join(save_dir, img_name)
+            cv2.imwrite(img_path, frame)
+            saved_paths.append(img_path)
+
+            if len(saved_paths) >= max_frames:
                 break
         frame_count += 1
 
     cap.release()
-    if frames:
-        return torch.stack(frames)  # (N, C, H, W)
-    else:
-        return torch.empty(0)
+
+    processed_result = preprocess_function(saved_paths)
+    delete_saved_paths(saved_paths)
+    return processed_result
+
 
 def main():
     dist.init_process_group(backend="nccl")
@@ -38,6 +170,7 @@ def main():
 
     input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
     output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/memory_tokens"
+    tmp_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/tmp_frames"
     os.makedirs(output_dir, exist_ok=True)
     video_files = [
         os.path.join(input_dir, f)
@@ -49,7 +182,13 @@ def main():
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
         base_name = os.path.basename(video_path)
-        frames_tensor = extract_frames_from_video(video_path)
+        frames_tensor = extract_frames_from_video(
+                video_path=video_path,
+                preprocess_function=load_and_preprocess_images,  
+                tmp_dir=tmp_dir,
+                interval=18,
+                max_frames=7
+            )
         print(frames_tensor.shape)
         break
         if frames_tensor.numel() > 0:
