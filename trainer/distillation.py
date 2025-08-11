@@ -383,7 +383,7 @@ class Trainer:
             clean_latent = None
             image_latent = None
 
-        batch_size = len(text_prompts)
+        batch_size = 1
         image_or_video_shape = list(self.config.image_or_video_shape)
         image_or_video_shape[0] = batch_size
 
