@@ -48,18 +48,27 @@ def get_args_parser():
     return parser
 
 
-def main(args):
-    # add_path_to_dust3r(args.weights)
+def generate_tokens(model, frames):
+    past_key_values = [None] * model.aggregator.depth
+    output_tokens = []
+    with torch.no_grad():
+        with torch.cuda.amp.autocast(dtype = torch.bfloat16):
+            with torch.no_grad():
+                for i in range(frames.shape[0]):
+                    frame = frames[i].unsqueeze(0)
+                    aggregated_token, patch_start_idx, past_key_values = model.inference(frame, i, past_key_values=past_key_values)
+                    output_tokens.append(aggregated_token)
+    output_tokens = torch.cat(output_tokens, dim=1)
+    return output_tokens
 
-    if args.size == 512:
-        resolution = (512, 384)
-    elif args.size == 224:
-        resolution = 224
-    elif args.size == 518:
-        resolution = (518, 392)
-        # resolution = (518, 336)
-    else:
-        raise NotImplementedError
+def save_tokens(output_tokens, save_path):
+    torch.save(output_tokens, save_path)
+
+
+
+if __name__ == "__main__":
+    parser = get_args_parser()
+    args = parser.parse_args()
 
     accelerator = Accelerator()
     device = accelerator.device
@@ -74,19 +83,7 @@ def main(args):
     del ckpt
 
     frames = create_fake_frames()
-    past_key_values = [None] * model.aggregator.depth
-    with torch.no_grad():
-        with torch.cuda.amp.autocast(dtype = torch.bfloat16):
-            with torch.no_grad():
-                for i in range(frames.shape[0]):
-                    frame = frames[i].unsqueeze(0)
-                    print(frame.shape)
-                    aggregated_token, patch_start_idx, past_key_values = model.inference(frame, i, past_key_values=past_key_values)
-                    print(aggregated_token.shape)
 
-
-if __name__ == "__main__":
-    parser = get_args_parser()
-    args = parser.parse_args()
-
-    main(args)
+    output_tokens = generate_tokens(model, frames)
+    print(output_tokens.shape)
+    save_tokens(output_tokens, "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/memory_tokens/test.pth")
