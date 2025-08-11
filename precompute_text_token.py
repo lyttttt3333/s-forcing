@@ -24,6 +24,8 @@ def main():
     df = pd.read_csv(input_csv)
     total_rows = 20#len(df)
 
+    device = "cuda"
+
     text_encoder = WanTextEncoder().to(torch.float16).to(device)
     # 分片处理csv
     for i in range(rank, total_rows, world_size):
