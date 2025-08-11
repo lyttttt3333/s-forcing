@@ -10,8 +10,19 @@ from torchvision import transforms as TF
 from torchvision.transforms import ToPILImage
 to_pil = ToPILImage()
 
-def extract_memory_tokens(frames_tensor):
-    return frames_tensor.mean(dim=0)
+def generate_tokens(model, frames):
+    past_key_values = [None] * model.aggregator.depth
+    output_tokens = []
+    with torch.no_grad():
+        with torch.cuda.amp.autocast(dtype = torch.bfloat16):
+            with torch.no_grad():
+                for i in range(frames.shape[0]):
+                    frame = frames[i].unsqueeze(0)
+                    aggregated_token, patch_start_idx, past_key_values = model.inference(frame, i, past_key_values=past_key_values)
+                    output_tokens.append(aggregated_token)
+    output_tokens = torch.cat(output_tokens, dim=0)
+    return output_tokens
+
 
 def load_and_preprocess_images(image_path_list, mode="crop"):
     if len(image_path_list) == 0:
@@ -179,6 +190,18 @@ def main():
     ][:20]
     video_files.sort()
 
+
+    accelerator = Accelerator()
+    device = accelerator.device
+    from streamvggt.models.streamvggt import StreamVGGT
+    model = StreamVGGT()
+    ckpt = torch.load(args.weights, map_location=device)
+    model.load_state_dict(ckpt, strict=False)
+    model.eval()
+    model = model.to("cuda").to(torch.bfloat16)
+    del ckpt
+    print(f"Load at {model.device}")
+
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
         base_name = os.path.basename(video_path)
@@ -189,13 +212,12 @@ def main():
                 interval=18,
                 max_frames=7
             )
-        print(frames_tensor.shape)
-        break
-        if frames_tensor.numel() > 0:
-            frames_tensor = frames_tensor.to(rank, non_blocking=True)
-            print(f"[GPU {rank}] begin {base_name}")
-            result = extract_memory_tokens(frames_tensor)
-            print(f"[GPU {rank}] done {base_name}")
+        frames_tensor = frames_tensor.to(rank, non_blocking=True)
+        print(f"[GPU {rank}] begin {base_name}")
+        save_path = os.path.join(output_dir,f"{base_name}.pth")
+        output_tokens = generate_tokens(model, frames_tensor)
+        torch.save(output_tokens, save_path)
+        print(f"[GPU {rank}] done {base_name}")
 
     dist.destroy_process_group()
 
