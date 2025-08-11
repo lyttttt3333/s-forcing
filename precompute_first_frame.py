@@ -40,7 +40,7 @@ def get_first_frame_as_pil(video_path: str) -> Image.Image:
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return Image.fromarray(frame_rgb)
 
-def encode_images(vae, img, device)
+def encode_images(vae, img, device):
     ih, iw = img.height, img.width
     patch_size = (1, 2, 2)
     vae_stride = (4, 16, 16)
