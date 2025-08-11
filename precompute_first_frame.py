@@ -102,3 +102,6 @@ def main():
         latent = encode_images(vae, image, device).to(torch.bfloat16)
         torch.save(latent, save_path)
         print(f"[GPU {rank}] done {base_name}")
+
+if __name__ == "__main__":
+    main()
