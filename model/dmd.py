@@ -451,6 +451,7 @@ class DMD(SelfForcingModel):
                 print(f"before {mask.shape}")
                 temp_ts = (mask[0][:, ::2, ::2] * timestep).flatten()
                 print(f"first stage {temp_ts.shape}")
+                print(f"##################time_step", temp_ts.shape, seq_len)
                 temp_ts = torch.cat([
                     temp_ts,
                     temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
