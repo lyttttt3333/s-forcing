@@ -436,7 +436,7 @@ class DMD(SelfForcingModel):
             # sample videos
             latent = noise
             mask = torch.ones_like(noise)
-            mask1, mask2 = masks_like(noise, zero=False)
+            mask1, mask2 = masks_like([noise], zero=False)
             print(f"####### {mask2[0].shape} and {mask.shape}")
             # mask[:, 0] = 0
             mask = mask2[0]
