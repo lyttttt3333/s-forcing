@@ -380,7 +380,6 @@ class DMD(SelfForcingModel):
             oh // vae_stride[1]) * (ow // vae_stride[2]) // (
                 patch_size[1] * patch_size[2])
         seq_len = int(math.ceil(seq_len / sp_size)) * sp_size
-        print(seq_len)
 
         noise = torch.randn(
             48, (F - 1) // vae_stride[0] + 1,
@@ -408,7 +407,6 @@ class DMD(SelfForcingModel):
             # sample videos
             latent = noise
             mask = torch.ones_like(noise)
-            print("noise", noise.shape)
             mask[:, 0] = 0
             latent = (1. - mask) * z[0] + mask * latent
 
