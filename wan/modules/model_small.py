@@ -585,6 +585,9 @@ class WanModel(ModelMixin, ConfigMixin):
         self.text_embedding = nn.Sequential(
             nn.Linear(text_dim, dim), nn.GELU(approximate='tanh'),
             nn.Linear(dim, dim))
+        self.state_proj = nn.Sequential(
+            nn.Linear(2048, dim), nn.GELU(approximate='tanh'),
+            nn.Linear(dim, dim))
 
         self.time_embedding = nn.Sequential(
             nn.Linear(freq_dim, dim), nn.SiLU(), nn.Linear(dim, dim))
