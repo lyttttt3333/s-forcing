@@ -159,9 +159,9 @@ class SelfForcingTrainingPipeline:
                 print("##########")
                 print("initial latent shape",initial_latent.shape)
                 print("mask",mask.shape)
-                initial_latent = initial_latent.unsqueeze(0)
+                initial_latent = initial_latent[1].unsqueeze(0).unsqueeze(0)
                 mask = torch.ones_like(noisy_input)
-                mask[:,:, 0] = 0
+                mask[:, 0] = 0
                 noisy_input = noisy_input * mask + initial_latent * (1-mask)
 
             print("masked noisy input shape",noisy_input.shape)
