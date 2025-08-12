@@ -180,6 +180,11 @@ class DMD(SelfForcingModel):
                 timestep.flatten(0, 1)
             ).detach().unflatten(0, (batch_size, num_frame))
 
+            mask = torch.ones_like(noisy_latent)
+            print("mask shape", mask.shape, image_or_video.shape)
+            mask[:, 0] = 0
+            noisy_latent = noisy_latent * mask + image_or_video * (1-mask)
+
             # Step 2: Compute the KL grad
             grad, dmd_log_dict = self._compute_kl_grad(
                 noisy_image_or_video=noisy_latent,
@@ -299,6 +304,12 @@ class DMD(SelfForcingModel):
             critic_noise.flatten(0, 1),
             critic_timestep.flatten(0, 1)
         ).unflatten(0, image_or_video_shape[:2])
+
+        mask = torch.ones_like(noisy_generated_image)
+        print("mask shape", mask.shape)
+        mask[:, 0] = 0
+        noisy_generated_image = noisy_generated_image * mask + generated_image * (1-mask)
+
 
 
         conditional_dict["state"] = memory_token[-1].unsqueeze(0)

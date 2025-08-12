@@ -72,7 +72,6 @@ class Trainer:
 
         self.output_path = config.logdir
 
-        print(config)
         # Step 2: Initialize the model and optimizer
         if config.distribution_loss == "causvid":
             self.model = CausVid(config, device=self.device)

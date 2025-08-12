@@ -150,20 +150,14 @@ class SelfForcingTrainingPipeline:
 
         # for block_index in range(num_blocks):
         for block_index, current_num_frames in enumerate(all_num_frames):
-            print("noise shape", noise.shape)
             noisy_input = noise[
                 :, current_start_frame : current_start_frame + current_num_frames]
-            print("noisy input shape",noisy_input.shape)
 
             if block_index == 0 and initial_latent is not None:
-                print("##########")
-                print("initial latent shape",initial_latent.shape)
                 initial_latent = initial_latent[1].unsqueeze(0).unsqueeze(0)
                 mask = torch.ones_like(noisy_input)
                 mask[:, 0] = 0
                 noisy_input = noisy_input * mask + initial_latent * (1-mask)
-
-            print("masked noisy input shape",noisy_input.shape)
 
 
             # Step 3.1: Spatial denoising loop
