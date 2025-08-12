@@ -538,8 +538,8 @@ class WanDiffusionWrapper(torch.nn.Module):
         sp_size = 1
         patch_size = (1, 2, 2)
         vae_stride = (4, 16, 16)
-        ow = 1
-        oh = 2
+        ow = 1248 
+        oh = 704
         F = 21
         
         seq_len = ((F - 1) // vae_stride[0] + 1) * (
