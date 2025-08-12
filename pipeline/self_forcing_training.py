@@ -142,8 +142,8 @@ class SelfForcingTrainingPipeline:
 
         # Step 3: Temporal denoising loop
         all_num_frames = [self.num_frame_per_block] * num_blocks
-        if self.independent_first_frame and initial_latent is None:
-            all_num_frames = [1] + all_num_frames
+        # if self.independent_first_frame and initial_latent is None:
+        #     all_num_frames = [1] + all_num_frames
         num_denoising_steps = len(self.denoising_step_list)
         exit_flags = self.generate_and_sync_list(len(all_num_frames), num_denoising_steps, device=noise.device)
         start_gradient_frame_index = num_output_frames - 21
@@ -151,7 +151,8 @@ class SelfForcingTrainingPipeline:
         # for block_index in range(num_blocks):
         for block_index, current_num_frames in enumerate(all_num_frames):
             noisy_input = noise[
-                :, current_start_frame - num_input_frames:current_start_frame + current_num_frames - num_input_frames]
+                :, current_start_frame : current_start_frame + current_num_frames]
+            print("noisy input shape",noisey_input.shape)
 
             if block_index == 0 and initial_latent is not None:
                 mask = torch.ones_like(noisy_input)
