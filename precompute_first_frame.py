@@ -54,6 +54,7 @@ def encode_images(vae, img, device):
     dh, dw = patch_size[1] * vae_stride[1], patch_size[
         2] * vae_stride[2]
     ow, oh = best_output_size(iw, ih, dw, dh, max_area)
+    print(ow, oh)
 
     scale = max(ow / iw, oh / ih)
     img = img.resize((round(iw * scale), round(ih * scale)), Image.LANCZOS)
@@ -97,7 +98,8 @@ def main():
         save_path = os.path.join(output_dir,f"{base_name}.pth")
         image = get_first_frame_as_pil(video_path)
         latent = encode_images(vae, image, device).to(torch.bfloat16)
-        torch.save(latent, save_path)
+        break
+        # torch.save(latent, save_path)
         print(f"[GPU {rank}] done {base_name}")
 
 if __name__ == "__main__":
