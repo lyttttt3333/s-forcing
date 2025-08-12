@@ -530,6 +530,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         z = frame_token
         sample_solver = 'unipc'
         num_train_timesteps = 1000
+        sampling_steps = 50
 
         with (
                 torch.amp.autocast('cuda'),
