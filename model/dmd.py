@@ -103,8 +103,8 @@ class DMD(SelfForcingModel):
         # Step 2: Compute the real score
         # We compute the conditional and unconditional prediction
         # and add them together to achieve cfg (https://arxiv.org/abs/2207.12598)
-        # print("#########", noisy_image_or_video.shape)
-        # print("#########", timestep.shape)
+        print("#########", noisy_image_or_video.shape)
+        print("#########", timestep.shape)
         _, pred_real_image_cond = self.real_score(
             noisy_image_or_video=noisy_image_or_video,
             conditional_dict=conditional_dict,
@@ -413,7 +413,7 @@ class DMD(SelfForcingModel):
 
             for _, t in enumerate(tqdm(timesteps)):
 
-                latent_model_input = [latent.to(device)]
+                latent_model_input = latent.to(device)
                 timestep = [t]
 
                 timestep = torch.stack(timestep).to(device)
