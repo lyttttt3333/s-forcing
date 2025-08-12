@@ -587,6 +587,7 @@ class WanDiffusionWrapper(torch.nn.Module):
             }
 
             for _, t in enumerate(tqdm(timesteps)):
+                print("latent", latent.shape)
                 latent_model_input = [latent.to(device)]
                 timestep = [t]
 
@@ -598,6 +599,7 @@ class WanDiffusionWrapper(torch.nn.Module):
                     temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
                 ])
                 timestep = temp_ts.unsqueeze(0)
+                print("time_step",timestep.shape)
 
                 noise_pred_cond = self.model(
                     latent_model_input, t=timestep, **arg_c)[0]
