@@ -549,10 +549,9 @@ class WanDiffusionWrapper(torch.nn.Module):
         print(seq_len)
 
         noise = torch.randn(
-            48,
-            21,
-            44,
-            78,
+            48, (F - 1) // vae_stride[0] + 1,
+            oh // vae_stride[1],
+            ow // vae_stride[2],
             dtype=torch.bfloat16,
             device=device)
 
