@@ -533,7 +533,15 @@ class WanDiffusionWrapper(torch.nn.Module):
         num_train_timesteps = 1000
         sampling_steps = 50
         shift = 5
-        self.device = device
+        sp_size = 1
+        patch_size = (1, 2, 2)
+        vae_stride = (4, 16, 16)
+
+        F = frame_num
+        seq_len = ((F - 1) // vae_stride[0] + 1) * (
+            oh // vae_stride[1]) * (ow // vae_stride[2]) // (
+                patch_size[1] * patch_size[2])
+        seq_len = int(math.ceil(seq_len / sp_size))
 
         noise = torch.randn(
             48,
@@ -541,7 +549,7 @@ class WanDiffusionWrapper(torch.nn.Module):
             44,
             78,
             dtype=torch.bfloat16,
-            device=self.device)
+            device=device)
 
         with (
                 torch.amp.autocast('cuda'),
@@ -554,7 +562,7 @@ class WanDiffusionWrapper(torch.nn.Module):
                     shift=1,
                     use_dynamic_shifting=False)
                 sample_scheduler.set_timesteps(
-                    sampling_steps, device=self.device, shift=shift)
+                    sampling_steps, device=device, shift=shift)
                 timesteps = sample_scheduler.timesteps
             else:
                 raise
@@ -575,10 +583,10 @@ class WanDiffusionWrapper(torch.nn.Module):
             }
 
             for _, t in enumerate(tqdm(timesteps)):
-                latent_model_input = [latent.to(self.device)]
+                latent_model_input = [latent.to(device)]
                 timestep = [t]
 
-                timestep = torch.stack(timestep).to(self.device)
+                timestep = torch.stack(timestep).to(device)
 
                 temp_ts = (mask2[0][0][:, ::2, ::2] * timestep).flatten()
                 temp_ts = torch.cat([
