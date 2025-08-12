@@ -2,6 +2,7 @@ import types
 from typing import List, Optional
 import torch
 from torch import nn
+from tqdm import tqdm
 
 import logging
 
