@@ -158,7 +158,6 @@ class SelfForcingTrainingPipeline:
             if block_index == 0 and initial_latent is not None:
                 print("##########")
                 print("initial latent shape",initial_latent.shape)
-                print("mask",mask.shape)
                 initial_latent = initial_latent[1].unsqueeze(0).unsqueeze(0)
                 mask = torch.ones_like(noisy_input)
                 mask[:, 0] = 0
