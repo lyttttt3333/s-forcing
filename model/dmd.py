@@ -248,7 +248,8 @@ class DMD(SelfForcingModel):
         conditional_dict: dict,
         unconditional_dict: dict,
         clean_latent: torch.Tensor,
-        initial_latent: torch.Tensor = None
+        initial_latent: torch.Tensor = None,
+        memory_token: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noise and train the critic with generated samples.
@@ -270,7 +271,8 @@ class DMD(SelfForcingModel):
             generated_image, _, denoised_timestep_from, denoised_timestep_to = self._run_generator(
                 image_or_video_shape=image_or_video_shape,
                 conditional_dict=conditional_dict,
-                initial_latent=initial_latent
+                initial_latent=initial_latent,
+                memory_token=memory_token,
             )
 
         # Step 2: Compute the fake prediction
@@ -298,6 +300,8 @@ class DMD(SelfForcingModel):
             critic_timestep.flatten(0, 1)
         ).unflatten(0, image_or_video_shape[:2])
 
+
+        conditional_dict["state"] = memory_token[-1].unsqueeze(0)
         _, pred_fake_image = self.fake_score(
             noisy_image_or_video=noisy_generated_image,
             conditional_dict=conditional_dict,

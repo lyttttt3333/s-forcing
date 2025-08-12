@@ -423,7 +423,8 @@ class Trainer:
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
             clean_latent=clean_latent,
-            initial_latent=image_latent if self.config.i2v else None
+            initial_latent=image_latent if self.config.i2v else None,
+            memory_token=memory_token
         )
 
         critic_loss.backward()
