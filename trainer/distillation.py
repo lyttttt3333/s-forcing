@@ -472,7 +472,7 @@ class Trainer:
             print("Training step %d" % self.step)
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
-            if 1:
+            if 0:
                 batch = next(self.dataloader)
                 batch = self.load_batch(batch)
 
