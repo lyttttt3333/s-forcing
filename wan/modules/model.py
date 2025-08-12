@@ -696,8 +696,9 @@ class WanModel(ModelMixin, ConfigMixin):
             x = [torch.cat([u, v], dim=0) for u, v in zip(x, y)]
 
         # embeddings
-        print(x[0].unsqueeze(0).shape)
-        x = [self.patch_embedding(u.unsqueeze(0)) for u in x]
+        conv_input = x[0].unsqueeze(0)
+        print("####",conv_input.shape)
+        x = [self.patch_embedding(conv_input)]
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])
         x = [u.flatten(2).transpose(1, 2) for u in x]
