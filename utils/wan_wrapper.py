@@ -534,7 +534,6 @@ class WanDiffusionWrapper(torch.nn.Module):
         with (
                 torch.amp.autocast('cuda'),
                 torch.no_grad(),
-                no_sync(),
         ):
 
             if sample_solver == 'unipc':
