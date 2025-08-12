@@ -94,6 +94,7 @@ class DMD(SelfForcingModel):
         self, noisy_image_or_video: torch.Tensor,
         estimated_clean_image_or_video: torch.Tensor,
         timestep: torch.Tensor,
+        t,
         conditional_dict: dict, unconditional_dict: dict,
         normalization: bool = True,
     ) -> Tuple[torch.Tensor, dict]:
@@ -141,6 +142,8 @@ class DMD(SelfForcingModel):
             conditional_dict=conditional_dict,
             timestep=timestep,
             memory_condition=False,
+            t = t,
+            return_x0=True,
         )
 
         _, pred_real_image_uncond = self.real_score(
@@ -148,6 +151,8 @@ class DMD(SelfForcingModel):
             conditional_dict=unconditional_dict,
             timestep=timestep,
             memory_condition=False,
+            t = t,
+            return_x0=True,
         )
 
         pred_real_image = pred_real_image_cond + (
@@ -230,6 +235,7 @@ class DMD(SelfForcingModel):
                 noisy_image_or_video=noisy_latent,
                 estimated_clean_image_or_video=original_latent,
                 timestep=timestep,
+                t=time_step,
                 conditional_dict=conditional_dict,
                 unconditional_dict=unconditional_dict,
             )
@@ -478,6 +484,8 @@ class DMD(SelfForcingModel):
                     timestep=timestep,
                     memory_condition=False,
                     seq_len=seq_len,
+                    t = t,
+                    return_x0 = False
                 )
 
                 pred_real_image_uncond = self.real_score(
@@ -486,6 +494,8 @@ class DMD(SelfForcingModel):
                     timestep=timestep,
                     memory_condition=False,
                     seq_len=seq_len,
+                    t = t,
+                    return_x0 = False
                 )
 
                 pred_real_image = pred_real_image_cond + (
