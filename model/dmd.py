@@ -407,8 +407,9 @@ class DMD(SelfForcingModel):
 
             # sample videos
             latent = noise
-            mask1, mask2 = masks_like([noise], zero=True)
-            latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
+            mask = torch.ones_like(noisy_generated_image)
+            mask[:, 0] = 0
+            latent = (1. - mask[0]) * z[0] + mask[0] * latent
 
             for _, t in enumerate(tqdm(timesteps)):
                 print("latent", latent.shape)
@@ -417,7 +418,7 @@ class DMD(SelfForcingModel):
 
                 timestep = torch.stack(timestep).to(device)
 
-                temp_ts = (mask2[0][0][:, ::2, ::2] * timestep).flatten()
+                temp_ts = (mask[0][0][:, ::2, ::2] * timestep).flatten()
                 temp_ts = torch.cat([
                     temp_ts,
                     temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
@@ -462,7 +463,7 @@ class DMD(SelfForcingModel):
                     return_dict=False,
                     generator=seed_g)[0]
                 latent = temp_x0.squeeze(0)
-                latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
+                latent = (1. - mask[0]) * z[0] + mask[0] * latent
 
                 x0 = [latent]
                 del latent_model_input, timestep
