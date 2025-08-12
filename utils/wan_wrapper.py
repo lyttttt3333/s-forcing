@@ -400,7 +400,8 @@ class WanDiffusionWrapper(torch.nn.Module):
         aug_t: Optional[torch.Tensor] = None,
         cache_start: Optional[int] = None,
         input_ids = None,
-        memory_condition = False
+        memory_condition = False,
+        seq_len = None,
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
         if memory_condition:
@@ -415,13 +416,16 @@ class WanDiffusionWrapper(torch.nn.Module):
         # else:
         input_timestep = timestep
 
+        if seq_len is None:
+            seq_len = self.seq_len
+
         logits = None
         # X0 prediction
         if kv_cache is not None:
             flow_pred = self.model(
                 noisy_image_or_video.permute(0, 2, 1, 3, 4),
                 t=input_timestep, context=prompt_embeds,
-                seq_len=self.seq_len,
+                seq_len=seq_len,
                 kv_cache=kv_cache,
                 crossattn_cache=crossattn_cache,
                 current_start=current_start,
@@ -434,7 +438,7 @@ class WanDiffusionWrapper(torch.nn.Module):
                 flow_pred = self.model(
                     noisy_image_or_video.permute(0, 2, 1, 3, 4),
                     t=input_timestep, context=prompt_embeds,
-                    seq_len=self.seq_len,
+                    seq_len=seq_len,
                     clean_x=clean_x.permute(0, 2, 1, 3, 4),
                     aug_t=aug_t,
                     memory_condition = memory_condition,
@@ -444,7 +448,7 @@ class WanDiffusionWrapper(torch.nn.Module):
                     flow_pred, logits = self.model(
                         noisy_image_or_video.permute(0, 2, 1, 3, 4),
                         t=input_timestep, context=prompt_embeds,
-                        seq_len=self.seq_len,
+                        seq_len=seq_len,
                         classify_mode=True,
                         register_tokens=self._register_tokens,
                         cls_pred_branch=self._cls_pred_branch,
@@ -457,7 +461,7 @@ class WanDiffusionWrapper(torch.nn.Module):
                     flow_pred = self.model(
                         noisy_image_or_video.permute(0, 2, 1, 3, 4),
                         t=input_timestep, context=prompt_embeds,
-                        seq_len=self.seq_len,
+                        seq_len=seq_len,
                         memory_condition = memory_condition,
                     ).permute(0, 2, 1, 3, 4)
 
