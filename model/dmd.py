@@ -181,7 +181,6 @@ class DMD(SelfForcingModel):
             ).detach().unflatten(0, (batch_size, num_frame))
 
             mask = torch.ones_like(noisy_latent)
-            print("mask shape", mask.shape, image_or_video.shape)
             mask[:, 0] = 0
             noisy_latent = noisy_latent * mask + image_or_video * (1-mask)
 
@@ -306,7 +305,6 @@ class DMD(SelfForcingModel):
         ).unflatten(0, image_or_video_shape[:2])
 
         mask = torch.ones_like(noisy_generated_image)
-        print("mask shape", mask.shape)
         mask[:, 0] = 0
         noisy_generated_image = noisy_generated_image * mask + generated_image * (1-mask)
 
