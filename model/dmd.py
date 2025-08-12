@@ -466,17 +466,6 @@ class DMD(SelfForcingModel):
                 print("##################time_step",timestep.shape)
                 print("##################", timestep)
 
-                # noise_pred_cond = self.model(
-                #     x = latent_model_input, t=timestep, **arg_c)[0]
-                # # if offload_model:
-                # #     torch.cuda.empty_cache()
-                # noise_pred_uncond = self.model(
-                #     x = latent_model_input, t=timestep, **arg_null)[0]
-                # # if offload_model:
-                # #     torch.cuda.empty_cache()
-                # noise_pred = noise_pred_uncond + guide_scale * (
-                #     noise_pred_cond - noise_pred_uncond)
-
 
                 pred_real_image_cond = self.real_score(
                     noisy_image_or_video=latent_model_input.unsqueeze(0),
@@ -503,9 +492,9 @@ class DMD(SelfForcingModel):
                 ) * self.real_guidance_scale
 
                 temp_x0 = sample_scheduler.step(
-                    noise_pred.unsqueeze(0),
+                    pred_real_image.unsqueeze(0),
                     t,
-                    latent.unsqueeze(0),
+                    latent_model_input.unsqueeze(0),
                     return_dict=False,
                     generator=seed_g)[0]
                 latent = temp_x0.squeeze(0)
