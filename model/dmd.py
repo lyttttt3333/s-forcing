@@ -10,8 +10,10 @@ import torch.distributed as dist
 from einops import rearrange
 
 from model.base import SelfForcingModel
-from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 import math
+
+
+from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 def masks_like(tensor, zero=False, generator=None, p=0.2):
     assert isinstance(tensor, list)
@@ -470,16 +472,16 @@ class DMD(SelfForcingModel):
                 #     noise_pred_cond - noise_pred_uncond)
 
 
-                _, pred_real_image_cond = self.real_score(
-                    noisy_image_or_video=latent_model_input.transpose(1,0).unsqueeze(0),
+                pred_real_image_cond = self.real_score(
+                    noisy_image_or_video=latent_model_input.unsqueeze(0),
                     conditional_dict=cond_dict,
                     timestep=timestep,
                     memory_condition=False,
                     seq_len=seq_len,
                 )
 
-                _, pred_real_image_uncond = self.real_score(
-                    noisy_image_or_video=latent_model_input.transpose(1,0).unsqueeze(0),
+                pred_real_image_uncond = self.real_score(
+                    noisy_image_or_video=latent_model_input.unsqueeze(0),
                     conditional_dict=uncond_dict,
                     timestep=timestep,
                     memory_condition=False,

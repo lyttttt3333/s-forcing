@@ -17,6 +17,8 @@ from wan.modules.vae import _video_vae
 from wan.modules.t5 import umt5_xxl
 from wan.modules.causal_model import CausalWanModel
 
+from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
+
 
 class WanTextEncoder(torch.nn.Module):
     def __init__(self) -> None:
@@ -314,6 +316,17 @@ class WanDiffusionWrapper(torch.nn.Module):
         self.seq_len = 32760  # [1, 21, 16, 60, 104]
         self.post_init()
 
+        sampling_steps = 50
+        num_train_timesteps = 1000
+        shift = 5
+
+        self.sample_scheduler = FlowUniPCMultistepScheduler(
+                                            num_train_timesteps=num_train_timesteps,
+                                            shift=1,
+                                            use_dynamic_shifting=False)
+        self.sample_scheduler.set_timesteps(
+                sampling_steps, device="cuda", shift=shift)
+
     def enable_gradient_checkpointing(self) -> None:
         self.model.enable_gradient_checkpointing()
 
@@ -394,7 +407,6 @@ class WanDiffusionWrapper(torch.nn.Module):
         timestep: torch.Tensor, kv_cache: Optional[List[dict]] = None,
         crossattn_cache: Optional[List[dict]] = None,
         current_start: Optional[int] = None,
-        classify_mode: Optional[bool] = False,
         concat_time_embeddings: Optional[bool] = False,
         clean_x: Optional[torch.Tensor] = None,
         aug_t: Optional[torch.Tensor] = None,
@@ -402,6 +414,8 @@ class WanDiffusionWrapper(torch.nn.Module):
         input_ids = None,
         memory_condition = False,
         seq_len = None,
+        t = None,
+        return_x0 = False,
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
         if memory_condition:
@@ -410,20 +424,15 @@ class WanDiffusionWrapper(torch.nn.Module):
         else:
             context = prompt_embeds
 
-        # [B, F] -> [B]
-        # if self.uniform_timestep:
-        #     input_timestep = timestep[:, 0]
-        # else:
         input_timestep = timestep
 
         if seq_len is None:
             seq_len = self.seq_len
 
-        logits = None
         # X0 prediction
         if kv_cache is not None:
             flow_pred = self.model(
-                noisy_image_or_video.permute(0, 2, 1, 3, 4),
+                noisy_image_or_video,
                 t=input_timestep, context=prompt_embeds,
                 seq_len=seq_len,
                 kv_cache=kv_cache,
@@ -431,50 +440,30 @@ class WanDiffusionWrapper(torch.nn.Module):
                 current_start=current_start,
                 cache_start=cache_start,
                 memory_condition = memory_condition,
-            ).permute(0, 2, 1, 3, 4)
+            )[0]
         else:
-            if clean_x is not None:
-                # teacher forcing
-                flow_pred = self.model(
-                    noisy_image_or_video.permute(0, 2, 1, 3, 4),
-                    t=input_timestep, context=prompt_embeds,
-                    seq_len=seq_len,
-                    clean_x=clean_x.permute(0, 2, 1, 3, 4),
-                    aug_t=aug_t,
-                    memory_condition = memory_condition,
-                ).permute(0, 2, 1, 3, 4)
-            else:
-                if classify_mode:
-                    flow_pred, logits = self.model(
-                        noisy_image_or_video.permute(0, 2, 1, 3, 4),
-                        t=input_timestep, context=prompt_embeds,
-                        seq_len=seq_len,
-                        classify_mode=True,
-                        register_tokens=self._register_tokens,
-                        cls_pred_branch=self._cls_pred_branch,
-                        gan_ca_blocks=self._gan_ca_blocks,
-                        concat_time_embeddings=concat_time_embeddings,
-                        memory_condition = memory_condition,
-                    )
-                    flow_pred = flow_pred.permute(0, 2, 1, 3, 4)
-                else:
-                    flow_pred = self.model(
-                        noisy_image_or_video.permute(0, 2, 1, 3, 4),
-                        t=input_timestep, context=prompt_embeds,
-                        seq_len=seq_len,
-                        memory_condition = memory_condition,
-                    ).permute(0, 2, 1, 3, 4)
+            flow_pred = self.model(
+                noisy_image_or_video,
+                t=input_timestep, context=prompt_embeds,
+                seq_len=seq_len,
+                memory_condition = memory_condition,
+            )[0]
 
-        pred_x0 = self._convert_flow_pred_to_x0(
-            flow_pred=flow_pred.flatten(0, 1),
-            xt=noisy_image_or_video.flatten(0, 1),
-            timestep=timestep.flatten(0, 1)
-        ).unflatten(0, flow_pred.shape[:2])
+        # pred_x0 = self._convert_flow_pred_to_x0(
+        #     flow_pred=flow_pred.flatten(0, 1),
+        #     xt=noisy_image_or_video.flatten(0, 1),
+        #     timestep=timestep.flatten(0, 1)
+        # ).unflatten(0, flow_pred.shape[:2])
 
-        if logits is not None:
-            return flow_pred, pred_x0, logits
-
-        return flow_pred, pred_x0
+        if return_x0:
+            pred_x0 = self.sample_scheduler.step(
+                flow_pred.unsqueeze(0),
+                t,
+                noisy_image_or_video.unsqueeze(0),
+                return_dict=False)[0]
+            return flow_pred, pred_x0
+        else:
+            return flow_pred
 
     def get_scheduler(self) -> SchedulerInterface:
         """

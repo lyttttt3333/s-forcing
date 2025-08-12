@@ -484,8 +484,6 @@ class Head(nn.Module):
             x(Tensor): Shape [B, L1, C]
             e(Tensor): Shape [B, L1, C]
         """
-        print("e shape", e.shape)
-        print("x shape", x.shape)
         e = (self.modulation.unsqueeze(0) + e.unsqueeze(2)).chunk(2, dim=2)
         x = (
             self.head(
@@ -645,10 +643,6 @@ class WanModel(ModelMixin, ConfigMixin):
         *args,
         **kwargs
     ):
-        # if kwargs.get('classify_mode', False) is True:
-        # kwargs.pop('classify_mode')
-        # return self._forward_classify(*args, **kwargs)
-        # else:
         return self._forward(*args, **kwargs)
 
     def _forward(
@@ -657,7 +651,6 @@ class WanModel(ModelMixin, ConfigMixin):
         t,
         context,
         seq_len,
-        classify_mode=False,
         concat_time_embeddings=False,
         register_tokens=None,
         cls_pred_branch=None,
@@ -789,7 +782,7 @@ class WanModel(ModelMixin, ConfigMixin):
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
-        return torch.stack(x)
+        return [u.float() for u in x]
 
     # def _forward_classify(
     #     self,
