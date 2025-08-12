@@ -525,6 +525,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         self.get_scheduler()
 
     def generate_from_latent(self, frame_token, text_token, uncond_token, device, memory_token = None):
+        import math
 
         context_null = uncond_token
         context = text_token
