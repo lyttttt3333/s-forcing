@@ -536,7 +536,8 @@ class WanDiffusionWrapper(torch.nn.Module):
         self.device = device
 
         noise = torch.randn(
-            21, 48,
+            48,
+            21,
             44,
             78,
             dtype=torch.bfloat16,
