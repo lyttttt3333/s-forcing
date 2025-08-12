@@ -715,6 +715,8 @@ class WanModel(ModelMixin, ConfigMixin):
         # with amp.autocast(dtype=torch.float32):
         with torch.amp.autocast('cuda'):
             bt = t.size(0)
+            print("t before flatten:", t.shape)
+            print("bt:", bt, "seq_len:", seq_len)
             t = t.flatten()
             e = self.time_embedding(
                 sinusoidal_embedding_1d(self.freq_dim,
