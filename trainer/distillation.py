@@ -474,6 +474,7 @@ class Trainer:
 
             if True:
                 batch = next(self.dataloader)
+                batch = self.load_batch(batch)
                 uncond_token = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
                 print(uncond_token.shape)
                 self.model.real_score.generate_from_latent(
