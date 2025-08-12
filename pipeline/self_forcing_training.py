@@ -77,7 +77,7 @@ class SelfForcingTrainingPipeline:
         #     # Using a [1, 4, 4, 4, 4, 4, ...] model to generate a video without image conditioning
         #     assert (num_frames - 1) % self.num_frame_per_block == 0
         #     num_blocks = (num_frames - 1) // self.num_frame_per_block
-        num_input_frames = initial_latent.shape[1] if initial_latent is not None else 0
+        # num_input_frames = initial_latent.shape[1] if initial_latent is not None else 0
         # num_output_frames = num_frames + num_input_frames  # add the initial latent frames
         num_output_frames = num_frames
         output = torch.zeros(
@@ -155,9 +155,14 @@ class SelfForcingTrainingPipeline:
             print("noisy input shape",noisy_input.shape)
 
             if block_index == 0 and initial_latent is not None:
+                initial_latent = initial_latent.unsqueeze(0)
                 mask = torch.ones_like(noisy_input)
-                mask[:, 0] = 0
-                noisey_input = noisy_input * mask + initial_latent * (1-mask)
+                mask[:,:, 0] = 0
+                noisy_input = noisy_input * mask + initial_latent * (1-mask)
+                print("##########")
+                print("initial latent shape",initial_latent.shape)
+            print("masked noisy input shape",noisy_input.shape)
+
 
             # Step 3.1: Spatial denoising loop
             for index, current_timestep in enumerate(self.denoising_step_list):
