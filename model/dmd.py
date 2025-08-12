@@ -425,7 +425,6 @@ class DMD(SelfForcingModel):
                 ])
                 timestep = temp_ts.unsqueeze(0)
                 print("time_step",timestep.shape)
-                print(timestep)
                 print("latent", latent.shape)
 
                 # noise_pred_cond = self.model(
