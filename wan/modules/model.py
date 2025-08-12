@@ -482,12 +482,14 @@ class Head(nn.Module):
         r"""
         Args:
             x(Tensor): Shape [B, L1, C]
-            e(Tensor): Shape [B, C]
+            e(Tensor): Shape [B, L1, C]
         """
-        # assert e.dtype == torch.float32
-        # with amp.autocast(dtype=torch.float32):
-        e = (self.modulation + e.unsqueeze(1)).chunk(2, dim=1)
-        x = (self.head(self.norm(x) * (1 + e[1]) + e[0]))
+        print("e shape", e.shape)
+        print("x shape", x.shape)
+        e = (self.modulation.unsqueeze(0) + e.unsqueeze(2)).chunk(2, dim=2)
+        x = (
+            self.head(
+                self.norm(x) * (1 + e[1].squeeze(2)) + e[0].squeeze(2)))
         return x
 
 
