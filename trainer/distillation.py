@@ -395,6 +395,7 @@ class Trainer:
 
         # Step 3: Store gradients for the generator (if training the generator)
         if train_generator:
+            print("################### Beginning generator training step")
             generator_loss, generator_log_dict = self.model.generator_loss(
                 image_or_video_shape=image_or_video_shape,
                 conditional_dict=conditional_dict,
@@ -415,6 +416,7 @@ class Trainer:
         else:
             generator_log_dict = {}
 
+        print("################### Beginning critic training step")
         # Step 4: Store gradients for the critic (if training the critic)
         critic_loss, critic_log_dict = self.model.critic_loss(
             image_or_video_shape=image_or_video_shape,

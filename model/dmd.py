@@ -56,7 +56,7 @@ class DMD(SelfForcingModel):
         estimated_clean_image_or_video: torch.Tensor,
         timestep: torch.Tensor,
         conditional_dict: dict, unconditional_dict: dict,
-        normalization: bool = True
+        normalization: bool = True,
     ) -> Tuple[torch.Tensor, dict]:
         """
         Compute the KL grad (eq 7 in https://arxiv.org/abs/2311.18828).
@@ -75,14 +75,16 @@ class DMD(SelfForcingModel):
         _, pred_fake_image_cond = self.fake_score(
             noisy_image_or_video=noisy_image_or_video,
             conditional_dict=conditional_dict,
-            timestep=timestep
+            timestep=timestep,
+            memory_condition=True,
         )
 
         if self.fake_guidance_scale != 0.0:
             _, pred_fake_image_uncond = self.fake_score(
                 noisy_image_or_video=noisy_image_or_video,
                 conditional_dict=unconditional_dict,
-                timestep=timestep
+                timestep=timestep,
+                memory_condition=False,
             )
             pred_fake_image = pred_fake_image_cond + (
                 pred_fake_image_cond - pred_fake_image_uncond
@@ -96,13 +98,15 @@ class DMD(SelfForcingModel):
         _, pred_real_image_cond = self.real_score(
             noisy_image_or_video=noisy_image_or_video,
             conditional_dict=conditional_dict,
-            timestep=timestep
+            timestep=timestep,
+            memory_condition=True,
         )
 
         _, pred_real_image_uncond = self.real_score(
             noisy_image_or_video=noisy_image_or_video,
             conditional_dict=unconditional_dict,
-            timestep=timestep
+            timestep=timestep,
+            memory_condition=False,
         )
 
         pred_real_image = pred_real_image_cond + (
@@ -132,7 +136,7 @@ class DMD(SelfForcingModel):
         unconditional_dict: dict,
         gradient_mask: Optional[torch.Tensor] = None,
         denoised_timestep_from: int = 0,
-        denoised_timestep_to: int = 0
+        denoised_timestep_to: int = 0,
     ) -> Tuple[torch.Tensor, dict]:
         """
         Compute the DMD loss (eq 7 in https://arxiv.org/abs/2311.18828).
@@ -182,7 +186,7 @@ class DMD(SelfForcingModel):
                 estimated_clean_image_or_video=original_latent,
                 timestep=timestep,
                 conditional_dict=conditional_dict,
-                unconditional_dict=unconditional_dict
+                unconditional_dict=unconditional_dict,
             )
 
         if gradient_mask is not None:
@@ -224,6 +228,8 @@ class DMD(SelfForcingModel):
             memory_token=memory_token,
         )
 
+        conditional_dict["state"] = memory_token[-1].unsqueeze(0)
+
         # Step 2: Compute the DMD loss
         dmd_loss, dmd_log_dict = self.compute_distribution_matching_loss(
             image_or_video=pred_image,
@@ -231,7 +237,7 @@ class DMD(SelfForcingModel):
             unconditional_dict=unconditional_dict,
             gradient_mask=gradient_mask,
             denoised_timestep_from=denoised_timestep_from,
-            denoised_timestep_to=denoised_timestep_to
+            denoised_timestep_to=denoised_timestep_to,
         )
 
         return dmd_loss, dmd_log_dict
