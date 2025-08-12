@@ -68,17 +68,18 @@ class SelfForcingTrainingPipeline:
             **conditional_dict
     ) -> torch.Tensor:
         batch_size, num_frames, num_channels, height, width = noise.shape
-        if not self.independent_first_frame or (self.independent_first_frame and initial_latent is not None):
-            # If the first frame is independent and the first frame is provided, then the number of frames in the
-            # noise should still be a multiple of num_frame_per_block
-            assert num_frames % self.num_frame_per_block == 0
-            num_blocks = num_frames // self.num_frame_per_block
-        else:
-            # Using a [1, 4, 4, 4, 4, 4, ...] model to generate a video without image conditioning
-            assert (num_frames - 1) % self.num_frame_per_block == 0
-            num_blocks = (num_frames - 1) // self.num_frame_per_block
+        # if not self.independent_first_frame or (self.independent_first_frame and initial_latent is not None):
+        #     # If the first frame is independent and the first frame is provided, then the number of frames in the
+        #     # noise should still be a multiple of num_frame_per_block
+        assert num_frames % self.num_frame_per_block == 0
+        num_blocks = num_frames // self.num_frame_per_block
+        # else:
+        #     # Using a [1, 4, 4, 4, 4, 4, ...] model to generate a video without image conditioning
+        #     assert (num_frames - 1) % self.num_frame_per_block == 0
+        #     num_blocks = (num_frames - 1) // self.num_frame_per_block
         num_input_frames = initial_latent.shape[1] if initial_latent is not None else 0
-        num_output_frames = num_frames + num_input_frames  # add the initial latent frames
+        # num_output_frames = num_frames + num_input_frames  # add the initial latent frames
+        num_output_frames = num_frames
         output = torch.zeros(
             [batch_size, num_output_frames, num_channels, height, width],
             device=noise.device,
@@ -124,20 +125,20 @@ class SelfForcingTrainingPipeline:
         self.crossattn_cache = None
 
         current_start_frame = 0
-        if initial_latent is not None:
-            timestep = torch.ones([batch_size, 1], device=noise.device, dtype=torch.int64) * 0
-            # Assume num_input_frames is 1 + self.num_frame_per_block * num_input_blocks
-            output[:, :1] = initial_latent
-            with torch.no_grad():
-                self.generator(
-                    noisy_image_or_video=initial_latent,
-                    conditional_dict=conditional_dict,
-                    timestep=timestep * 0,
-                    kv_cache=self.kv_cache1,
-                    crossattn_cache=self.crossattn_cache,
-                    current_start=current_start_frame * self.frame_seq_length
-                )
-            current_start_frame += 1
+        # if initial_latent is not None:
+        #     timestep = torch.ones([batch_size, 1], device=noise.device, dtype=torch.int64) * 0
+        #     # Assume num_input_frames is 1 + self.num_frame_per_block * num_input_blocks
+        #     output[:, :1] = initial_latent
+        #     with torch.no_grad():
+        #         self.generator(
+        #             noisy_image_or_video=initial_latent,
+        #             conditional_dict=conditional_dict,
+        #             timestep=timestep * 0,
+        #             kv_cache=self.kv_cache1,
+        #             crossattn_cache=self.crossattn_cache,
+        #             current_start=current_start_frame * self.frame_seq_length
+        #         )
+        #     current_start_frame += 1
 
         # Step 3: Temporal denoising loop
         all_num_frames = [self.num_frame_per_block] * num_blocks
@@ -151,6 +152,11 @@ class SelfForcingTrainingPipeline:
         for block_index, current_num_frames in enumerate(all_num_frames):
             noisy_input = noise[
                 :, current_start_frame - num_input_frames:current_start_frame + current_num_frames - num_input_frames]
+
+            if block_index == 0 and initial_latent is not None:
+                mask = torch.ones_like(noisy_input)
+                mask[:, 0] = 0
+                noisey_input = noisy_input * mask + initial_latent * (1-mask)
 
             # Step 3.1: Spatial denoising loop
             for index, current_timestep in enumerate(self.denoising_step_list):
@@ -206,6 +212,8 @@ class SelfForcingTrainingPipeline:
                             memory_condition = True
                         )
                     break
+                if block_index == 0 and initial_latent is not None:
+                    noisey_input = noisy_input * mask + initial_latent * (1-mask)
             
             self.updata_3d_state(conditional_dict, idx = block_index, memory_token = memory_token)
                 
