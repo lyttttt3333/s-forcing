@@ -524,13 +524,15 @@ class WanDiffusionWrapper(torch.nn.Module):
         """
         self.get_scheduler()
 
-    def generate_from_latent(self, frame_token, text_token, uncond_token, memory_token = None):
+    def generate_from_latent(self, frame_token, text_token, uncond_token, device, memory_token = None):
         context_null = uncond_token
         context = text_token
         z = frame_token
         sample_solver = 'unipc'
         num_train_timesteps = 1000
         sampling_steps = 50
+        shift = 5
+        self.device = device
 
         with (
                 torch.amp.autocast('cuda'),

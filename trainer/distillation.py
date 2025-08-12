@@ -481,6 +481,7 @@ class Trainer:
                     text_token = batch["text_token"],
                     memory_token = batch["memory_token"],
                     uncond_token = uncond_token,
+                    device = self.device
                 )
 
             # Train the generator
