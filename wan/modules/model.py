@@ -713,9 +713,17 @@ class WanModel(ModelMixin, ConfigMixin):
 
         # time embeddings
         # with amp.autocast(dtype=torch.float32):
-        e = self.time_embedding(
-            sinusoidal_embedding_1d(self.freq_dim, t).type_as(x))
-        e0 = self.time_projection(e).unflatten(1, (6, self.dim))
+        with torch.amp.autocast('cuda'):
+            bt = t.size(0)
+            t = t.flatten()
+            e = self.time_embedding(
+                sinusoidal_embedding_1d(self.freq_dim,
+                                        t).unflatten(0, (bt, seq_len)).float())
+            e0 = self.time_projection(e).unflatten(2, (6, self.dim))
+
+        # e = self.time_embedding(
+        #     sinusoidal_embedding_1d(self.freq_dim, t).type_as(x))
+        # e0 = self.time_projection(e).unflatten(1, (6, self.dim))
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
 
         # context
@@ -761,17 +769,6 @@ class WanModel(ModelMixin, ConfigMixin):
                 return module(*inputs, **kwargs)
             return custom_forward
 
-        # TODO: Tune the number of blocks for feature extraction
-        final_x = None
-        if classify_mode:
-            assert register_tokens is not None
-            assert gan_ca_blocks is not None
-            assert cls_pred_branch is not None
-
-            final_x = []
-            registers = repeat(register_tokens(), "n d -> b n d", b=x.shape[0])
-            # x = torch.cat([registers, x], dim=1)
-
         gan_idx = 0
         for ii, block in enumerate(self.blocks):
             if torch.is_grad_enabled() and self.gradient_checkpointing:
@@ -783,27 +780,11 @@ class WanModel(ModelMixin, ConfigMixin):
             else:
                 x = block(x, **kwargs)
 
-            if classify_mode and ii in [13, 21, 29]:
-                gan_token = registers[:, gan_idx: gan_idx + 1]
-                final_x.append(gan_ca_blocks[gan_idx](x, gan_token))
-                gan_idx += 1
-
-        if classify_mode:
-            final_x = torch.cat(final_x, dim=1)
-            if concat_time_embeddings:
-                final_x = cls_pred_branch(torch.cat([final_x, 10 * e[:, None, :]], dim=1).view(final_x.shape[0], -1))
-            else:
-                final_x = cls_pred_branch(final_x.view(final_x.shape[0], -1))
-
         # head
         x = self.head(x, e)
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
-
-        if classify_mode:
-            return torch.stack(x), final_x
-
         return torch.stack(x)
 
     # def _forward_classify(
