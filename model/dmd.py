@@ -2,8 +2,16 @@ from pipeline import SelfForcingTrainingPipeline
 import torch.nn.functional as F
 from typing import Optional, Tuple
 import torch
+from tqdm import tqdm
+
+import torch.cuda.amp as amp
+import torch.nn.functional as F
+import torch.distributed as dist
+from einops import rearrange
 
 from model.base import SelfForcingModel
+from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
+import math
 
 
 class DMD(SelfForcingModel):
@@ -95,8 +103,8 @@ class DMD(SelfForcingModel):
         # Step 2: Compute the real score
         # We compute the conditional and unconditional prediction
         # and add them together to achieve cfg (https://arxiv.org/abs/2207.12598)
-        print("#########", noisy_image_or_video.shape)
-        print("#########", timestep.shape)
+        # print("#########", noisy_image_or_video.shape)
+        # print("#########", timestep.shape)
         _, pred_real_image_cond = self.real_score(
             noisy_image_or_video=noisy_image_or_video,
             conditional_dict=conditional_dict,
@@ -353,3 +361,118 @@ class DMD(SelfForcingModel):
         }
 
         return denoising_loss, critic_log_dict
+
+    
+    def generate_from_latent(self, frame_token, uncond_dict, cond_dict, device):
+        z = frame_token
+        sample_solver = 'unipc'
+        num_train_timesteps = 1000
+        sampling_steps = 50
+        shift = 5
+        sp_size = 1
+        patch_size = (1, 2, 2)
+        vae_stride = (4, 16, 16)
+        ow = 1248 
+        oh = 704
+        F = 84
+        
+        seq_len = ((F - 1) // vae_stride[0] + 1) * (
+            oh // vae_stride[1]) * (ow // vae_stride[2]) // (
+                patch_size[1] * patch_size[2])
+        seq_len = int(math.ceil(seq_len / sp_size)) * sp_size
+        print(seq_len)
+
+        noise = torch.randn(
+            48, (F - 1) // vae_stride[0] + 1,
+            oh // vae_stride[1],
+            ow // vae_stride[2],
+            dtype=torch.bfloat16,
+            device=device)
+
+        with (
+                torch.amp.autocast('cuda'),
+                torch.no_grad(),
+        ):
+
+            if sample_solver == 'unipc':
+                sample_scheduler = FlowUniPCMultistepScheduler(
+                    num_train_timesteps=num_train_timesteps,
+                    shift=1,
+                    use_dynamic_shifting=False)
+                sample_scheduler.set_timesteps(
+                    sampling_steps, device=device, shift=shift)
+                timesteps = sample_scheduler.timesteps
+            else:
+                raise
+
+            # sample videos
+            latent = noise
+            mask1, mask2 = masks_like([noise], zero=True)
+            latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
+
+            for _, t in enumerate(tqdm(timesteps)):
+                print("latent", latent.shape)
+                latent_model_input = [latent.to(device)]
+                timestep = [t]
+
+                timestep = torch.stack(timestep).to(device)
+
+                temp_ts = (mask2[0][0][:, ::2, ::2] * timestep).flatten()
+                temp_ts = torch.cat([
+                    temp_ts,
+                    temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
+                ])
+                timestep = temp_ts.unsqueeze(0)
+                print("time_step",timestep.shape)
+
+                # noise_pred_cond = self.model(
+                #     x = latent_model_input, t=timestep, **arg_c)[0]
+                # # if offload_model:
+                # #     torch.cuda.empty_cache()
+                # noise_pred_uncond = self.model(
+                #     x = latent_model_input, t=timestep, **arg_null)[0]
+                # # if offload_model:
+                # #     torch.cuda.empty_cache()
+                # noise_pred = noise_pred_uncond + guide_scale * (
+                #     noise_pred_cond - noise_pred_uncond)
+
+
+                _, pred_real_image_cond = self.real_score(
+                    noisy_image_or_video=latent_model_input,
+                    conditional_dict=cond_dict,
+                    timestep=timestep,
+                    memory_condition=False,
+                )
+
+                _, pred_real_image_uncond = self.real_score(
+                    noisy_image_or_video=latent_model_input,
+                    conditional_dict=uncond_dict,
+                    timestep=timestep,
+                    memory_condition=False,
+                )
+
+                pred_real_image = pred_real_image_cond + (
+                    pred_real_image_cond - pred_real_image_uncond
+                ) * self.real_guidance_scale
+
+                temp_x0 = sample_scheduler.step(
+                    noise_pred.unsqueeze(0),
+                    t,
+                    latent.unsqueeze(0),
+                    return_dict=False,
+                    generator=seed_g)[0]
+                latent = temp_x0.squeeze(0)
+                latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
+
+                x0 = [latent]
+                del latent_model_input, timestep
+
+                videos = self.vae.decode_to_pixel(x0)
+
+        del noise, latent, x0
+        del sample_scheduler
+
+        if dist.is_initialized():
+            dist.barrier()
+
+        return videos[0] if self.rank == 0 else None

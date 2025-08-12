@@ -2,7 +2,6 @@ import types
 from typing import List, Optional
 import torch
 from torch import nn
-from tqdm import tqdm
 
 import logging
 
@@ -12,7 +11,6 @@ import torch.distributed as dist
 from einops import rearrange
 
 from utils.scheduler import SchedulerInterface, FlowMatchScheduler
-from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 from wan.modules.tokenizers import HuggingfaceTokenizer
 from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 from wan.modules.vae import _video_vae
@@ -525,111 +523,4 @@ class WanDiffusionWrapper(torch.nn.Module):
         """
         self.get_scheduler()
 
-    def generate_from_latent(self, frame_token, text_token, uncond_token, device, memory_token = None):
-        import math
 
-        context_null = uncond_token
-        context = text_token
-        z = frame_token
-        sample_solver = 'unipc'
-        num_train_timesteps = 1000
-        sampling_steps = 50
-        shift = 5
-        sp_size = 1
-        patch_size = (1, 2, 2)
-        vae_stride = (4, 16, 16)
-        ow = 1248 
-        oh = 704
-        F = 84
-        
-        seq_len = ((F - 1) // vae_stride[0] + 1) * (
-            oh // vae_stride[1]) * (ow // vae_stride[2]) // (
-                patch_size[1] * patch_size[2])
-        seq_len = int(math.ceil(seq_len / sp_size)) * sp_size
-        print(seq_len)
-
-        noise = torch.randn(
-            48, (F - 1) // vae_stride[0] + 1,
-            oh // vae_stride[1],
-            ow // vae_stride[2],
-            dtype=torch.bfloat16,
-            device=device)
-
-        with (
-                torch.amp.autocast('cuda'),
-                torch.no_grad(),
-        ):
-
-            if sample_solver == 'unipc':
-                sample_scheduler = FlowUniPCMultistepScheduler(
-                    num_train_timesteps=num_train_timesteps,
-                    shift=1,
-                    use_dynamic_shifting=False)
-                sample_scheduler.set_timesteps(
-                    sampling_steps, device=device, shift=shift)
-                timesteps = sample_scheduler.timesteps
-            else:
-                raise
-
-            # sample videos
-            latent = noise
-            mask1, mask2 = masks_like([noise], zero=True)
-            latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
-
-            arg_c = {
-                'context': [context],
-                'seq_len': seq_len,
-            }
-
-            arg_null = {
-                'context': context_null,
-                'seq_len': seq_len,
-            }
-
-            for _, t in enumerate(tqdm(timesteps)):
-                print("latent", latent.shape)
-                latent_model_input = [latent.to(device)]
-                timestep = [t]
-
-                timestep = torch.stack(timestep).to(device)
-
-                temp_ts = (mask2[0][0][:, ::2, ::2] * timestep).flatten()
-                temp_ts = torch.cat([
-                    temp_ts,
-                    temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
-                ])
-                timestep = temp_ts.unsqueeze(0)
-                print("time_step",timestep.shape)
-
-                noise_pred_cond = self.model(
-                    x = latent_model_input, t=timestep, **arg_c)[0]
-                # if offload_model:
-                #     torch.cuda.empty_cache()
-                noise_pred_uncond = self.model(
-                    x = latent_model_input, t=timestep, **arg_null)[0]
-                # if offload_model:
-                #     torch.cuda.empty_cache()
-                noise_pred = noise_pred_uncond + guide_scale * (
-                    noise_pred_cond - noise_pred_uncond)
-
-                temp_x0 = sample_scheduler.step(
-                    noise_pred.unsqueeze(0),
-                    t,
-                    latent.unsqueeze(0),
-                    return_dict=False,
-                    generator=seed_g)[0]
-                latent = temp_x0.squeeze(0)
-                latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
-
-                x0 = [latent]
-                del latent_model_input, timestep
-
-                videos = self.vae.decode_to_pixel(x0)
-
-        del noise, latent, x0
-        del sample_scheduler
-
-        if dist.is_initialized():
-            dist.barrier()
-
-        return videos[0] if self.rank == 0 else None

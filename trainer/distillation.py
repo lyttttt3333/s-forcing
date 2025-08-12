@@ -475,13 +475,17 @@ class Trainer:
             if False:
                 batch = next(self.dataloader)
                 batch = self.load_batch(batch)
-                uncond_token = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
-                print(uncond_token.shape)
-                self.model.real_score.generate_from_latent(
+
+                embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
+                unconditional_dict = {'prompt_embeds': embed}
+
+                conditional_dict = {'prompt_embeds': batch["text_token"],
+                                    "state": batch["memory_token"]}
+                                    
+                self.model.generate_from_latent(
                     frame_token = batch["frame_token"],
-                    text_token = batch["text_token"],
-                    memory_token = batch["memory_token"],
-                    uncond_token = uncond_token,
+                    uncond_dict = unconditional_dict,
+                    cond_dict = conditional_dict,
                     device = self.device
                 )
 
