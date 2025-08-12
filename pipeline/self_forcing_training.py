@@ -152,7 +152,7 @@ class SelfForcingTrainingPipeline:
         for block_index, current_num_frames in enumerate(all_num_frames):
             noisy_input = noise[
                 :, current_start_frame : current_start_frame + current_num_frames]
-            print("noisy input shape",noisey_input.shape)
+            print("noisy input shape",noisy_input.shape)
 
             if block_index == 0 and initial_latent is not None:
                 mask = torch.ones_like(noisy_input)
