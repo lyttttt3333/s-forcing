@@ -7,14 +7,45 @@ import logging
 
 import torch.cuda.amp as amp
 import torch.nn.functional as F
+import torch.distributed as dist
 from einops import rearrange
 
 from utils.scheduler import SchedulerInterface, FlowMatchScheduler
+from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 from wan.modules.tokenizers import HuggingfaceTokenizer
 from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 from wan.modules.vae import _video_vae
 from wan.modules.t5 import umt5_xxl
 from wan.modules.causal_model import CausalWanModel
+
+def masks_like(tensor, zero=False, generator=None, p=0.2):
+    assert isinstance(tensor, list)
+    out1 = [torch.ones(u.shape, dtype=u.dtype, device=u.device) for u in tensor]
+
+    out2 = [torch.ones(u.shape, dtype=u.dtype, device=u.device) for u in tensor]
+
+    if zero:
+        if generator is not None:
+            for u, v in zip(out1, out2):
+                random_num = torch.rand(
+                    1, generator=generator, device=generator.device).item()
+                if random_num < p:
+                    u[:, 0] = torch.normal(
+                        mean=-3.5,
+                        std=0.5,
+                        size=(1,),
+                        device=u.device,
+                        generator=generator).expand_as(u[:, 0]).exp()
+                    v[:, 0] = torch.zeros_like(v[:, 0])
+                else:
+                    u[:, 0] = u[:, 0]
+                    v[:, 0] = v[:, 0]
+        else:
+            for u, v in zip(out1, out2):
+                u[:, 0] = torch.zeros_like(u[:, 0])
+                v[:, 0] = torch.zeros_like(v[:, 0])
+
+    return out1, out2
 
 
 class WanTextEncoder(torch.nn.Module):
@@ -492,3 +523,88 @@ class WanDiffusionWrapper(torch.nn.Module):
         We can gradually add more methods here if needed.
         """
         self.get_scheduler()
+
+    def generate_from_latent(self, frame_token, prompt_token, uncond_token, memory_token = None):
+        context_null = uncond_token
+        context = prompt_token
+        z = frame_token
+        sample_solver = 'unipc'
+        num_train_timesteps = 1000
+
+        with (
+                torch.amp.autocast('cuda'),
+                torch.no_grad(),
+                no_sync(),
+        ):
+
+            if sample_solver == 'unipc':
+                sample_scheduler = FlowUniPCMultistepScheduler(
+                    num_train_timesteps=num_train_timesteps,
+                    shift=1,
+                    use_dynamic_shifting=False)
+                sample_scheduler.set_timesteps(
+                    sampling_steps, device=self.device, shift=shift)
+                timesteps = sample_scheduler.timesteps
+            else:
+                raise
+
+            # sample videos
+            latent = noise
+            mask1, mask2 = masks_like([noise], zero=True)
+            latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
+
+            arg_c = {
+                'context': [context],
+                'seq_len': seq_len,
+            }
+
+            arg_null = {
+                'context': context_null,
+                'seq_len': seq_len,
+            }
+
+            for _, t in enumerate(tqdm(timesteps)):
+                latent_model_input = [latent.to(self.device)]
+                timestep = [t]
+
+                timestep = torch.stack(timestep).to(self.device)
+
+                temp_ts = (mask2[0][0][:, ::2, ::2] * timestep).flatten()
+                temp_ts = torch.cat([
+                    temp_ts,
+                    temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
+                ])
+                timestep = temp_ts.unsqueeze(0)
+
+                noise_pred_cond = self.model(
+                    latent_model_input, t=timestep, **arg_c)[0]
+                if offload_model:
+                    torch.cuda.empty_cache()
+                noise_pred_uncond = self.model(
+                    latent_model_input, t=timestep, **arg_null)[0]
+                if offload_model:
+                    torch.cuda.empty_cache()
+                noise_pred = noise_pred_uncond + guide_scale * (
+                    noise_pred_cond - noise_pred_uncond)
+
+                temp_x0 = sample_scheduler.step(
+                    noise_pred.unsqueeze(0),
+                    t,
+                    latent.unsqueeze(0),
+                    return_dict=False,
+                    generator=seed_g)[0]
+                latent = temp_x0.squeeze(0)
+                latent = (1. - mask2[0]) * z[0] + mask2[0] * latent
+
+                x0 = [latent]
+                del latent_model_input, timestep
+
+                videos = self.vae.decode_to_pixel(x0)
+
+        del noise, latent, x0
+        del sample_scheduler
+
+        if dist.is_initialized():
+            dist.barrier()
+
+        return videos[0] if self.rank == 0 else None

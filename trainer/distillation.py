@@ -472,6 +472,17 @@ class Trainer:
             print("Training step %d" % self.step)
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
+            if True:
+                batch = next(self.dataloader)
+                uncond_token = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
+                print(uncond_token.shape)
+                self.model.real_score.generate_from_latent(
+                    frame_token = batch["frame_token"],
+                    text_token = batch["text_token"],
+                    memory_token = batch["memory_token"],
+                    uncond_token = uncond_token,
+                )
+
             # Train the generator
             if TRAIN_GENERATOR:
                 self.generator_optimizer.zero_grad(set_to_none=True)
