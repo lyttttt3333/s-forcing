@@ -407,7 +407,7 @@ class DMD(SelfForcingModel):
 
             # sample videos
             latent = noise
-            mask = torch.ones_like(noisy_generated_image)
+            mask = torch.ones_like(noise)
             mask[:, 0] = 0
             latent = (1. - mask[0]) * z[0] + mask[0] * latent
 
