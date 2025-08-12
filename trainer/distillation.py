@@ -472,7 +472,7 @@ class Trainer:
             print("Training step %d" % self.step)
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
-            if True:
+            if False:
                 batch = next(self.dataloader)
                 batch = self.load_batch(batch)
                 uncond_token = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
