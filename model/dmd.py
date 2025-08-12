@@ -495,8 +495,7 @@ class DMD(SelfForcingModel):
                     pred_real_image.unsqueeze(0),
                     t,
                     latent_model_input.unsqueeze(0),
-                    return_dict=False,
-                    generator=seed_g)[0]
+                    return_dict=False)[0]
                 latent = temp_x0.squeeze(0)
                 latent = (1. - mask) * z[0] + mask * latent
 
