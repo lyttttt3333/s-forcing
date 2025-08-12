@@ -472,7 +472,7 @@ class Trainer:
             print("Training step %d" % self.step)
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
-            if False:
+            if True:
                 batch = next(self.dataloader)
                 batch = self.load_batch(batch)
 
@@ -481,7 +481,7 @@ class Trainer:
 
                 conditional_dict = {'prompt_embeds': batch["text_token"],
                                     "state": batch["memory_token"]}
-                                    
+
                 self.model.generate_from_latent(
                     frame_token = batch["frame_token"],
                     uncond_dict = unconditional_dict,
