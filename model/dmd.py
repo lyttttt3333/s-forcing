@@ -448,12 +448,14 @@ class DMD(SelfForcingModel):
                 timestep = [t]
 
                 timestep = torch.stack(timestep).to(device)
-
+                print(f"before {mask.shape}")
                 temp_ts = (mask[0][:, ::2, ::2] * timestep).flatten()
+                print(f"first stage {temp_ts.shape}")
                 temp_ts = torch.cat([
                     temp_ts,
                     temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
                 ])
+                print(f"second stage {temp_ts.shape}")
                 timestep = temp_ts.unsqueeze(0)
                 print("##################time_step",timestep.shape)
                 print("##################", timestep)
