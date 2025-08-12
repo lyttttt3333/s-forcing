@@ -602,11 +602,11 @@ class WanDiffusionWrapper(torch.nn.Module):
                 print("time_step",timestep.shape)
 
                 noise_pred_cond = self.model(
-                    latent_model_input, t=timestep, **arg_c)[0]
+                    x = latent_model_input, t=timestep, **arg_c)[0]
                 # if offload_model:
                 #     torch.cuda.empty_cache()
                 noise_pred_uncond = self.model(
-                    latent_model_input, t=timestep, **arg_null)[0]
+                    x = latent_model_input, t=timestep, **arg_null)[0]
                 # if offload_model:
                 #     torch.cuda.empty_cache()
                 noise_pred = noise_pred_uncond + guide_scale * (
