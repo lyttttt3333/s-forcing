@@ -412,7 +412,7 @@ class DMD(SelfForcingModel):
             latent = (1. - mask) * z[0] + mask * latent
 
             for _, t in enumerate(tqdm(timesteps)):
-                print("latent", latent.shape)
+
                 latent_model_input = [latent.to(device)]
                 timestep = [t]
 
@@ -425,6 +425,7 @@ class DMD(SelfForcingModel):
                 ])
                 timestep = temp_ts.unsqueeze(0)
                 print("time_step",timestep.shape)
+                print("latent", latent.shape)
 
                 # noise_pred_cond = self.model(
                 #     x = latent_model_input, t=timestep, **arg_c)[0]
