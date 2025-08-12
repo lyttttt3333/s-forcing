@@ -540,7 +540,6 @@ class WanDiffusionWrapper(torch.nn.Module):
             44,
             78,
             dtype=torch.bfloat16,
-            generator=seed_g,
             device=self.device)
 
         with (
