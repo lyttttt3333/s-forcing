@@ -99,7 +99,7 @@ class DMD(SelfForcingModel):
             noisy_image_or_video=noisy_image_or_video,
             conditional_dict=conditional_dict,
             timestep=timestep,
-            memory_condition=True,
+            memory_condition=False,
         )
 
         _, pred_real_image_uncond = self.real_score(
