@@ -525,6 +525,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         self.get_scheduler()
 
     def generate_from_latent(self, frame_token, text_token, uncond_token, device, memory_token = None):
+
         context_null = uncond_token
         context = text_token
         z = frame_token
@@ -533,6 +534,14 @@ class WanDiffusionWrapper(torch.nn.Module):
         sampling_steps = 50
         shift = 5
         self.device = device
+
+        noise = torch.randn(
+            21, 48,
+            44,
+            78,
+            dtype=torch.bfloat16,
+            generator=seed_g,
+            device=self.device)
 
         with (
                 torch.amp.autocast('cuda'),
