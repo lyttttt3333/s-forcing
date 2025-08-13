@@ -1,8 +1,9 @@
-generator_ckpt: checkpoints/self_forcing_dmd.pt
+generator_ckpt: checkpoints/ode_init.pt
 generator_fsdp_wrap_strategy: size
 real_score_fsdp_wrap_strategy: size
 fake_score_fsdp_wrap_strategy: size
-real_name: Wan2.1-T2V-1.3B
+real_name: Wan2.2-TI2V-5B
+fake_name: Wan2.2-TI2V-5B
 text_encoder_fsdp_wrap_strategy: size
 denoising_step_list:
 - 1000
@@ -13,7 +14,7 @@ warp_denoising_step: true # need to remove - 0 in denoising_step_list if warp_de
 ts_schedule: false
 num_train_timestep: 1000
 timestep_shift: 5.0
-guidance_scale: 3.0
+guidance_scale: 5.0
 denoising_loss_type: flow
 mixed_precision: true
 seed: 0
@@ -38,11 +39,11 @@ negative_prompt: '色调艳丽，过曝，静态，细节模糊不清，字幕�
 dfake_gen_update_ratio: 5
 image_or_video_shape:
 - 1
-- 9
-- 16
-- 60
-- 104
-distribution_loss: dmd
+- 21
+- 48
+- 44
+- 78
+distribution_loss: gan
 trainer: score_distillation
 gradient_checkpointing: true
 num_frame_per_block: 3
@@ -50,3 +51,4 @@ load_raw_video: false
 model_kwargs:
   timestep_shift: 5.0
   local_attn_size: 9
+num_class: 2

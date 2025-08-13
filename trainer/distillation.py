@@ -14,7 +14,7 @@ from utils.misc import (
 import torch.distributed as dist
 from torch.nn import ModuleList
 from omegaconf import OmegaConf
-from model import CausVid, DMD, SiD
+from model import CausVid, DMD, SiD, GAN
 import torch
 import wandb
 import time
@@ -109,6 +109,8 @@ class Trainer:
             self.model = DMD(config, device=self.device)
         elif config.distribution_loss == "sid":
             self.model = SiD(config, device=self.device)
+        elif config.distribution_loss == "gan":
+            self.model = GAN(config, device=self.device)
         else:
             raise ValueError("Invalid distribution matching loss")
 
@@ -504,27 +506,13 @@ class Trainer:
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
             MAX_COUNT = 1
-            if 1:
+            if 0:
                 count = 0
                 rank = dist.get_rank()
                 os.makedirs("tmp", exist_ok=True)
                 txt_path = os.path.join("tmp", f"video_info_rank-{rank}.txt")
                 with open(txt_path, "w") as f:
                     batch = next(self.dataloader)
-                    base_name = "8057c4e7-daae-4927-bf90-f608866c45a1"
-                    self.root_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025"
-                    text_token_path = os.path.join(self.root_dir, "text_token")
-                    text_token_path = os.path.join(text_token_path, base_name + ".pth")
-                    memory_token_path = os.path.join(self.root_dir, "memory_token")
-                    memory_token_path = os.path.join(memory_token_path, base_name + ".pth")
-                    frame_token_path = os.path.join(self.root_dir, "frame_token")
-                    frame_token_path = os.path.join(frame_token_path, base_name + ".pth")
-                    batch = {
-                        "text_token": [text_token_path],
-                        "memory_token": [memory_token_path],
-                        "frame_token": [frame_token_path],
-                        "base_name": [base_name],
-                    }
                     batch = self.load_batch(batch)
 
                     embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)

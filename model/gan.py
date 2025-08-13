@@ -19,7 +19,6 @@ class GAN(SelfForcingModel):
         self.same_step_across_blocks = getattr(args, "same_step_across_blocks", True)
         self.concat_time_embeddings = getattr(args, "concat_time_embeddings", False)
         self.num_class = args.num_class
-        self.relativistic_discriminator = getattr(args, "relativistic_discriminator", False)
 
         if self.num_frame_per_block > 1:
             self.generator.model.num_frame_per_block = self.num_frame_per_block
@@ -42,12 +41,8 @@ class GAN(SelfForcingModel):
         self.num_train_timestep = args.num_train_timestep
         self.min_step = int(0.02 * self.num_train_timestep)
         self.max_step = int(0.98 * self.num_train_timestep)
-        if hasattr(args, "real_guidance_scale"):
-            self.real_guidance_scale = args.real_guidance_scale
-            self.fake_guidance_scale = args.fake_guidance_scale
-        else:
-            self.real_guidance_scale = args.guidance_scale
-            self.fake_guidance_scale = 0.0
+        self.real_guidance_scale = args.guidance_scale
+        self.fake_guidance_scale = 0.0
         self.timestep_shift = getattr(args, "timestep_shift", 1.0)
         self.critic_timestep_shift = getattr(args, "critic_timestep_shift", self.timestep_shift)
         self.ts_schedule = getattr(args, "ts_schedule", True)
@@ -163,11 +158,8 @@ class GAN(SelfForcingModel):
         )
         noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
 
-        if not self.relativistic_discriminator:
-            gan_G_loss = F.softplus(-noisy_fake_logit.float()).mean() * self.gan_g_weight
-        else:
-            relative_fake_logit = noisy_fake_logit - noisy_real_logit
-            gan_G_loss = F.softplus(-relative_fake_logit.float()).mean() * self.gan_g_weight
+        relative_fake_logit = noisy_fake_logit - noisy_real_logit
+        gan_G_loss = F.softplus(-relative_fake_logit.float()).mean() * self.gan_g_weight
 
         return gan_G_loss
 
@@ -247,11 +239,8 @@ class GAN(SelfForcingModel):
         )
         noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
 
-        if not self.relativistic_discriminator:
-            gan_D_loss = F.softplus(-noisy_real_logit.float()).mean() + F.softplus(noisy_fake_logit.float()).mean()
-        else:
-            relative_real_logit = noisy_real_logit - noisy_fake_logit
-            gan_D_loss = F.softplus(-relative_real_logit.float()).mean()
+        relative_real_logit = noisy_real_logit - noisy_fake_logit
+        gan_D_loss = F.softplus(-relative_real_logit.float()).mean()
         gan_D_loss = gan_D_loss * self.gan_d_weight
 
         # R1 regularization
