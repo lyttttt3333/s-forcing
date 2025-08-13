@@ -23,11 +23,29 @@ import os
 import imageio
 from tqdm import tqdm
 import torchvision
+import numpy as np
 
-def save_video(frames, save_path, fps, quality=9, ffmpeg_params=None):
+def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
+    """
+    保存一个形状为 [C, T, H, W] 的视频张量到文件
+    video_tensor: torch.Tensor, float32, 值域 [-1, 1] 或 [0, 1]
+    """
+    assert video_tensor.dim() == 4, "video_tensor 必须是 4 维 [C, T, H, W]"
+    
+    # 转到 CPU，避免 GPU 张量直接参与 numpy 转换
+    video_tensor = video_tensor.detach().cpu()
+
+    # [-1, 1] → [0, 255]
+    if video_tensor.min() < 0:
+        video_tensor = (video_tensor + 1) / 2  # [-1,1] → [0,1]
+    video_tensor = (video_tensor * 255).clamp(0, 255).byte()
+
+    # [C, T, H, W] → [T, H, W, C]
+    video_tensor = video_tensor.permute(1, 2, 3, 0).numpy()
+
+    # 保存视频
     writer = imageio.get_writer(save_path, fps=fps, quality=quality, ffmpeg_params=ffmpeg_params)
-    for frame in tqdm(frames, desc="Saving video"):
-        frame = np.array(frame)
+    for frame in tqdm(video_tensor, desc="Saving video"):
         writer.append_data(frame)
     writer.close()
 
@@ -519,7 +537,7 @@ class Trainer:
                     print(video.shape)  # 查看形状，比如 (N, H, W, C)
                     print(video.dtype)  # 查看数据类型
                     print(video.min().item(), video.max().item()) 
-                    video = video.detach().cpu().numpy()
+
                     save_video(video, output_path, fps=15, quality=5)
                 
                     count += 1
