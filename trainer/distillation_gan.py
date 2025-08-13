@@ -213,12 +213,9 @@ class Trainer:
         )
 
         # Step 3: Initialize the dataloader
-        if self.config.i2v:
-            meta_path = self.config.meta_path
-            root_dir = self.config.root_dir
-            dataset = MixedDataset(meta_path, root_dir)
-        else:
-            dataset = TextDataset(config.data_path)
+        meta_path = self.config.meta_path
+        root_dir = self.config.root_dir
+        dataset = MixedDataset(meta_path, root_dir)
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset, shuffle=True, drop_last=True)
         dataloader = torch.utils.data.DataLoader(
@@ -277,63 +274,11 @@ class Trainer:
         os.makedirs(save_path_generator, exist_ok=True)
         self.model.fake_score.save_pretrained(save_path_score)
         self.model.generator.save_pretrained(save_path_generator)
-        # generator_state_dict = fsdp_state_dict(
-        #     self.model.generator)
-        # critic_state_dict = fsdp_state_dict(
-        #     self.model.fake_score)
-
-        # if self.config.ema_start_step < self.step:
-        #     state_dict = {
-        #         "generator": generator_state_dict,
-        #         "critic": critic_state_dict,
-        #         "generator_ema": self.generator_ema.state_dict(),
-        #     }
-        # else:
-        #     state_dict = {
-        #         "generator": generator_state_dict,
-        #         "critic": critic_state_dict,
-        #     }
-
-        # if self.is_main_process:
-        #     os.makedirs(os.path.join(self.output_path,
-        #                 f"checkpoint_model_{self.step:06d}"), exist_ok=True)
-        #     torch.save(state_dict, os.path.join(self.output_path,
-        #                f"checkpoint_model_{self.step:06d}", "model.pt"))
-        #     print("Model saved to", os.path.join(self.output_path,
-        #           f"checkpoint_model_{self.step:06d}", "model.pt"))
 
     def load_embed_dict(self, embed_dict_root):
         file_changed = False
         self.model.text_encoder = None
         global_dict_path = os.path.join(embed_dict_root, "global_embed_dict.pt")
-
-        # if not os.path.exists(embed_dict_path):
-        #     self.embed_dict = {}
-        # else:
-        #     self.embed_dict = torch.load(embed_dict_path, map_location="cpu")
-
-        # if not os.path.exists(embed_dict_path):
-        #     for prompt in prompt_list:
-        #         if prompt not in self.embed_dict:
-        #             if self.model.text_encoder is None:
-        #                 self.model.load_text_model()
-        #                 self.model.text_encoder = fsdp_wrap(
-        #                     self.model.text_encoder,
-        #                     sharding_strategy=self.config.sharding_strategy,
-        #                     mixed_precision=self.config.mixed_precision,
-        #                     wrap_strategy=self.config.text_encoder_fsdp_wrap_strategy,
-        #                     cpu_offload=getattr(self.config, "text_encoder_cpu_offload", False)
-        #                 )
-        #             embed = self.model.text_encoder(
-        #                 text_prompts=[prompt])["prompt_embeds"]
-        #             self.embed_dict[prompt] = embed.detach().to("cpu", dtype=self.dtype)
-        #             print("Embed dict updated with", prompt)
-        #             file_changed = True
-
-        # if self.is_main_process and file_changed:
-        #     os.makedirs(os.path.dirname(embed_dict_path), exist_ok=True)
-        #     torch.save(self.embed_dict, embed_dict_path)
-        #     print("Embed dict saved to", embed_dict_path)
 
         if not os.path.exists(global_dict_path):
             self.global_embed_dict = {}
@@ -360,20 +305,6 @@ class Trainer:
 
         if self.model.text_encoder is not None:
             self.model.delete_text_model()
-            
-
-
-    # def text_embedding_precompute(self, text_prompts):
-    #     prompt = text_prompts[0]
-    #     embed = self.embed_dict[prompt].to(device=self.device, dtype=self.dtype)
-    #     # embed = torch.zeros([1, 512, 4096]).to(device=self.device, dtype=self.dtype)
-    #     return {'prompt_embeds': embed}
-
-    # def get_unconditional_dict(self):
-    #     # prompt = text_prompts[0]
-    #     embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
-    #     # embed = torch.zeros([1, 512, 4096]).to(device=self.device, dtype=self.dtype)
-    #     return {'prompt_embeds': embed}
 
     def load_batch(self, batch):
         for key in batch.keys():
@@ -384,7 +315,6 @@ class Trainer:
                 batch[key] = tensor
                 print(key, tensor.shape)
         return batch
-
 
     def fwdbwd_one_step(self, batch, train_generator):
         batch = self.load_batch(batch)
@@ -441,11 +371,13 @@ class Trainer:
 
         print("################### Beginning critic training step")
         # Step 4: Store gradients for the critic (if training the critic)
+        fake
         critic_loss, critic_log_dict = self.model.critic_loss(
             image_or_video_shape=image_or_video_shape,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
             clean_latent=clean_latent,
+            real_image_or_video=None,
             initial_latent=image_latent if self.config.i2v else None,
             memory_token=memory_token
         )

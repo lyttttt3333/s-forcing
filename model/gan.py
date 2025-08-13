@@ -88,7 +88,8 @@ class GAN(SelfForcingModel):
         conditional_dict: dict,
         unconditional_dict: dict,
         clean_latent: torch.Tensor,
-        initial_latent: torch.Tensor = None
+        initial_latent: torch.Tensor = None,
+        memory_token: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noise and compute the DMD loss.
@@ -170,7 +171,8 @@ class GAN(SelfForcingModel):
         unconditional_dict: dict,
         clean_latent: torch.Tensor,
         real_image_or_video: torch.Tensor,
-        initial_latent: torch.Tensor = None
+        initial_latent: torch.Tensor = None,
+        memory_token: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noise and train the critic with generated samples.
@@ -221,6 +223,8 @@ class GAN(SelfForcingModel):
         ).unflatten(0, image_or_video_shape[:2])
 
         # Step 4: Compute the real GAN discriminator loss
+        if real_image_or_video is None:
+            real_image_or_video = torch.zeros_like(generated_image)
         noisy_real_latent = self.scheduler.add_noise(
             real_image_or_video.flatten(0, 1),
             critic_noise.flatten(0, 1),
