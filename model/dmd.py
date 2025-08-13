@@ -510,4 +510,4 @@ class DMD(SelfForcingModel):
         if dist.is_initialized():
             dist.barrier()
 
-        return videos[0] if self.rank == 0 else None
+        return videos[0]
