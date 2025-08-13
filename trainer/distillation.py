@@ -516,9 +516,9 @@ class Trainer:
                     output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
                     f.write(f"{base_name},{output_path}\n")
 
-                    print(video_tensor.shape)  # 查看形状，比如 (N, H, W, C)
-                    print(video_tensor.dtype)  # 查看数据类型
-                    print(video_tensor.min().item(), video_tensor.max().item()) 
+                    print(video.shape)  # 查看形状，比如 (N, H, W, C)
+                    print(video.dtype)  # 查看数据类型
+                    print(video.min().item(), video.max().item()) 
                     video = video.detach().cpu().numpy()
                     save_video(video, output_path, fps=15, quality=5)
                 
