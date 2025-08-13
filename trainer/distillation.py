@@ -546,10 +546,14 @@ class Trainer:
             dist.barrier()
 
             if self.is_main_process:
+                print("in main process")
                 all_video_infos = []
-                for r in range(self.world_size):
+                world_size = dist.get_world_size()
+                for r in range(world_size):
                     rank_txt = os.path.join("tmp", f"video_info_rank-{r}.txt")
+                    print(rank_txt)
                     if os.path.exists(rank_txt):
+                        print("exist")
                         with open(rank_txt, "r") as f:
                             for line in f:
                                 base_name, output_path = line.strip().split(",", 1)
