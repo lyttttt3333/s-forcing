@@ -500,6 +500,7 @@ class Trainer:
                                         "state": batch["memory_token"]}
 
                     base_name = batch["base_name"][0]
+                    print("base_name", base_name)
 
                     video = self.model.generate_from_latent(
                         frame_token = batch["frame_token"],
