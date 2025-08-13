@@ -22,13 +22,39 @@ import os
 
 import imageio
 from tqdm import tqdm
+import torchvision
 
-def save_video(frames, save_path, fps, quality=9, ffmpeg_params=None):
-    writer = imageio.get_writer(save_path, fps=fps, quality=quality, ffmpeg_params=ffmpeg_params)
-    for frame in tqdm(frames, desc="Saving video"):
-        frame = np.array(frame)
-        writer.append_data(frame)
-    writer.close()
+def save_video(tensor,
+               save_file=None,
+               fps=30,
+               suffix='.mp4',
+               nrow=8,
+               normalize=True,
+               value_range=(-1, 1)):
+    # cache file
+    cache_file = save_file
+
+    # save to cache
+    try:
+        # preprocess
+        tensor = tensor.clamp(min(value_range), max(value_range))
+        tensor = torch.stack([
+            torchvision.utils.make_grid(
+                u, nrow=nrow, normalize=normalize, value_range=value_range)
+            for u in tensor.unbind(2)
+        ],
+                             dim=1).permute(1, 2, 3, 0)
+        tensor = (tensor * 255).type(torch.uint8).cpu()
+
+        # write video
+        writer = imageio.get_writer(
+            cache_file, fps=fps, codec='libx264', quality=8)
+        for frame in tensor.numpy():
+            writer.append_data(frame)
+        writer.close()
+    except Exception as e:
+        logging.info(f'save_video failed, error: {e}')
+
 
 def get_lora_config():
     return LoraConfig(
@@ -511,7 +537,7 @@ class Trainer:
 
                     output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
                     f.write(f"{base_name},{output_path}\n")
-                    save_video(video, output_path, fps=15, quality=5)
+                    save_video(video, output_path, fps=16)
                 
                     count += 1
                     if count >= MAX_COUNT:
@@ -530,7 +556,7 @@ class Trainer:
                                 all_video_infos.append((base_name, output_path))
 
                 for video_name, output_path in all_video_infos:
-                    wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=steps)
+                    wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=self.step)
                     # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
 
             # Train the generator
