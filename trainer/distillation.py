@@ -511,6 +511,20 @@ class Trainer:
                 txt_path = os.path.join("tmp", f"video_info_rank-{rank}.txt")
                 with open(txt_path, "w") as f:
                     batch = next(self.dataloader)
+                    batch = "8057c4e7-daae-4927-bf90-f608866c45a1"
+                    self.root_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025"
+                    text_token_path = os.path.join(self.root_dir, "text_token")
+                    text_token_path = os.path.join(text_token_path, base_name + ".pth")
+                    memory_token_path = os.path.join(self.root_dir, "memory_token")
+                    memory_token_path = os.path.join(memory_token_path, base_name + ".pth")
+                    frame_token_path = os.path.join(self.root_dir, "frame_token")
+                    frame_token_path = os.path.join(frame_token_path, base_name + ".pth")
+                    batch = {
+                        "text_token": text_token_path,
+                        "memory_token": memory_token_path,
+                        "frame_token": frame_token_path,
+                        "base_name": base_name,
+                    }
                     batch = self.load_batch(batch)
 
                     embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
