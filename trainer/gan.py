@@ -2,6 +2,7 @@ import gc
 import logging
 
 from utils.dataset import ShardingLMDBDataset, cycle
+from utils.dataset import TextDataset, MixedDataset
 from utils.distributed import EMA_FSDP, fsdp_wrap, fsdp_state_dict, launch_distributed_job
 from utils.misc import (
     set_seed,
@@ -80,13 +81,13 @@ class Trainer:
             wrap_strategy=config.fake_score_fsdp_wrap_strategy
         )
 
-        self.model.text_encoder = fsdp_wrap(
-            self.model.text_encoder,
-            sharding_strategy=config.sharding_strategy,
-            mixed_precision=config.mixed_precision,
-            wrap_strategy=config.text_encoder_fsdp_wrap_strategy,
-            cpu_offload=getattr(config, "text_encoder_cpu_offload", False)
-        )
+        # self.model.text_encoder = fsdp_wrap(
+        #     self.model.text_encoder,
+        #     sharding_strategy=config.sharding_strategy,
+        #     mixed_precision=config.mixed_precision,
+        #     wrap_strategy=config.text_encoder_fsdp_wrap_strategy,
+        #     cpu_offload=getattr(config, "text_encoder_cpu_offload", False)
+        # )
 
         if not config.no_visualize or config.load_raw_video:
             self.model.vae = self.model.vae.to(
@@ -131,7 +132,9 @@ class Trainer:
 
         # Step 3: Initialize the dataloader
         self.data_path = config.data_path
-        dataset = ShardingLMDBDataset(config.data_path, max_pair=int(1e8))
+        meta_path = self.config.meta_path
+        root_dir = self.config.root_dir
+        dataset = MixedDataset(meta_path, root_dir)
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset, shuffle=True, drop_last=True)
         dataloader = torch.utils.data.DataLoader(
@@ -231,6 +234,17 @@ class Trainer:
                        f"checkpoint_model_{self.step:06d}", "model.pt"))
             print("Model saved to", os.path.join(self.output_path,
                   f"checkpoint_model_{self.step:06d}", "model.pt"))
+
+    def load_batch(self, batch):
+        for key in batch.keys():
+            if key != "base_name":
+                path = batch[key][0]
+                print(f"Loading {key} from {path} to {self.device} with dtype {self.dtype}")
+                tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
+                batch[key] = tensor
+                print(key, tensor.shape)
+        return batch
+
 
     def fwdbwd_one_step(self, batch, train_generator):
         self.model.eval()  # prevent any randomness (e.g. dropout)
