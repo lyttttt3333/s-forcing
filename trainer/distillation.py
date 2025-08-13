@@ -504,7 +504,7 @@ class Trainer:
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
             MAX_COUNT = 1
-            if 1:
+            if 0:
                 count = 0
                 rank = dist.get_rank()
                 os.makedirs("tmp", exist_ok=True)
@@ -546,7 +546,7 @@ class Trainer:
 
             dist.barrier()
 
-            if self.is_main_process:
+            if wandb.run is not None:
                 print("in main process")
                 all_video_infos = []
                 world_size = dist.get_world_size()
