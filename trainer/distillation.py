@@ -510,7 +510,7 @@ class Trainer:
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
             MAX_COUNT = 1
-            if 1:
+            if 0:
                 count = 0
                 rank = dist.get_rank()
                 os.makedirs("tmp", exist_ok=True)
@@ -556,6 +556,7 @@ class Trainer:
                                 all_video_infos.append((base_name, output_path))
 
                 for video_name, output_path in all_video_infos:
+                    print("log", video_name)
                     wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=self.step)
                     # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
 
