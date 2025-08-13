@@ -445,7 +445,7 @@ class DMD(SelfForcingModel):
             latent = noise
             mask = torch.ones_like(noise)
             mask[:, 0] = 0
-            latent = (1. - mask) * z[0] + mask * latent
+            latent = (1. - mask) * z + mask * latent
 
             for _, t in enumerate(tqdm(timesteps)):
 
@@ -497,7 +497,7 @@ class DMD(SelfForcingModel):
                     latent_model_input.unsqueeze(0),
                     return_dict=False)[0]
                 latent = temp_x0.squeeze(0)
-                latent = (1. - mask) * z[0] + mask * latent
+                latent = (1. - mask) * z + mask * latent
 
                 x0 = [latent]
                 del latent_model_input, timestep
