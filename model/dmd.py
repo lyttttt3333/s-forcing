@@ -473,8 +473,6 @@ class DMD(SelfForcingModel):
                     timestep=timestep,
                     memory_condition=False,
                     seq_len=seq_len,
-                    t = t,
-                    return_x0 = False
                 )
 
                 pred_real_image_uncond = self.real_score(
@@ -483,8 +481,6 @@ class DMD(SelfForcingModel):
                     timestep=timestep,
                     memory_condition=False,
                     seq_len=seq_len,
-                    t = t,
-                    return_x0 = False
                 )
 
                 pred_real_image = pred_real_image_cond + (

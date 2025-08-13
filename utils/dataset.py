@@ -62,6 +62,7 @@ class MixedDataset(Dataset):
             "text_token": text_token_path,
             "memory_token": memory_token_path,
             "frame_token": frame_token_path,
+            "clean_token": "none",
             "base_name": base_name,
         }
         return batch

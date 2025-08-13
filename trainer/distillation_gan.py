@@ -308,12 +308,14 @@ class Trainer:
 
     def load_batch(self, batch):
         for key in batch.keys():
-            if key != "base_name":
+            if key != "base_name" and key != "clean_token":
                 path = batch[key][0]
                 print(f"Loading {key} from {path} to {self.device} with dtype {self.dtype}")
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
                 print(key, tensor.shape)
+            if key == "clean_token":
+                batch[key] = torch.zeros([1,21,48,44,78]).to(self.dtype).to(self.device)
         return batch
 
     def fwdbwd_one_step(self, batch, train_generator):
@@ -321,19 +323,13 @@ class Trainer:
         frame_token = batch["frame_token"]
         text_token = batch["text_token"]
         memory_token = batch["memory_token"]
+        clean_latent = batch["clean_latent"]
 
         self.model.eval()  # prevent any randomness (e.g. dropout)
 
         if self.step % 20 == 0:
             torch.cuda.empty_cache()
 
-        # Step 1: Get the next batch of text prompts
-        if self.config.i2v:
-            clean_latent = None
-            image_latent = frame_token
-        else:
-            clean_latent = None
-            image_latent = None
 
         batch_size = 1
         image_or_video_shape = list(self.config.image_or_video_shape)
@@ -351,10 +347,10 @@ class Trainer:
             print("################### Beginning generator training step")
             generator_loss, generator_log_dict = self.model.generator_loss(
                 image_or_video_shape=image_or_video_shape,
+                clean_latent=clean_latent,
                 conditional_dict=conditional_dict,
                 unconditional_dict=unconditional_dict,
-                clean_latent=clean_latent,
-                initial_latent=image_latent if self.config.i2v else None,
+                frame_token=frame_token,
                 memory_token=memory_token
             )
 
@@ -371,14 +367,13 @@ class Trainer:
 
         print("################### Beginning critic training step")
         # Step 4: Store gradients for the critic (if training the critic)
-        fake
         critic_loss, critic_log_dict = self.model.critic_loss(
             image_or_video_shape=image_or_video_shape,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
             clean_latent=clean_latent,
             real_image_or_video=None,
-            initial_latent=image_latent if self.config.i2v else None,
+            initial_latent=frame_token,
             memory_token=memory_token
         )
 

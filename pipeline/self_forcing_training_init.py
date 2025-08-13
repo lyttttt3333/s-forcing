@@ -3,7 +3,6 @@ from utils.scheduler import SchedulerInterface
 from typing import List, Optional
 import torch
 import torch.distributed as dist
-import math
 
 
 class SelfForcingTrainingPipeline:
@@ -41,23 +40,6 @@ class SelfForcingTrainingPipeline:
         self.last_step_only = last_step_only
         self.kv_cache_size = num_max_frames * self.frame_seq_length
 
-        self.real_guidance_scale = 5
-
-        sampling_steps = 50
-        num_train_timesteps = 1000
-        shift = 
-        device = "cuda"
-
-        self.sample_scheduler = FlowUniPCMultistepScheduler(
-            num_train_timesteps=num_train_timesteps,
-            shift=1,
-            use_dynamic_shifting=False)
-        self.sample_scheduler.set_timesteps(
-            sampling_steps, device=device, shift=shift)
-        self.timesteps = sample_scheduler.timesteps
-        print("#################", self.timesteps, "#################")
-        self.denoising_step_list = self.timesteps
-
     def generate_and_sync_list(self, num_blocks, num_denoising_steps, device):
         rank = dist.get_rank() if dist.is_initialized() else 0
 
@@ -77,60 +59,27 @@ class SelfForcingTrainingPipeline:
         dist.broadcast(indices, src=0)  # Broadcast the random indices to all ranks
         return indices.tolist()
 
-    def get_flow_pred(self, 
-                    noisy_input,
-                    conditional_dict,
-                    unconditional_dict,
-                    memory_token,
-                    timestep,
-                    kv_cache,
-                    crossattn_cache,
-                    current_start,
-                    seq_len):
-
-        pred_real_image_cond = self.generator.real_score(
-            noisy_image_or_video=noisy_input.unsqueeze(0),
-            conditional_dict=conditional_dict,
-            timestep=timestep,
-            memory_token=memory_token,
-            seq_len=seq_len,
-        )
-
-        pred_real_image_uncond = self.generator.real_score(
-            noisy_image_or_video=noisy_input.unsqueeze(0),
-            conditional_dict=unconditional_dict,
-            timestep=timestep,
-            seq_len=seq_len
-        )
-
-        pred_real_image = pred_real_image_cond + (
-            pred_real_image_cond - pred_real_image_uncond
-        ) * self.real_guidance_scale
-
-        temp_x0 = self.sample_scheduler.step(
-                pred_real_image.unsqueeze(0),
-                t,
-                latent_model_input.unsqueeze(0),
-                return_dict=False)[0]
-        return temp_x0
-
     def inference_with_trajectory(
-        self,
-        noise: torch.Tensor,
-        conditional_dict: dict,
-        unconditional_dict: dict,
-        frame_token: Optional[torch.Tensor] = None,
-        memory_token: Optional[torch.Tensor] = None,
-        return_sim_step: bool = False,
+            self,
+            noise: torch.Tensor,
+            initial_latent: Optional[torch.Tensor] = None,
+            memory_token: Optional[torch.Tensor] = None,
+            return_sim_step: bool = False,
+            **conditional_dict
     ) -> torch.Tensor:
-
-        
-
         batch_size, num_frames, num_channels, height, width = noise.shape
+        # if not self.independent_first_frame or (self.independent_first_frame and initial_latent is not None):
+        #     # If the first frame is independent and the first frame is provided, then the number of frames in the
+        #     # noise should still be a multiple of num_frame_per_block
         assert num_frames % self.num_frame_per_block == 0
         num_blocks = num_frames // self.num_frame_per_block
+        # else:
+        #     # Using a [1, 4, 4, 4, 4, 4, ...] model to generate a video without image conditioning
+        #     assert (num_frames - 1) % self.num_frame_per_block == 0
+        #     num_blocks = (num_frames - 1) // self.num_frame_per_block
+        # num_input_frames = initial_latent.shape[1] if initial_latent is not None else 0
+        # num_output_frames = num_frames + num_input_frames  # add the initial latent frames
         num_output_frames = num_frames
-        seq_len = int( self.num_frame_per_block  *  height * width / 4)
         output = torch.zeros(
             [batch_size, num_output_frames, num_channels, height, width],
             device=noise.device,
@@ -144,16 +93,57 @@ class SelfForcingTrainingPipeline:
         self._initialize_crossattn_cache(
             batch_size=batch_size, dtype=noise.dtype, device=noise.device
         )
-        self.state_init(conditional_dict, memory_token)
+
+        self.state_cache = None
+
+        # if self.kv_cache1 is None:
+        #     self._initialize_kv_cache(
+        #         batch_size=batch_size,
+        #         dtype=noise.dtype,
+        #         device=noise.device,
+        #     )
+        #     self._initialize_crossattn_cache(
+        #         batch_size=batch_size,
+        #         dtype=noise.dtype,
+        #         device=noise.device
+        #     )
+        # else:
+        #     # reset cross attn cache
+        #     for block_index in range(self.num_transformer_blocks):
+        #         self.crossattn_cache[block_index]["is_init"] = False
+        #     # reset kv cache
+        #     for block_index in range(len(self.kv_cache1)):
+        #         self.kv_cache1[block_index]["global_end_index"] = torch.tensor(
+        #             [0], dtype=torch.long, device=noise.device)
+        #         self.kv_cache1[block_index]["local_end_index"] = torch.tensor(
+        #             [0], dtype=torch.long, device=noise.device)
 
         # Step 2: Cache context feature
+
+        self.state_init(conditional_dict, memory_token)
 
         self.crossattn_cache = None
 
         current_start_frame = 0
+        # if initial_latent is not None:
+        #     timestep = torch.ones([batch_size, 1], device=noise.device, dtype=torch.int64) * 0
+        #     # Assume num_input_frames is 1 + self.num_frame_per_block * num_input_blocks
+        #     output[:, :1] = initial_latent
+        #     with torch.no_grad():
+        #         self.generator(
+        #             noisy_image_or_video=initial_latent,
+        #             conditional_dict=conditional_dict,
+        #             timestep=timestep * 0,
+        #             kv_cache=self.kv_cache1,
+        #             crossattn_cache=self.crossattn_cache,
+        #             current_start=current_start_frame * self.frame_seq_length
+        #         )
+        #     current_start_frame += 1
 
         # Step 3: Temporal denoising loop
         all_num_frames = [self.num_frame_per_block] * num_blocks
+        # if self.independent_first_frame and initial_latent is None:
+        #     all_num_frames = [1] + all_num_frames
         num_denoising_steps = len(self.denoising_step_list)
         exit_flags = self.generate_and_sync_list(len(all_num_frames), num_denoising_steps, device=noise.device)
         start_gradient_frame_index = num_output_frames - 21
@@ -163,13 +153,11 @@ class SelfForcingTrainingPipeline:
             noisy_input = noise[
                 :, current_start_frame : current_start_frame + current_num_frames]
 
-            mask = torch.ones_like(noisy_input)
-            if block_index == 0 and frame_token is not None:
+            if block_index == 0 and initial_latent is not None:
+                initial_latent = initial_latent[1].unsqueeze(0).unsqueeze(0)
+                mask = torch.ones_like(noisy_input)
                 mask[:, 0] = 0
-            else:
-                frame_token = torch.zeros_like(noisy_input[:,0])
-
-            noisy_input = noisy_input * mask + frame_token * (1-mask)
+                noisy_input = noisy_input * mask + initial_latent * (1-mask)
 
 
             # Step 3.1: Spatial denoising loop
@@ -178,25 +166,24 @@ class SelfForcingTrainingPipeline:
                     exit_flag = (index == exit_flags[0])
                 else:
                     exit_flag = (index == exit_flags[block_index])  # Only backprop at the randomly selected timestep (consistent across all ranks)
-
-                temp_ts = (mask[0][:, ::2, ::2] * current_timestep).flatten()
-                timestep = temp_ts.unsqueeze(0)
+                timestep = torch.ones(
+                    [batch_size, current_num_frames],
+                    device=noise.device,
+                    dtype=torch.int64) * current_timestep
 
                 if not exit_flag:
                     with torch.no_grad():
-                        denoised_pred = self.get_flow_pred(
-                            noisy_input=noisy_input,
+                        _, denoised_pred = self.generator(
+                            noisy_image_or_video=noisy_input,
                             conditional_dict=conditional_dict,
-                            unconditional_dict=unconditional_dict,
-                            memory_token = memory_token,
                             timestep=timestep,
                             kv_cache=self.kv_cache1,
                             crossattn_cache=self.crossattn_cache,
                             current_start=current_start_frame * self.frame_seq_length,
-                            seq_len=seq_len,
+                            memory_condition = True
                         )
                         next_timestep = self.denoising_step_list[index + 1]
-                        noisy_input = self.sample_scheduler.add_noise(
+                        noisy_input = self.scheduler.add_noise(
                             denoised_pred.flatten(0, 1),
                             torch.randn_like(denoised_pred.flatten(0, 1)),
                             next_timestep * torch.ones(
@@ -207,32 +194,28 @@ class SelfForcingTrainingPipeline:
                     # with torch.set_grad_enabled(current_start_frame >= start_gradient_frame_index):
                     if current_start_frame < start_gradient_frame_index:
                         with torch.no_grad():
-                            denoised_pred = self.get_flow_pred(
-                                noisy_input=noisy_input,
+                            _, denoised_pred = self.generator(
+                                noisy_image_or_video=noisy_input,
                                 conditional_dict=conditional_dict,
-                                unconditional_dict=unconditional_dict,
-                                memory_token = memory_token,
                                 timestep=timestep,
                                 kv_cache=self.kv_cache1,
                                 crossattn_cache=self.crossattn_cache,
                                 current_start=current_start_frame * self.frame_seq_length,
-                                seq_len=seq_len,
+                                memory_condition = True
                             )
                     else:
-                        denoised_pred = self.get_flow_pred(
-                            noisy_input=noisy_input,
+                        _, denoised_pred = self.generator(
+                            noisy_image_or_video=noisy_input,
                             conditional_dict=conditional_dict,
-                            unconditional_dict=unconditional_dict,
-                            memory_token = memory_token,
                             timestep=timestep,
                             kv_cache=self.kv_cache1,
                             crossattn_cache=self.crossattn_cache,
                             current_start=current_start_frame * self.frame_seq_length,
-                            seq_len=seq_len,
+                            memory_condition = True
                         )
                     break
-
-                noisy_input = noisy_input * mask + frame_token * (1-mask)
+                if block_index == 0 and initial_latent is not None:
+                    noisey_input = noisy_input * mask + initial_latent * (1-mask)
             
             self.updata_3d_state(conditional_dict, idx = block_index, memory_token = memory_token)
                 
@@ -311,24 +294,22 @@ class SelfForcingTrainingPipeline:
         self.crossattn_cache = crossattn_cache
 
     def updata_3d_state(self, conditional_dict, idx, latent_to_decode = None, memory_token = None):
-        pass
-        # if latent_to_decode is not None:
-        #     device = latent_to_decode.device
-        #     dtype = latent_to_decode.dtype
-        #     latent_to_decode = latent_to_decode[0].transpose(1,0)
-        #     pixel_video_clip = self.vae.decode_to_pixel([latent_to_decode])
-        #     state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
-        #     self.state_cache = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
-        # elif memory_token is not None:
-        #     state = memory_token[idx].unsqueeze(0)
-        #     self.state_cache = None
-        # conditional_dict["state"] = state
+        if latent_to_decode is not None:
+            device = latent_to_decode.device
+            dtype = latent_to_decode.dtype
+            latent_to_decode = latent_to_decode[0].transpose(1,0)
+            pixel_video_clip = self.vae.decode_to_pixel([latent_to_decode])
+            state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+            self.state_cache = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        elif memory_token is not None:
+            state = memory_token[idx].unsqueeze(0)
+            self.state_cache = None
+        conditional_dict["state"] = state
 
     def state_init(self, conditional_dict, memory_token):
-        pass
-        # device = conditional_dict["prompt_embeds"].device
-        # dtype = conditional_dict["prompt_embeds"].dtype
-        # # state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
-        # memory_token.to(device).to(dtype)
-        # state = memory_token[0].unsqueeze(0)
-        # conditional_dict["state"] = state
+        device = conditional_dict["prompt_embeds"].device
+        dtype = conditional_dict["prompt_embeds"].dtype
+        # state = torch.zeros([1, 1041, 2048]).to(device).to(dtype)
+        memory_token.to(device).to(dtype)
+        state = memory_token[0].unsqueeze(0)
+        conditional_dict["state"] = state

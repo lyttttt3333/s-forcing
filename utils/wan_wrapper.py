@@ -316,16 +316,6 @@ class WanDiffusionWrapper(torch.nn.Module):
         self.seq_len = 32760  # [1, 21, 16, 60, 104]
         self.post_init()
 
-        sampling_steps = 50
-        num_train_timesteps = 1000
-        shift = 5
-
-        self.sample_scheduler = FlowUniPCMultistepScheduler(
-                                            num_train_timesteps=num_train_timesteps,
-                                            shift=1,
-                                            use_dynamic_shifting=False)
-        self.sample_scheduler.set_timesteps(
-                sampling_steps, device="cuda", shift=shift)
 
     def enable_gradient_checkpointing(self) -> None:
         self.model.enable_gradient_checkpointing()
@@ -412,14 +402,11 @@ class WanDiffusionWrapper(torch.nn.Module):
         aug_t: Optional[torch.Tensor] = None,
         cache_start: Optional[int] = None,
         input_ids = None,
-        memory_condition = False,
+        memory_token = None
         seq_len = None,
-        t = None,
-        return_x0 = False,
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
-        if memory_condition:
-            state = conditional_dict["state"]
+        if memory_condition is not None:
             context = (prompt_embeds, state)
         else:
             context = prompt_embeds
@@ -449,21 +436,7 @@ class WanDiffusionWrapper(torch.nn.Module):
                 memory_condition = memory_condition,
             )[0]
 
-        # pred_x0 = self._convert_flow_pred_to_x0(
-        #     flow_pred=flow_pred.flatten(0, 1),
-        #     xt=noisy_image_or_video.flatten(0, 1),
-        #     timestep=timestep.flatten(0, 1)
-        # ).unflatten(0, flow_pred.shape[:2])
-
-        if return_x0:
-            pred_x0 = self.sample_scheduler.step(
-                flow_pred.unsqueeze(0),
-                t,
-                noisy_image_or_video.unsqueeze(0),
-                return_dict=False)[0]
-            return flow_pred, pred_x0
-        else:
-            return flow_pred
+        return flow_pred
 
     def get_scheduler(self) -> SchedulerInterface:
         """

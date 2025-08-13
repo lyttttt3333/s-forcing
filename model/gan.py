@@ -85,10 +85,10 @@ class GAN(SelfForcingModel):
     def generator_loss(
         self,
         image_or_video_shape,
+        clean_latent: torch.Tensor,
         conditional_dict: dict,
         unconditional_dict: dict,
-        clean_latent: torch.Tensor,
-        initial_latent: torch.Tensor = None,
+        frame_token: torch.Tensor = None,
         memory_token: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, dict]:
         """
@@ -109,7 +109,9 @@ class GAN(SelfForcingModel):
         pred_image, gradient_mask, denoised_timestep_from, denoised_timestep_to = self._run_generator(
             image_or_video_shape=image_or_video_shape,
             conditional_dict=conditional_dict,
-            initial_latent=initial_latent
+            unconditional_dict=unconditional_dict,
+            frame_token=frame_token,
+            memory_token=memory_token,
         )
 
         # Step 2: Get timestep and add noise to generated/real latents
@@ -146,8 +148,6 @@ class GAN(SelfForcingModel):
             critic_timestep.flatten(0, 1)
         ).unflatten(0, image_or_video_shape[:2])
 
-        conditional_dict["prompt_embeds"] = torch.concatenate(
-            (conditional_dict["prompt_embeds"], conditional_dict["prompt_embeds"]), dim=0)
         critic_timestep = torch.concatenate((critic_timestep, critic_timestep), dim=0)
         noisy_latent = torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0)
         _, _, noisy_logit = self.fake_score(

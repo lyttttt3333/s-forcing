@@ -112,7 +112,8 @@ class SelfForcingModel(BaseModel):
         self,
         image_or_video_shape,
         conditional_dict: dict,
-        initial_latent: torch.tensor = None,
+        unconditional_dict: dict,
+        frame_token: torch.tensor = None,
         memory_token: torch.tensor = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
@@ -130,14 +131,12 @@ class SelfForcingModel(BaseModel):
         """
         # Step 1: Sample noise and backward simulate the generator's input
         assert getattr(self.args, "backward_simulation", True), "Backward simulation needs to be enabled"
-        if initial_latent is not None:
-            conditional_dict["initial_latent"] = initial_latent
-        if memory_token is not None:
-            conditional_dict["memory_token"] = memory_token
-        if self.args.i2v:
-            noise_shape = [image_or_video_shape[0], image_or_video_shape[1] - 1, *image_or_video_shape[2:]]
-        else:
-            noise_shape = image_or_video_shape.copy()
+        # if initial_latent is not None:
+        #     conditional_dict["initial_latent"] = initial_latent
+        # if memory_token is not None:
+        #     conditional_dict["memory_token"] = memory_token
+
+        noise_shape = image_or_video_shape.copy()
 
         # During training, the number of generated frames should be uniformly sampled from
         # [21, self.num_training_frames], but still being a multiple of self.num_frame_per_block
@@ -160,7 +159,10 @@ class SelfForcingModel(BaseModel):
         pred_image_or_video, denoised_timestep_from, denoised_timestep_to = self._consistency_backward_simulation(
             noise=torch.randn(noise_shape,
                               device=self.device, dtype=self.dtype),
-            **conditional_dict,
+            conditional_dict = conditional_dict,
+            unconditional_dict = unconditional_dict,
+            frame_token = frame_token,
+            memory_token = memory_token,
         )
         # Slice last 21 frames
         if pred_image_or_video.shape[1] > 21:
@@ -193,7 +195,10 @@ class SelfForcingModel(BaseModel):
     def _consistency_backward_simulation(
         self,
         noise: torch.Tensor,
-        **conditional_dict: dict
+        conditional_dict: dict,
+        unconditional_dict: dict,
+        frame_token: torch.tensor = None,
+        memory_token: torch.tensor = None
     ) -> torch.Tensor:
         """
         Simulate the generator's input from noise to avoid training/inference mismatch.
@@ -211,7 +216,11 @@ class SelfForcingModel(BaseModel):
             self._initialize_inference_pipeline()
 
         return self.inference_pipeline.inference_with_trajectory(
-            noise=noise, **conditional_dict
+            noise = noise,
+            conditional_dict =conditional_dict,
+            unconditional_dict = unconditional_dict,
+            frame_token = frame_token,
+            memory_token = memory_token,
         )
 
     def _initialize_inference_pipeline(self):
