@@ -44,7 +44,7 @@ image_or_video_shape:
 - 44
 - 78
 distribution_loss: gan
-trainer: score_distillation
+trainer: gan
 gradient_checkpointing: true
 num_frame_per_block: 3
 load_raw_video: false
