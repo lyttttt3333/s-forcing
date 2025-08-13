@@ -404,7 +404,7 @@ class DMD(SelfForcingModel):
         z = frame_token
         sample_solver = 'unipc'
         num_train_timesteps = 1000
-        sampling_steps = 3
+        sampling_steps = 50
         shift = 5
         sp_size = 1
         patch_size = (1, 2, 2)
