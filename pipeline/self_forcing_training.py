@@ -44,7 +44,7 @@ class SelfForcingTrainingPipeline:
 
         self.real_guidance_scale = 5
 
-        sampling_steps = 4
+        sampling_steps = 50
         num_train_timesteps = 1000
         shift = 5
         device = "cuda"
@@ -221,7 +221,7 @@ class SelfForcingTrainingPipeline:
                         noisy_input = self.sample_scheduler.add_noise(
                             denoised_pred,
                             torch.randn_like(denoised_pred),
-                            next_timestep * torch.ones([batch_size], device=noise.device, dtype=torch.long),
+                            0*next_timestep * torch.ones([batch_size], device=noise.device, dtype=torch.long),
                         )
                 else:
                     # for getting real output
@@ -287,6 +287,7 @@ class SelfForcingTrainingPipeline:
 
             # Step 3.4: update the start and end frame indices
             current_start_frame += current_num_frames
+            break
 
         # Step 3.5: Return the denoised timestep
         if not self.same_step_across_blocks:
