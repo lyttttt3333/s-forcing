@@ -86,7 +86,6 @@ def encode_images(vae, img, device):
 
     # to tensor
     img = TF.to_tensor(cropped).sub_(0.5).div_(0.5).to(device).unsqueeze(1)
-    print(f"Image size after processing: {img.shape}")
     img.to(torch.bfloat16)
     z = vae.encode_to_latent([img])[0]
     return z 
@@ -118,9 +117,7 @@ def main():
         save_path = os.path.join(output_dir,f"{base_name}.pth")
         image = get_first_frame_as_pil(video_path)
         latent = encode_images(vae, image, device).to(torch.bfloat16)
-        print(latent.shape)
-        break
-        # torch.save(latent, save_path)
+        torch.save(latent, save_path)
         print(f"[GPU {rank}] done {base_name}")
 
 if __name__ == "__main__":
