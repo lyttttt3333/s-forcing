@@ -113,6 +113,9 @@ class GAN(SelfForcingModel):
             frame_token=frame_token,
             memory_token=memory_token,
         )
+        print("############## pred_image shape:", pred_image.shape)
+
+        torch.save(pred_image, "pred_image.pt")
 
         # Step 2: Get timestep and add noise to generated/real latents
         min_timestep = denoised_timestep_to if self.ts_schedule and denoised_timestep_to is not None else self.min_score_timestep
