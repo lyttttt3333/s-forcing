@@ -17,9 +17,10 @@ denoising_step_list = sample_scheduler.timesteps
 print("Denoising step list:", denoising_step_list)
 
 denoised_pred = torch.randn(1, 48, 3, 44, 78, device=device)
-timestep = torch.ones([3], device=denoised_pred.device, dtype=torch.long)*999
+timestep = torch.ones([1], device=denoised_pred.device, dtype=torch.long)*999
 noisy_input = sample_scheduler.add_noise(
     denoised_pred,
     torch.randn_like(denoised_pred),
     timestep,
 )
+print("Noisy input shape:", noisy_input.shape)

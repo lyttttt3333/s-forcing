@@ -218,7 +218,7 @@ class SelfForcingTrainingPipeline:
                         noisy_input = self.sample_scheduler.add_noise(
                             denoised_pred,
                             torch.randn_like(denoised_pred),
-                            next_timestep * torch.ones([batch_size * current_num_frames], device=noise.device, dtype=torch.long),
+                            next_timestep * torch.ones([batch_size], device=noise.device, dtype=torch.long),
                         )
                 else:
                     # for getting real output
