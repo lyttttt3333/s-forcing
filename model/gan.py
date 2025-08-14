@@ -127,9 +127,6 @@ class GAN(SelfForcingModel):
             frame_token=frame_token,
             memory_token=memory_token,
         )
-        # print("############## pred_image shape:", pred_image.shape)
-        print("denoised_timestep_from:", denoised_timestep_from)
-        print("denoised_timestep_to:", denoised_timestep_to)
 
         # denoised_timestep_from = None
         # denoised_timestep_to = None
@@ -153,8 +150,6 @@ class GAN(SelfForcingModel):
                 (critic_timestep / 1000) / (1 + (self.critic_timestep_shift - 1) * (critic_timestep / 1000)) * 1000
 
         critic_timestep = critic_timestep.clamp(self.min_step, self.max_step)
-
-        print("critic_timestep:", critic_timestep.shape)
 
         critic_noise = torch.randn_like(pred_image)
         noisy_fake_latent = self.scheduler.add_noise(

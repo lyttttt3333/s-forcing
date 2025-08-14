@@ -311,10 +311,8 @@ class Trainer:
         for key in batch.keys():
             if key != "base_name" and key != "clean_token":
                 path = batch[key][0]
-                print(f"Loading {key} from {path} to {self.device} with dtype {self.dtype}")
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
-                print(key, tensor.shape)
             if key == "clean_token":
                 batch[key] = torch.zeros([1,48,21,44,78]).to(self.dtype).to(self.device)
         return batch
@@ -454,9 +452,9 @@ class Trainer:
                 output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
                 f.write(f"{base_name},{output_path}\n")
 
-                print(video.shape)  # 查看形状，比如 (N, H, W, C)
-                print(video.dtype)  # 查看数据类型
-                print(video.min().item(), video.max().item()) 
+                # print(video.shape) 
+                # print(video.dtype)  
+                # print(video.min().item(), video.max().item()) 
 
                 save_video(video, output_path, fps=15, quality=5)
             
@@ -494,71 +492,7 @@ class Trainer:
             print("Training step %d" % self.step)
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
 
-            MAX_COUNT = 1
-            # if 0:
-            #     count = 0
-            #     rank = dist.get_rank()
-            #     os.makedirs("tmp", exist_ok=True)
-            #     txt_path = os.path.join("tmp", f"video_info_rank-{rank}.txt")
-            #     with open(txt_path, "w") as f:
-            #         batch = next(self.dataloader)
-            #         batch = self.load_batch(batch)
-
-            #         embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
-            #         unconditional_dict = {'prompt_embeds': embed}
-
-            #         conditional_dict = {'prompt_embeds': batch["text_token"],
-            #                             "state": batch["memory_token"]}
-
-            #         base_name = batch["base_name"][0]
-            #         print("base_name", base_name)
-
-            #         video = self.model.generate_from_latent(
-            #             frame_token = batch["frame_token"],
-            #             uncond_dict = unconditional_dict,
-            #             cond_dict = conditional_dict,
-            #             device = self.device
-            #         )
-
-            #         print("decoder video shape",video.shape)
-
-            #         output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
-            #         f.write(f"{base_name},{output_path}\n")
-
-            #         print(video.shape)  # 查看形状，比如 (N, H, W, C)
-            #         print(video.dtype)  # 查看数据类型
-            #         print(video.min().item(), video.max().item()) 
-
-            #         save_video(video, output_path, fps=15, quality=5)
-                
-            #         count += 1
-            #         if count >= MAX_COUNT:
-            #             break
-
-            # dist.barrier()
-
-            # if wandb.run is not None:
-            #     print("in main process")
-            #     all_video_infos = []
-            #     world_size = dist.get_world_size()
-            #     for r in range(world_size):
-            #         rank_txt = os.path.join("tmp", f"video_info_rank-{r}.txt")
-            #         print(rank_txt)
-            #         if os.path.exists(rank_txt):
-            #             print("exist")
-            #             with open(rank_txt, "r") as f:
-            #                 for line in f:
-            #                     base_name, output_path = line.strip().split(",", 1)
-            #                     all_video_infos.append((base_name, output_path))
-
-            #     for video_name, output_path in all_video_infos:
-            #         print("log", video_name)
-            #         wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=self.step)
-            #         # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
-
-            # Train the generator
-            TRAIN_GENERATOR = False
-            EVALUATION = True
+            EVALUATION = False
             if TRAIN_GENERATOR:
                 self.generator_optimizer.zero_grad(set_to_none=True)
                 extras_list = []
