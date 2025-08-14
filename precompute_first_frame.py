@@ -100,7 +100,7 @@ def main():
     device = "cuda"
 
     input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
-    output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/first_frame"
+    output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/frame_token"
     os.makedirs(output_dir, exist_ok=True)
     video_files = [
         os.path.join(input_dir, f)

@@ -80,7 +80,7 @@ def main():
     device = "cuda"
 
     input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
-    output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/latent_videos"
+    output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/video_token"
     os.makedirs(output_dir, exist_ok=True)
 
     video_files = [
@@ -103,12 +103,9 @@ def main():
         save_path = os.path.join(output_dir, f"{base_name}.pth")
 
         video_tensor = video_to_tensor(video_path, target_frames, target_h, target_w, device)
-        print("video_tensor shape:", video_tensor.shape)
         video_tensor = video_tensor[0]
         latent = encode_video(vae, video_tensor).to(torch.bfloat16)
-        print("latent shape:", latent.shape)
-        # torch.save(latent, save_path)
-        break
+        torch.save(latent, save_path)
         print(f"[GPU {rank}] done {base_name}")
 
 
