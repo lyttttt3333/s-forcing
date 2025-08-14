@@ -397,19 +397,20 @@ class WanDiffusionWrapper(torch.nn.Module):
         timestep: torch.Tensor, kv_cache: Optional[List[dict]] = None,
         crossattn_cache: Optional[List[dict]] = None,
         current_start: Optional[int] = None,
-        concat_time_embeddings: Optional[bool] = False,
-        clean_x: Optional[torch.Tensor] = None,
-        aug_t: Optional[torch.Tensor] = None,
+        # concat_time_embeddings: Optional[bool] = False,
+        # clean_x: Optional[torch.Tensor] = None,
+        # aug_t: Optional[torch.Tensor] = None,
         cache_start: Optional[int] = None,
-        input_ids = None,
-        memory_token = None,
+        memory_token: Optional[torch.Tensor] = None,
         seq_len = None,
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
-        if memory_condition is not None:
-            context = (prompt_embeds, state)
+        if memory_token is not None:
+            context = (prompt_embeds, memory_token)
+            memory_condition = True
         else:
             context = prompt_embeds
+            memory_condition = False
 
         input_timestep = timestep
 
@@ -420,7 +421,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         if kv_cache is not None:
             flow_pred = self.model(
                 noisy_image_or_video,
-                t=input_timestep, context=prompt_embeds,
+                t=input_timestep, context=context,
                 seq_len=seq_len,
                 kv_cache=kv_cache,
                 crossattn_cache=crossattn_cache,
@@ -431,7 +432,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         else:
             flow_pred = self.model(
                 noisy_image_or_video,
-                t=input_timestep, context=prompt_embeds,
+                t=input_timestep, context=context,
                 seq_len=seq_len,
                 memory_condition = memory_condition,
             )[0]
