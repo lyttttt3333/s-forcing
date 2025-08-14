@@ -292,8 +292,14 @@ class WanCrossAttention(CausalWanSelfAttention):
                 k = crossattn_cache["k"]
                 v = crossattn_cache["v"]
         else:
-            k = self.norm_k(self.k(context)).view(b, -1, n, d)
-            v = self.v(context).view(b, -1, n, d)
+            # show tensor shape
+            print(f"Cross-attention: context shape {context.shape}, context_lens shape {context_lens.shape}")
+            k = self.norm_k(self.k(context))
+            print(f"Cross-attention: k shape {k.shape}")
+            k = k.view(b, -1, n, d)
+            v = self.v(context)
+            print(f"Cross-attention: v shape {v.shape}")
+            v = v.view(b, -1, n, d)
 
         # compute attention
         x = flash_attention(q, k, v, k_lens=context_lens)

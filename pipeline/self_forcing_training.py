@@ -113,7 +113,6 @@ class SelfForcingTrainingPipeline:
 
         pred_real_image = pred_real_image.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
 
-        print("############################# pred_real_image shape:", pred_real_image.shape)
 
         temp_x0 = self.sample_scheduler.step(
                 pred_real_image,
@@ -194,6 +193,7 @@ class SelfForcingTrainingPipeline:
 
                 if not exit_flag:
                     with torch.no_grad():
+                        print("############################# input_shape", noisy_input.shape)
                         denoised_pred = self.get_flow_pred(
                             noisy_input=noisy_input,
                             conditional_dict=conditional_dict,
