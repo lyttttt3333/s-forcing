@@ -32,8 +32,8 @@ class BaseModel(nn.Module):
         self.generator = WanDiffusionWrapper(model_name=self.real_model_name, is_causal=True)
         self.generator.model.requires_grad_(False)
 
-        self.real_score = WanDiffusionWrapper(model_name=self.real_model_name, is_causal=False)
-        self.real_score.model.requires_grad_(False)
+        # self.real_score = WanDiffusionWrapper(model_name=self.real_model_name, is_causal=False)
+        # self.real_score.model.requires_grad_(False)
 
         self.fake_score = WanDiffusionWrapper_small(model_name=self.fake_model_name, is_causal=False)
         self.fake_score.model.requires_grad_(True)
