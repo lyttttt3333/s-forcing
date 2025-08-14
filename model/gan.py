@@ -143,9 +143,9 @@ class GAN(SelfForcingModel):
             min_timestep,
             max_timestep,
             image_or_video_shape[0],
-            image_or_video_shape[1],
+            image_or_video_shape[2],
             self.num_frame_per_block,
-            uniform_timestep=True
+            uniform_timestep=False
         )
 
         if self.critic_timestep_shift > 1:
