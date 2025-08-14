@@ -315,7 +315,7 @@ class Trainer:
                 batch[key] = tensor
                 print(key, tensor.shape)
             if key == "clean_token":
-                batch[key] = torch.zeros([1,21,48,44,78]).to(self.dtype).to(self.device)
+                batch[key] = torch.zeros([1,48,21,44,78]).to(self.dtype).to(self.device)
         return batch
 
     def fwdbwd_one_step(self, batch, train_generator):
