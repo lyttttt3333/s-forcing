@@ -361,6 +361,7 @@ class SelfForcingTrainingPipeline:
                             seq_len=seq_len,
                             t=current_timestep,
                         )
+                    break
 
                 noisy_input = noisy_input * mask + frame_token * (1-mask)
             
