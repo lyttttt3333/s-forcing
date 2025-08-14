@@ -86,6 +86,7 @@ def encode_images(vae, img, device):
 
     # to tensor
     img = TF.to_tensor(img).sub_(0.5).div_(0.5).to(device).unsqueeze(1)
+    print(f"Image size after processing: {img.shape}")
     img.to(torch.bfloat16)
     z = vae.encode_to_latent([img])[0]
     return z 
