@@ -321,3 +321,7 @@ class GAN(SelfForcingModel):
         }
 
         return (gan_D_loss, r1_loss, r2_loss), critic_log_dict
+    
+    def evaluate_inference(self,):
+        pass
+

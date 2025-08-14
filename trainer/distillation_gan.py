@@ -373,7 +373,7 @@ class Trainer:
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
             real_image_or_video=clean_token,
-            initial_latent=frame_token,
+            frame_token=frame_token,
             memory_token=memory_token
         )
 
@@ -487,6 +487,7 @@ class Trainer:
 
             # Train the generator
             TRAIN_GENERATOR = False
+            EVALUATION = False
             if TRAIN_GENERATOR:
                 self.generator_optimizer.zero_grad(set_to_none=True)
                 extras_list = []
@@ -497,6 +498,9 @@ class Trainer:
                 self.generator_optimizer.step()
                 if self.generator_ema is not None:
                     self.generator_ema.update(self.model.generator)
+            
+            if EVALUATION:
+                self.model.evaluate_inference()
 
             # Train the critic
             self.critic_optimizer.zero_grad(set_to_none=True)
