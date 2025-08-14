@@ -227,8 +227,8 @@ class SelfForcingTrainingPipeline:
 
             # Step 3.4: update the start and end frame indices
             current_start_frame += current_num_frames
-            ### ONLY FOR TESTING
-            break
+            # ### ONLY FOR TESTING
+            # break
 
         return output
 
@@ -394,7 +394,6 @@ class SelfForcingTrainingPipeline:
 
             # Step 3.4: update the start and end frame indices
             current_start_frame += current_num_frames
-            break
 
         # Step 3.5: Return the denoised timestep
         if not self.same_step_across_blocks:
