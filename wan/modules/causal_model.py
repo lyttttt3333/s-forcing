@@ -293,7 +293,7 @@ class WanCrossAttention(CausalWanSelfAttention):
                 v = crossattn_cache["v"]
         else:
             # show tensor shape
-            print(f"Cross-attention: context shape {context.shape}, context_lens shape {context_lens.shape}")
+            print(f"Cross-attention: context shape {context.shape}")
             k = self.norm_k(self.k(context))
             print(f"Cross-attention: k shape {k.shape}")
             k = k.view(b, -1, n, d)
@@ -1037,10 +1037,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                         [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
                     for u in context
                 ]))
-
-            if clip_fea is not None:
-                context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
-                context = torch.concat([context_clip, context], dim=1)
         else:
             text_context, state_context = context
             text_context = self.text_embedding(
