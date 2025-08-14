@@ -138,15 +138,6 @@ class SelfForcingModel(BaseModel):
 
         noise_shape = image_or_video_shape.copy()
 
-        # During training, the number of generated frames should be uniformly sampled from
-        # [21, self.num_training_frames], but still being a multiple of self.num_frame_per_block
-        num_generated_blocks = 21 // self.num_frame_per_block
-        num_generated_blocks = torch.tensor(num_generated_blocks, device=self.device)
-        dist.broadcast(num_generated_blocks, src=0)
-        num_generated_blocks = int(num_generated_blocks.item())
-        num_generated_frames = num_generated_blocks * self.num_frame_per_block
-        # Sync num_generated_frames across all processes
-        noise_shape[1] = num_generated_frames
 
         pred_image_or_video, denoised_timestep_from, denoised_timestep_to = self._consistency_backward_simulation(
             noise=torch.randn(noise_shape,
@@ -157,17 +148,17 @@ class SelfForcingModel(BaseModel):
             memory_token = memory_token,
         )
         # Slice last 21 frames
-        if pred_image_or_video.shape[1] > 21:
+        if pred_image_or_video.shape[2] > 21:
             with torch.no_grad():
                 # Reencode to get image latent
-                latent_to_decode = pred_image_or_video[:, :-20, ...]
+                latent_to_decode = pred_image_or_video[:, :, :-20, ...]
                 # Deccode to video
                 pixels = self.vae.decode_to_pixel(latent_to_decode)
-                frame = pixels[:, -1:, ...].to(self.dtype)
-                frame = rearrange(frame, "b t c h w -> b c t h w")
+                frame = pixels[:, :, -1:, ...].to(self.dtype)
+                # frame = rearrange(frame, "b t c h w -> b c t h w")
                 # Encode frame to get image latent
                 image_latent = self.vae.encode_to_latent(frame).to(self.dtype)
-            pred_image_or_video_last_21 = torch.cat([image_latent, pred_image_or_video[:, -20:, ...]], dim=1)
+            pred_image_or_video_last_21 = torch.cat([image_latent, pred_image_or_video[:, :, -20:, ...]], dim=2)
         else:
             pred_image_or_video_last_21 = pred_image_or_video
 
@@ -228,10 +219,10 @@ class SelfForcingModel(BaseModel):
             scheduler=self.scheduler,
             generator=self.generator,
             vae=self.vae,
-            num_frame_per_block=self.num_frame_per_block,
-            independent_first_frame=self.args.independent_first_frame,
-            same_step_across_blocks=self.args.same_step_across_blocks,
-            last_step_only=self.args.last_step_only,
-            num_max_frames=self.num_training_frames,
-            context_noise=self.args.context_noise
+            # num_frame_per_block=self.num_frame_per_block,
+            # independent_first_frame=self.args.independent_first_frame,
+            # same_step_across_blocks=self.args.same_step_across_blocks,
+            # last_step_only=self.args.last_step_only,
+            # num_max_frames=self.num_training_frames,
+            # context_noise=self.args.context_noise
         )

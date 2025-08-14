@@ -42,8 +42,8 @@ negative_prompt: '色调艳丽，过曝，静态，细节模糊不清，字幕�
 dfake_gen_update_ratio: 5
 image_or_video_shape:
 - 1
-- 21
 - 48
+- 21
 - 44
 - 78
 distribution_loss: gan
