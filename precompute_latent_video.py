@@ -104,7 +104,7 @@ def main():
 
         video_tensor = video_to_tensor(video_path, target_frames, target_h, target_w, device)
         print("video_tensor shape:", video_tensor.shape)
-        video_tensor = video_tensor[0,0]
+        video_tensor = video_tensor[0]
         latent = encode_video(vae, video_tensor).to(torch.bfloat16)
         print("latent shape:", latent.shape)
         # torch.save(latent, save_path)
