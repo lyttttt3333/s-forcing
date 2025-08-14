@@ -5,6 +5,7 @@ from typing import Tuple
 import torch
 
 from model.base import SelfForcingModel
+from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 
 class GAN(SelfForcingModel):
@@ -56,10 +57,23 @@ class GAN(SelfForcingModel):
         self.r1_sigma = getattr(args, "r1_sigma", 0.01)
         self.r2_sigma = getattr(args, "r2_sigma", 0.01)
 
-        if getattr(self.scheduler, "alphas_cumprod", None) is not None:
-            self.scheduler.alphas_cumprod = self.scheduler.alphas_cumprod.to(device)
-        else:
-            self.scheduler.alphas_cumprod = None
+        # if getattr(self.scheduler, "alphas_cumprod", None) is not None:
+        #     self.scheduler.alphas_cumprod = self.scheduler.alphas_cumprod.to(device)
+        # else:
+        #     self.scheduler.alphas_cumprod = None
+
+        
+        sampling_steps = 4
+        num_train_timesteps = 1000
+        shift = 5
+        device = "cuda"
+
+        self.scheduler = FlowUniPCMultistepScheduler(
+            num_train_timesteps=num_train_timesteps,
+            shift=1,
+            use_dynamic_shifting=False)
+        self.scheduler.set_timesteps(
+            sampling_steps, device=device, shift=shift)
 
     def _run_cls_pred_branch(self,
                              noisy_image_or_video: torch.Tensor,
@@ -106,18 +120,21 @@ class GAN(SelfForcingModel):
             - generator_log_dict: a dictionary containing the intermediate tensors for logging.
         """
         # Step 1: Unroll generator to obtain fake videos
-        pred_image, gradient_mask, denoised_timestep_from, denoised_timestep_to = self._run_generator(
-            image_or_video_shape=image_or_video_shape,
-            conditional_dict=conditional_dict,
-            unconditional_dict=unconditional_dict,
-            frame_token=frame_token,
-            memory_token=memory_token,
-        )
-        # print("############## pred_image shape:", pred_image.shape)
-        print("denoised_timestep_from:", denoised_timestep_from)
-        print("denoised_timestep_to:", denoised_timestep_to)
+        # pred_image, gradient_mask, denoised_timestep_from, denoised_timestep_to = self._run_generator(
+        #     image_or_video_shape=image_or_video_shape,
+        #     conditional_dict=conditional_dict,
+        #     unconditional_dict=unconditional_dict,
+        #     frame_token=frame_token,
+        #     memory_token=memory_token,
+        # )
+        # # print("############## pred_image shape:", pred_image.shape)
+        # print("denoised_timestep_from:", denoised_timestep_from)
+        # print("denoised_timestep_to:", denoised_timestep_to)
 
-        # torch.save(pred_image, "pred_image.pt")
+        denoised_timestep_from = None
+        denoised_timestep_to = None
+
+        pred_image = torch.save("pred_image.pt", map_location="cpu").to("cuda")
 
         # Step 2: Get timestep and add noise to generated/real latents
         min_timestep = denoised_timestep_to if self.ts_schedule and denoised_timestep_to is not None else self.min_score_timestep

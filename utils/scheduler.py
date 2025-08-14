@@ -174,6 +174,7 @@ class FlowMatchScheduler():
         timestep_id = torch.argmin(
             (self.timesteps.unsqueeze(0) - timestep.unsqueeze(1)).abs(), dim=1)
         sigma = self.sigmas[timestep_id].reshape(-1, 1, 1, 1)
+        print(sigma.shape, original_samples.shape, noise.shape)
         sample = (1 - sigma) * original_samples + sigma * noise
         sample = sample.unflatten(0, 1).transpose(2, 1)
         return sample.type_as(noise)
