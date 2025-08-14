@@ -59,8 +59,6 @@ class SelfForcingTrainingPipeline:
         
         self.denoising_step_list = self.timesteps
 
-        print("#################", self.denoising_step_list, "#################")
-
     def generate_and_sync_list(self, num_blocks, num_denoising_steps, device):
         rank = dist.get_rank() if dist.is_initialized() else 0
 
@@ -119,7 +117,6 @@ class SelfForcingTrainingPipeline:
                 t,
                 noisy_input,
                 return_dict=False)[0]# [1, num_channels, num_frames, height, width]
-        print("############################# temp_x0 shape:", temp_x0.shape)
         return temp_x0
     
     def inference(
@@ -184,7 +181,6 @@ class SelfForcingTrainingPipeline:
                 self.sample_scheduler.set_timesteps(self.sampling_steps, device="cuda", shift=5)
 
                 with torch.no_grad():
-                    print("############################# input_shape", noisy_input.shape)
                     denoised_pred = self.get_flow_pred(
                         noisy_input=noisy_input,
                         conditional_dict=conditional_dict,
@@ -279,7 +275,6 @@ class SelfForcingTrainingPipeline:
         all_num_frames = [self.num_frame_per_block] * num_blocks
         num_denoising_steps = len(self.denoising_step_list)
         exit_flags = self.generate_and_sync_list(len(all_num_frames), num_denoising_steps, device=noise.device)
-        print("############## exit flag",exit_flags)
         start_gradient_frame_index = num_output_frames - 21
 
         # for block_index in range(num_blocks):
@@ -310,7 +305,6 @@ class SelfForcingTrainingPipeline:
 
                 if not exit_flag:
                     with torch.no_grad():
-                        print("############################# input_shape", noisy_input.shape)
                         denoised_pred = self.get_flow_pred(
                             noisy_input=noisy_input,
                             conditional_dict=conditional_dict,
