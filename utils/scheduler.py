@@ -160,11 +160,13 @@ class FlowMatchScheduler():
         """
         Diffusion forward corruption process.
         Input:
-            - clean_latent: the clean latent with shape [B*T, C, H, W]
-            - noise: the noise with shape [B*T, C, H, W]
+            - clean_latent: the clean latent with shape [B, C, T, H, W]
+            - noise: the noise with shape [B, C, T, H, W]
             - timestep: the timestep with shape [B*T]
-        Output: the corrupted latent with shape [B*T, C, H, W]
+        Output: the corrupted latent with shape [B, C, T, H, W]
         """
+        original_samples = original_samples.transpose(1, 2).flatten(0, 1)
+        noise = noise.transpose(1, 2).flatten(0, 1)
         if timestep.ndim == 2:
             timestep = timestep.flatten(0, 1)
         self.sigmas = self.sigmas.to(noise.device)
@@ -173,6 +175,7 @@ class FlowMatchScheduler():
             (self.timesteps.unsqueeze(0) - timestep.unsqueeze(1)).abs(), dim=1)
         sigma = self.sigmas[timestep_id].reshape(-1, 1, 1, 1)
         sample = (1 - sigma) * original_samples + sigma * noise
+        sample = sample.unflatten(0, 1).transpose(2, 1)
         return sample.type_as(noise)
 
     def training_target(self, sample, noise, timestep):

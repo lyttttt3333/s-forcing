@@ -113,9 +113,11 @@ class GAN(SelfForcingModel):
             frame_token=frame_token,
             memory_token=memory_token,
         )
-        print("############## pred_image shape:", pred_image.shape)
+        # print("############## pred_image shape:", pred_image.shape)
+        print("denoised_timestep_from:", denoised_timestep_from)
+        print("denoised_timestep_to:", denoised_timestep_to)
 
-        torch.save(pred_image, "pred_image.pt")
+        # torch.save(pred_image, "pred_image.pt")
 
         # Step 2: Get timestep and add noise to generated/real latents
         min_timestep = denoised_timestep_to if self.ts_schedule and denoised_timestep_to is not None else self.min_score_timestep
@@ -137,19 +139,20 @@ class GAN(SelfForcingModel):
 
         critic_noise = torch.randn_like(pred_image)
         noisy_fake_latent = self.scheduler.add_noise(
-            pred_image.flatten(0, 1),
-            critic_noise.flatten(0, 1),
+            pred_image,
+            critic_noise,
             critic_timestep.flatten(0, 1)
-        ).unflatten(0, image_or_video_shape[:2])
+        )
+
 
         # Step 4: Compute the real GAN discriminator loss
         real_image_or_video = clean_latent.clone()
         critic_noise = torch.randn_like(real_image_or_video)
         noisy_real_latent = self.scheduler.add_noise(
-            real_image_or_video.flatten(0, 1),
-            critic_noise.flatten(0, 1),
+            real_image_or_video,
+            critic_noise,
             critic_timestep.flatten(0, 1)
-        ).unflatten(0, image_or_video_shape[:2])
+        )
 
         critic_timestep = torch.concatenate((critic_timestep, critic_timestep), dim=0)
         noisy_latent = torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0)
