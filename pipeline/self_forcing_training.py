@@ -91,7 +91,7 @@ class SelfForcingTrainingPipeline:
                     seq_len):
 
         pred_real_image_cond = self.generator.real_score(
-            noisy_image_or_video=noisy_input.unsqueeze(0),
+            noisy_image_or_video=noisy_input,
             conditional_dict=conditional_dict,
             timestep=timestep,
             memory_token=memory_token,
@@ -99,7 +99,7 @@ class SelfForcingTrainingPipeline:
         )
 
         pred_real_image_uncond = self.generator.real_score(
-            noisy_image_or_video=noisy_input.unsqueeze(0),
+            noisy_image_or_video=noisy_input,
             conditional_dict=unconditional_dict,
             timestep=timestep,
             seq_len=seq_len
@@ -109,10 +109,12 @@ class SelfForcingTrainingPipeline:
             pred_real_image_cond - pred_real_image_uncond
         ) * self.real_guidance_scale
 
+        print("pred_real_image shape:", pred_real_image.shape)
+
         temp_x0 = self.sample_scheduler.step(
-                pred_real_image.unsqueeze(0),
+                pred_real_image,
                 t,
-                noisy_input.unsqueeze(0),
+                noisy_input,
                 return_dict=False)[0]
         return temp_x0
 
