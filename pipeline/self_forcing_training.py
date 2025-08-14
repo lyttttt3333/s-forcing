@@ -119,9 +119,7 @@ class SelfForcingTrainingPipeline:
                 pred_real_image,
                 t,
                 noisy_input,
-                return_dict=False)[0]
-        
-        temp_x0 = temp_x0.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
+                return_dict=False)[0]# [1, num_channels, num_frames, height, width]
         print("############################# temp_x0 shape:", temp_x0.shape)
         return temp_x0
 
@@ -217,11 +215,12 @@ class SelfForcingTrainingPipeline:
                         #         [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
                         # )
                         # noisy_input = noisy_input.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
-                        noisy_input = self.sample_scheduler.add_noise(
-                            denoised_pred,
-                            torch.randn_like(denoised_pred),
-                            timestep * next_timestep / current_timestep,
-                        )
+                        noisy_input = denoised_pred
+                        # noisy_input = self.sample_scheduler.add_noise(
+                        #     denoised_pred,
+                        #     torch.randn_like(denoised_pred),
+                        #     timestep * next_timestep / current_timestep,
+                        # )
                 else:
                     # for getting real output
                     # with torch.set_grad_enabled(current_start_frame >= start_gradient_frame_index):
