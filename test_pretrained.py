@@ -37,7 +37,7 @@ vae = WanVAEWrapper()
 vae.requires_grad_(False)
 latent = torch.load("pred_image.pt", map_location="cpu").to("cuda")[0][:,:3]
 latent = torch.zeros([48, 1, 30, 40], device="cuda", dtype=torch.bfloat16) 
-video = torch.zeros([48, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
+video = torch.zeros([3, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
 with torch.no_grad():
     latent = vae.encode_to_latent([video])[0]
     print(latent.shape)
