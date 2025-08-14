@@ -47,23 +47,42 @@ def get_first_frame_as_pil(video_path: str) -> Image.Image:
     return Image.fromarray(frame_rgb)
 
 def encode_images(vae, img, device):
-    ih, iw = img.height, img.width
-    patch_size = (1, 2, 2)
-    vae_stride = (4, 16, 16)
-    max_area=704 * 1280
-    dh, dw = patch_size[1] * vae_stride[1], patch_size[
-        2] * vae_stride[2]
-    ow, oh = best_output_size(iw, ih, dw, dh, max_area)
-    print(ow, oh)
+    # ih, iw = img.height, img.width
+    # patch_size = (1, 2, 2)
+    # vae_stride = (4, 16, 16)
+    # max_area=704 * 1280
+    # dh, dw = patch_size[1] * vae_stride[1], patch_size[
+    #     2] * vae_stride[2]
+    # ow, oh = best_output_size(iw, ih, dw, dh, max_area)
+    # print(ow, oh)
 
-    scale = max(ow / iw, oh / ih)
-    img = img.resize((round(iw * scale), round(ih * scale)), Image.LANCZOS)
+    # scale = max(ow / iw, oh / ih)
+    # img = img.resize((round(iw * scale), round(ih * scale)), Image.LANCZOS)
 
-    # center-crop
-    x1 = (img.width - ow) // 2
-    y1 = (img.height - oh) // 2
-    img = img.crop((x1, y1, x1 + ow, y1 + oh))
-    assert img.width == ow and img.height == oh
+    # # center-crop
+    # x1 = (img.width - ow) // 2
+    # y1 = (img.height - oh) // 2
+    # img = img.crop((x1, y1, x1 + ow, y1 + oh))
+    # assert img.width == ow and img.height == oh
+    target_w, target_h = 640, 480
+    iw, ih = img.width, img.height
+    target_ratio = target_w / target_h
+    input_ratio = iw / ih
+
+    if input_ratio > target_ratio:
+        # 输入更宽 → 按高度对齐，裁掉左右多余部分
+        new_width = round(ih * target_ratio)
+        x1 = (iw - new_width) // 2
+        y1 = 0
+        cropped = img.crop((x1, y1, x1 + new_width, ih))
+    else:
+        # 输入更高 → 按宽度对齐，裁掉上下多余部分
+        new_height = round(iw / target_ratio)
+        x1 = 0
+        y1 = (ih - new_height) // 2
+        cropped = img.crop((x1, y1, iw, y1 + new_height))
+
+    cropped.resize((target_w, target_h), Image.LANCZOS)
 
     # to tensor
     img = TF.to_tensor(img).sub_(0.5).div_(0.5).to(device).unsqueeze(1)
