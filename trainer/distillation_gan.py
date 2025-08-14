@@ -162,6 +162,7 @@ class Trainer:
         self.model.fake_score.print_trainable_parameters() 
 
         self.image_or_video_shape = list(self.config.image_or_video_shape)
+        self.discriminator_warmup_steps = getattr(config, "discriminator_warmup_steps", 0)
         
         self.model.generator = fsdp_wrap(
             self.model.generator,
@@ -275,6 +276,14 @@ class Trainer:
         os.makedirs(save_path_generator, exist_ok=True)
         self.model.fake_score.save_pretrained(save_path_score)
         self.model.generator.save_pretrained(save_path_generator)
+        # print("Start gathering distributed model states...")
+        # save_path = os.path.join(self.output_path, f"checkpoint_model_{self.step:06d}")
+        # save_path_score = os.path.join(save_path, "fake_score_model")
+        # save_path_generator = os.path.join(save_path, "generator_model")
+        # os.makedirs(save_path_score, exist_ok=True)
+        # os.makedirs(save_path_generator, exist_ok=True)
+        # self.model.fake_score.save_pretrained(save_path_score)
+        # self.model.generator.save_pretrained(save_path_generator)
 
     def load_embed_dict(self, embed_dict_root):
         file_changed = False
@@ -314,10 +323,11 @@ class Trainer:
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
             if key == "clean_token":
-                batch[key] = torch.zeros(self.image_or_video_shape).to(self.dtype).to(self.device)
-            if key == "frame_token":
-                image_shape = [48,1,30,40]
-                batch[key] = torch.zeros(image_shape).to(self.dtype).to(self.device)
+                tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
+                batch[key] = tensor.unsqueeze(0)  # Ensure it has batch dimension
+            # if key == "frame_token":
+            #     image_shape = [48,1,30,40]
+            #     batch[key] = torch.zeros(image_shape).to(self.dtype).to(self.device)
         return batch
 
     def fwdbwd_one_step(self, batch, train_generator):
@@ -420,7 +430,7 @@ class Trainer:
         txt_path = os.path.join("tmp", f"video_info_rank-{rank}.txt")
         with open(txt_path, "w") as f:
             while True:
-                batch = self.dataset.get_examples()
+                batch = next(self.dataloader)
                 batch = self.load_batch(batch)
                 frame_token = batch["frame_token"]
                 text_token = batch["text_token"]
@@ -485,8 +495,11 @@ class Trainer:
         start_step = self.step
 
         while True:
-            
-            TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
+
+            self.in_discriminator_warmup = self.step < self.discriminator_warmup_steps
+
+            # Only update generator and critic outside the warmup phase
+            TRAIN_GENERATOR = not self.in_discriminator_warmup and self.step % self.config.dfake_gen_update_ratio == 0
             if TRAIN_GENERATOR:
                 print("(Gen) Training step %d" % self.step)
             else:
@@ -526,7 +539,7 @@ class Trainer:
                 self.generator_ema = EMA_FSDP(self.model.generator, decay=self.config.ema_weight)
 
             # Save the model
-            if (not self.config.no_save) and (self.step - start_step) > 0 and self.step % self.config.log_iters == 0:
+            if (not self.config.no_save) and self.step % self.config.log_iters == 0:
                 torch.cuda.empty_cache()
                 self.save()
                 torch.cuda.empty_cache()

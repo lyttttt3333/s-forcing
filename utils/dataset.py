@@ -57,11 +57,13 @@ class MixedDataset(Dataset):
         memory_token_path = os.path.join(memory_token_path, base_name + ".pth")
         frame_token_path = os.path.join(self.root_dir, "frame_token")
         frame_token_path = os.path.join(frame_token_path, base_name + ".pth")
+        video_token_path = os.path.join(self.root_dir, "frame_token")
+        video_token_path = os.path.join(video_token_path, base_name + ".pth")
         batch = {
             "text_token": text_token_path,
             "memory_token": memory_token_path,
             "frame_token": frame_token_path,
-            "clean_token": "none",
+            "clean_token": video_token_path,
             "base_name": base_name,
         }
         return batch
