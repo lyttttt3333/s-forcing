@@ -402,7 +402,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         aug_t: Optional[torch.Tensor] = None,
         cache_start: Optional[int] = None,
         input_ids = None,
-        memory_token = None
+        memory_token = None,
         seq_len = None,
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
