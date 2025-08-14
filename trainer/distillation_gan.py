@@ -349,7 +349,7 @@ class Trainer:
                 memory_token=memory_token,
                 clean_token=clean_token,
             )
-
+            print("############# begin generator loss")
             generator_loss.backward()
             generator_grad_norm = self.model.generator.clip_grad_norm_(
                 self.max_grad_norm_generator)
