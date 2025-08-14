@@ -4,6 +4,7 @@ from typing import List, Optional
 import torch
 import torch.distributed as dist
 import math
+from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 
 class SelfForcingTrainingPipeline:
@@ -54,7 +55,7 @@ class SelfForcingTrainingPipeline:
             use_dynamic_shifting=False)
         self.sample_scheduler.set_timesteps(
             sampling_steps, device=device, shift=shift)
-        self.timesteps = sample_scheduler.timesteps
+        self.timesteps = self.sample_scheduler.timesteps
         print("#################", self.timesteps, "#################")
         self.denoising_step_list = self.timesteps
 
@@ -83,6 +84,7 @@ class SelfForcingTrainingPipeline:
                     unconditional_dict,
                     memory_token,
                     timestep,
+                    t,
                     kv_cache,
                     crossattn_cache,
                     current_start,
@@ -110,7 +112,7 @@ class SelfForcingTrainingPipeline:
         temp_x0 = self.sample_scheduler.step(
                 pred_real_image.unsqueeze(0),
                 t,
-                latent_model_input.unsqueeze(0),
+                noisy_input.unsqueeze(0),
                 return_dict=False)[0]
         return temp_x0
 
@@ -126,13 +128,13 @@ class SelfForcingTrainingPipeline:
 
         
 
-        batch_size, num_frames, num_channels, height, width = noise.shape
+        batch_size, num_channels, num_frames, height, width = noise.shape
         assert num_frames % self.num_frame_per_block == 0
         num_blocks = num_frames // self.num_frame_per_block
         num_output_frames = num_frames
-        seq_len = int( self.num_frame_per_block  *  height * width / 4)
+        seq_len = int(self.num_frame_per_block  *  height * width / 4)
         output = torch.zeros(
-            [batch_size, num_output_frames, num_channels, height, width],
+            [batch_size, num_channels, num_output_frames,  height, width],
             device=noise.device,
             dtype=noise.dtype
         )
