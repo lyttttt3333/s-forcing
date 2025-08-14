@@ -323,6 +323,26 @@ class GAN(SelfForcingModel):
         loss = gan_D_loss # + r1_loss + r2_loss
         return loss, critic_log_dict
     
-    def evaluate_inference(self,):
-        pass
+    def generator_inference(self,
+                            image_or_video_shape,
+                            conditional_dict,
+                            unconditional_dict,
+                            frame_token,
+                            memory_token):
+        with torch.no_grad():
+            # latent_video, _, denoised_timestep_from, denoised_timestep_to = self._run_generator(
+            #     image_or_video_shape=image_or_video_shape,
+            #     conditional_dict=conditional_dict,
+            #     unconditional_dict=unconditional_dict,
+            #     frame_token=frame_token,
+            #     memory_token=memory_token,
+            #     )
+            denoised_timestep_from = None
+            denoised_timestep_to = None
+
+            latent_video = torch.load("pred_image.pt", map_location="cpu").to("cuda")
+            video = self.vae.decode_to_pixel([latent_video[0]])[0]
+
+        return video
+            
 

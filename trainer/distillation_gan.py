@@ -325,15 +325,13 @@ class Trainer:
         memory_token = batch["memory_token"]
         clean_token = batch["clean_token"]
 
-        self.model.eval()  # prevent any randomness (e.g. dropout)
+        self.model.eval()  
 
         if self.step % 20 == 0:
             torch.cuda.empty_cache()
 
 
-        batch_size = 1
         image_or_video_shape = list(self.config.image_or_video_shape)
-        image_or_video_shape[0] = batch_size
 
         # Step 2: Extract the conditional infos
         with torch.no_grad():
@@ -415,6 +413,76 @@ class Trainer:
         )
         current_video = video.permute(0, 1, 3, 4, 2).cpu().numpy() * 255.0
         return current_video
+    
+    def generate_video(self, batch):
+        
+        count = 0
+        rank = dist.get_rank()
+        MAX_COUNT = 1
+        os.makedirs("tmp", exist_ok=True)
+        txt_path = os.path.join("tmp", f"video_info_rank-{rank}.txt")
+        with open(txt_path, "w") as f:
+            while True:
+                batch = self.load_batch(batch)
+                frame_token = batch["frame_token"]
+                text_token = batch["text_token"]
+                memory_token = batch["memory_token"]
+                clean_token = batch["clean_token"]
+
+                conditional_dict = {'prompt_embeds': text_token}
+                embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
+                unconditional_dict = {'prompt_embeds': embed}
+
+                base_name = batch["base_name"][0]
+                print("base_name", base_name)
+
+                image_or_video_shape = list(self.config.image_or_video_shape)
+
+
+                video = self.model.generator_inference(
+                    image_or_video_shape=image_or_video_shape,
+                    conditional_dict=conditional_dict,
+                    unconditional_dict=unconditional_dict,
+                    frame_token=frame_token,
+                    memory_token=memory_token
+                )
+                print("decoder video shape",video.shape)
+
+                output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
+                f.write(f"{base_name},{output_path}\n")
+
+                print(video.shape)  # 查看形状，比如 (N, H, W, C)
+                print(video.dtype)  # 查看数据类型
+                print(video.min().item(), video.max().item()) 
+
+                save_video(video, output_path, fps=15, quality=5)
+            
+                count += 1
+                if count >= MAX_COUNT:
+                    break
+
+    dist.barrier()
+
+    if wandb.run is not None:
+        print("in main process")
+        all_video_infos = []
+        world_size = dist.get_world_size()
+        for r in range(world_size):
+            rank_txt = os.path.join("tmp", f"video_info_rank-{r}.txt")
+            print(rank_txt)
+            if os.path.exists(rank_txt):
+                print("exist")
+                with open(rank_txt, "r") as f:
+                    for line in f:
+                        base_name, output_path = line.strip().split(",", 1)
+                        all_video_infos.append((base_name, output_path))
+
+        for video_name, output_path in all_video_infos:
+            print("log", video_name)
+            wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=self.step)
+            # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
+
+
 
     def train(self):
         start_step = self.step
@@ -500,7 +568,7 @@ class Trainer:
                     self.generator_ema.update(self.model.generator)
             
             if EVALUATION:
-                self.model.evaluate_inference()
+                self.evaluate_inference()
 
             # Train the critic
             self.critic_optimizer.zero_grad(set_to_none=True)
