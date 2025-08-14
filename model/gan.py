@@ -215,7 +215,7 @@ class GAN(SelfForcingModel):
 
         # Step 1: Run generator on backward simulated noisy input
         with torch.no_grad():
-            generated_image, _, denoised_timestep_from, denoised_timestep_to, num_sim_steps = self._run_generator(
+            generated_image, _, denoised_timestep_from, denoised_timestep_to = self._run_generator(
             image_or_video_shape=image_or_video_shape,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
@@ -282,37 +282,37 @@ class GAN(SelfForcingModel):
         gan_D_loss = F.softplus(-relative_real_logit.float()).mean()
         gan_D_loss = gan_D_loss * self.gan_d_weight
 
-        # R1 regularization
-        if self.r1_weight > 0.:
-            noisy_real_latent_perturbed = noisy_real_latent.clone()
-            epison_real = self.r1_sigma * torch.randn_like(noisy_real_latent_perturbed)
-            noisy_real_latent_perturbed = noisy_real_latent_perturbed + epison_real
-            noisy_real_logit_perturbed = self._run_cls_pred_branch(
-                noisy_image_or_video=noisy_real_latent_perturbed,
-                conditional_dict=conditional_dict,
-                timestep=critic_timestep
-            )
+        # # R1 regularization
+        # if self.r1_weight > 0.:
+        #     noisy_real_latent_perturbed = noisy_real_latent.clone()
+        #     epison_real = self.r1_sigma * torch.randn_like(noisy_real_latent_perturbed)
+        #     noisy_real_latent_perturbed = noisy_real_latent_perturbed + epison_real
+        #     noisy_real_logit_perturbed = self._run_cls_pred_branch(
+        #         noisy_image_or_video=noisy_real_latent_perturbed,
+        #         conditional_dict=conditional_dict,
+        #         timestep=critic_timestep
+        #     )
 
-            r1_grad = (noisy_real_logit_perturbed - noisy_real_logit) / self.r1_sigma
-            r1_loss = self.r1_weight * torch.mean((r1_grad)**2)
-        else:
-            r1_loss = torch.zeros_like(gan_D_loss)
+        #     r1_grad = (noisy_real_logit_perturbed - noisy_real_logit) / self.r1_sigma
+        #     r1_loss = self.r1_weight * torch.mean((r1_grad)**2)
+        # else:
+        #     r1_loss = torch.zeros_like(gan_D_loss)
 
-        # R2 regularization
-        if self.r2_weight > 0.:
-            noisy_fake_latent_perturbed = noisy_fake_latent.clone()
-            epison_generated = self.r2_sigma * torch.randn_like(noisy_fake_latent_perturbed)
-            noisy_fake_latent_perturbed = noisy_fake_latent_perturbed + epison_generated
-            noisy_fake_logit_perturbed = self._run_cls_pred_branch(
-                noisy_image_or_video=noisy_fake_latent_perturbed,
-                conditional_dict=conditional_dict,
-                timestep=critic_timestep
-            )
+        # # R2 regularization
+        # if self.r2_weight > 0.:
+        #     noisy_fake_latent_perturbed = noisy_fake_latent.clone()
+        #     epison_generated = self.r2_sigma * torch.randn_like(noisy_fake_latent_perturbed)
+        #     noisy_fake_latent_perturbed = noisy_fake_latent_perturbed + epison_generated
+        #     noisy_fake_logit_perturbed = self._run_cls_pred_branch(
+        #         noisy_image_or_video=noisy_fake_latent_perturbed,
+        #         conditional_dict=conditional_dict,
+        #         timestep=critic_timestep
+        #     )
 
-            r2_grad = (noisy_fake_logit_perturbed - noisy_fake_logit) / self.r2_sigma
-            r2_loss = self.r2_weight * torch.mean((r2_grad)**2)
-        else:
-            r2_loss = torch.zeros_like(r2_loss)
+        #     r2_grad = (noisy_fake_logit_perturbed - noisy_fake_logit) / self.r2_sigma
+        #     r2_loss = self.r2_weight * torch.mean((r2_grad)**2)
+        # else:
+        #     r2_loss = torch.zeros_like(r2_loss)
 
         critic_log_dict = {
             "critic_timestep": critic_timestep.detach(),
@@ -320,7 +320,8 @@ class GAN(SelfForcingModel):
             'noisy_fake_logit': noisy_fake_logit.detach(),
         }
 
-        return (gan_D_loss, r1_loss, r2_loss), critic_log_dict
+        loss = gan_D_loss # + r1_loss + r2_loss
+        return loss, critic_log_dict
     
     def evaluate_inference(self,):
         pass
