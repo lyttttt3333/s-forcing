@@ -840,12 +840,11 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         x = [u.flatten(2).transpose(1, 2) for u in x]
         seq_lens = torch.tensor([u.size(1) for u in x], dtype=torch.long)
         assert seq_lens.max() <= seq_len
-        x = torch.cat(x)
-        
-        # x = torch.cat([
-        #     torch.cat([u, u.new_zeros(1, seq_len - u.size(1), u.size(2))],
-        #               dim=1) for u in x
-        # ])
+        # x = torch.cat(x)
+        x = torch.cat([
+            torch.cat([u, u.new_zeros(1, seq_len - u.size(1), u.size(2))],
+                      dim=1) for u in x
+        ])
 
         # time embeddings
         with torch.amp.autocast('cuda'):
