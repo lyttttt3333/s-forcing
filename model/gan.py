@@ -99,7 +99,7 @@ class GAN(SelfForcingModel):
     def generator_loss(
         self,
         image_or_video_shape,
-        clean_latent: torch.Tensor,
+        clean_token: torch.Tensor,
         conditional_dict: dict,
         unconditional_dict: dict,
         frame_token: torch.Tensor = None,
@@ -114,7 +114,7 @@ class GAN(SelfForcingModel):
             - image_or_video_shape: a list containing the shape of the image or video [B, F, C, H, W].
             - conditional_dict: a dictionary containing the conditional information (e.g. text embeddings, image embeddings).
             - unconditional_dict: a dictionary containing the unconditional information (e.g. null/negative text embeddings, null/negative image embeddings).
-            - clean_latent: a tensor containing the clean latents [B, F, C, H, W]. Need to be passed when no backward simulation is used.
+            - clean_token: a tensor containing the clean latents [B, F, C, H, W]. Need to be passed when no backward simulation is used.
         Output:
             - loss: a scalar tensor representing the generator loss.
             - generator_log_dict: a dictionary containing the intermediate tensors for logging.
@@ -160,7 +160,7 @@ class GAN(SelfForcingModel):
 
 
         # Step 4: Compute the real GAN discriminator loss
-        real_image_or_video = clean_latent.clone()
+        real_image_or_video = clean_token.clone()
         critic_noise = torch.randn_like(real_image_or_video)
         noisy_real_latent = self.scheduler.add_noise(
             real_image_or_video,
@@ -202,7 +202,7 @@ class GAN(SelfForcingModel):
             - image_or_video_shape: a list containing the shape of the image or video [B, F, C, H, W].
             - conditional_dict: a dictionary containing the conditional information (e.g. text embeddings, image embeddings).
             - unconditional_dict: a dictionary containing the unconditional information (e.g. null/negative text embeddings, null/negative image embeddings).
-            - clean_latent: a tensor containing the clean latents [B, F, C, H, W]. Need to be passed when no backward simulation is used.
+            - clean_token: a tensor containing the clean latents [B, F, C, H, W]. Need to be passed when no backward simulation is used.
         Output:
             - loss: a scalar tensor representing the generator loss.
             - critic_log_dict: a dictionary containing the intermediate tensors for logging.
