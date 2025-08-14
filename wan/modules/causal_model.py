@@ -276,7 +276,6 @@ class WanCrossAttention(CausalWanSelfAttention):
             context_lens(Tensor): Shape [B]
             crossattn_cache (List[dict], *optional*): Contains the cached key and value tensors for context embedding.
         """
-        print("Cross-attention: x shape", x.shape)
         b, n, d = x.size(0), self.num_heads, self.head_dim
 
         # compute query, key, value
@@ -294,12 +293,9 @@ class WanCrossAttention(CausalWanSelfAttention):
                 v = crossattn_cache["v"]
         else:
             # show tensor shape
-            # print(f"Cross-attention: context shape {context.shape}")
             k = self.norm_k(self.k(context))
-            # print(f"Cross-attention: k shape {k.shape}")
             k = k.view(b, -1, n, d)
             v = self.v(context)
-            # print(f"Cross-attention: v shape {v.shape}")
             v = v.view(b, -1, n, d)
 
         # compute attention
@@ -849,8 +845,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # time embeddings
         with torch.amp.autocast('cuda'):
             bt = t.size(0)
-            print("t before flatten:", t.shape)
-            print("bt:", bt, "seq_len:", seq_len)
             t = t.flatten()
             e = self.time_embedding(
                 sinusoidal_embedding_1d(self.freq_dim,
@@ -1021,8 +1015,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # time embeddings
         with torch.amp.autocast('cuda'):
             bt = t.size(0)
-            print("t before flatten:", t.shape)
-            print("bt:", bt, "seq_len:", seq_len)
             t = t.flatten()
             e = self.time_embedding(
                 sinusoidal_embedding_1d(self.freq_dim,
