@@ -90,7 +90,7 @@ class SelfForcingTrainingPipeline:
                     current_start,
                     seq_len):
 
-        pred_real_image_cond = self.generator.real_score(
+        pred_real_image_cond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=conditional_dict,
             timestep=timestep,
@@ -98,7 +98,7 @@ class SelfForcingTrainingPipeline:
             seq_len=seq_len,
         )
 
-        pred_real_image_uncond = self.generator.real_score(
+        pred_real_image_uncond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=unconditional_dict,
             timestep=timestep,

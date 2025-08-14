@@ -29,7 +29,7 @@ class BaseModel(nn.Module):
         self.fake_model_name = "Wan2.1-T2V-1.3B"
 
 
-        self.generator = WanDiffusionWrapper_small(**getattr(args, "model_kwargs", {}), is_causal=True)
+        self.generator = WanDiffusionWrapper(model_name=self.real_model_name, is_causal=True)
         self.generator.model.requires_grad_(False)
 
         self.real_score = WanDiffusionWrapper(model_name=self.real_model_name, is_causal=False)
