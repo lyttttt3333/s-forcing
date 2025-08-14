@@ -341,7 +341,6 @@ class Trainer:
 
         # Step 3: Store gradients for the generator (if training the generator)
         if train_generator:
-            print("################### Beginning generator training step")
             generator_loss = self.model.generator_loss(
                 image_or_video_shape=image_or_video_shape,
                 conditional_dict=conditional_dict,
@@ -363,7 +362,6 @@ class Trainer:
         else:
             generator_log_dict = {}
 
-        print("################### Beginning critic training step")
         # Step 4: Store gradients for the critic (if training the critic)
         critic_loss, critic_log_dict = self.model.critic_loss(
             image_or_video_shape=image_or_video_shape,
@@ -489,8 +487,13 @@ class Trainer:
         start_step = self.step
 
         while True:
-            print("Training step %d" % self.step)
+            
             TRAIN_GENERATOR = self.step % self.config.dfake_gen_update_ratio == 0
+            if TRAIN_GENERATOR:
+                print("(Gen) Training step %d" % self.step)
+            else:
+                print("(Des) Training step %d" % self.step)
+
 
             EVALUATION = False
             if TRAIN_GENERATOR:
