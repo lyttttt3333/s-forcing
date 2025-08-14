@@ -55,9 +55,7 @@ class SelfForcingTrainingPipeline:
             use_dynamic_shifting=False)
         self.sample_scheduler.set_timesteps(
             self.sampling_steps, device=device, shift=shift)
-        self.timesteps = self.sample_scheduler.timesteps
-        
-        self.denoising_step_list = self.timesteps
+        self.denoising_step_list = self.sample_scheduler.timesteps
 
     def generate_and_sync_list(self, num_blocks, num_denoising_steps, device):
         rank = dist.get_rank() if dist.is_initialized() else 0
@@ -275,6 +273,7 @@ class SelfForcingTrainingPipeline:
         all_num_frames = [self.num_frame_per_block] * num_blocks
         num_denoising_steps = len(self.denoising_step_list)
         exit_flags = self.generate_and_sync_list(len(all_num_frames), num_denoising_steps, device=noise.device)
+        print("Exit flags:", exit_flags)
         start_gradient_frame_index = num_output_frames - 21
 
         # for block_index in range(num_blocks):
