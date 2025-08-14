@@ -165,8 +165,8 @@ class FlowMatchScheduler():
             - timestep: the timestep with shape [B*T]
         Output: the corrupted latent with shape [B, C, T, H, W]
         """
-        original_samples = original_samples.flatten(0, 1)
-        noise = noise.flatten(0, 1)
+        original_samples = original_samples.transpose(2,1).flatten(0, 1)
+        noise = noise.transpose(2,1).flatten(0, 1)
         if timestep.ndim == 2:
             timestep = timestep.flatten(0, 1)
         self.sigmas = self.sigmas.to(noise.device)
@@ -176,7 +176,7 @@ class FlowMatchScheduler():
         sigma = self.sigmas[timestep_id].reshape(-1, 1, 1, 1)
         print("####", sigma.shape, original_samples.shape, noise.shape)
         sample = (1 - sigma) * original_samples + sigma * noise
-        sample = sample.unsqueeze(0)  # [B, C, T, H, W]
+        sample = sample.transpose(1,0).unsqueeze(0)  # [B, C, T, H, W]
         return sample.type_as(noise)
 
     def training_target(self, sample, noise, timestep):
