@@ -270,7 +270,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
             else:
                 if classify_mode:
                     flow_pred, logits = self.model(
-                        noisy_image_or_video.permute(0, 2, 1, 3, 4),
+                        noisy_image_or_video,
                         t=input_timestep, context=context,
                         seq_len=self.seq_len,
                         classify_mode=True,
@@ -280,7 +280,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                         concat_time_embeddings=concat_time_embeddings,
                         memory_condition = memory_condition,
                     )
-                    flow_pred = flow_pred.permute(0, 2, 1, 3, 4)
+                    flow_pred = flow_pred
                 else:
                     flow_pred = self.model(
                         noisy_image_or_video.permute(0, 2, 1, 3, 4),
@@ -289,15 +289,16 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                         memory_condition = memory_condition,
                     ).permute(0, 2, 1, 3, 4)
 
+
+
+        if logits is not None:
+            return flow_pred, None, logits
+        
         pred_x0 = self._convert_flow_pred_to_x0(
             flow_pred=flow_pred.flatten(0, 1),
             xt=noisy_image_or_video.flatten(0, 1),
             timestep=timestep.flatten(0, 1)
         ).unflatten(0, flow_pred.shape[:2])
-
-
-        if logits is not None:
-            return flow_pred, pred_x0, logits
 
         return flow_pred, pred_x0
 
