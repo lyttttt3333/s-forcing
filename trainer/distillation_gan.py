@@ -415,7 +415,7 @@ class Trainer:
     #     current_video = video.permute(0, 1, 3, 4, 2).cpu().numpy() * 255.0
     #     return current_video
     
-    def generate_video(self, batch, step):
+    def generate_video(self, step):
         
         count = 0
         rank = dist.get_rank()
@@ -424,6 +424,7 @@ class Trainer:
         txt_path = os.path.join("tmp", f"video_info_rank-{rank}.txt")
         with open(txt_path, "w") as f:
             while True:
+                batch = self.dataset.get_examples()
                 batch = self.load_batch(batch)
                 frame_token = batch["frame_token"]
                 text_token = batch["text_token"]
@@ -570,8 +571,7 @@ class Trainer:
                     self.generator_ema.update(self.model.generator)
             
             if EVALUATION:
-                batch = self.dataset.get_examples()
-                self.generate_video(batch,self.step)
+                self.generate_video(self.step)
 
             # Train the critic
             self.critic_optimizer.zero_grad(set_to_none=True)
