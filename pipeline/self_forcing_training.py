@@ -44,20 +44,22 @@ class SelfForcingTrainingPipeline:
 
         self.real_guidance_scale = 5
 
-        sampling_steps = 4
-        num_train_timesteps = 1000
-        shift = 5
-        device = "cuda"
+        # sampling_steps = 4
+        # num_train_timesteps = 1000
+        # shift = 5
+        # device = "cuda"
 
-        self.sample_scheduler = FlowUniPCMultistepScheduler(
-            num_train_timesteps=num_train_timesteps,
-            shift=1,
-            use_dynamic_shifting=False)
-        self.sample_scheduler.set_timesteps(
-            sampling_steps, device=device, shift=shift)
-        self.timesteps = self.sample_scheduler.timesteps
-        print("#################", self.timesteps, "#################")
-        self.denoising_step_list = self.timesteps
+        # self.sample_scheduler = FlowUniPCMultistepScheduler(
+        #     num_train_timesteps=num_train_timesteps,
+        #     shift=1,
+        #     use_dynamic_shifting=False)
+        # self.sample_scheduler.set_timesteps(
+        #     sampling_steps, device=device, shift=shift)
+        # self.timesteps = self.sample_scheduler.timesteps
+        
+        # self.denoising_step_list = self.timesteps
+
+        print("#################", self.denoising_step_list, "#################")
 
     def generate_and_sync_list(self, num_blocks, num_denoising_steps, device):
         rank = dist.get_rank() if dist.is_initialized() else 0
@@ -202,11 +204,19 @@ class SelfForcingTrainingPipeline:
                             t=current_timestep,
                         ) # output [1, num_channels, num_frames, height, width]
                         next_timestep = self.denoising_step_list[index + 1]
-                        noisy_input = self.sample_scheduler.add_noise(
+                        denoised_pred = denoised_pred.transpose(1, 2).flatten(0, 1)  # [batch_size * current_num_frames, num_channels, height, width]
+                        noisy_input = self.scheduler.add_noise(
                             denoised_pred,
                             torch.randn_like(denoised_pred),
-                            timestep * next_timestep / current_timestep,
+                            next_timestep * torch.ones(
+                                [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
                         )
+                        noisy_input = noisy_input.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
+                        # noisy_input = self.sample_scheduler.add_noise(
+                        #     denoised_pred,
+                        #     torch.randn_like(denoised_pred),
+                        #     timestep * next_timestep / current_timestep,
+                        # )
                 else:
                     # for getting real output
                     # with torch.set_grad_enabled(current_start_frame >= start_gradient_frame_index):
@@ -250,11 +260,14 @@ class SelfForcingTrainingPipeline:
             # Step 3.3: rerun with timestep zero to update the cache
             context_timestep = torch.ones_like(timestep) * self.context_noise
             # add context noise
+            denoised_pred = denoised_pred.transpose(1, 2).flatten(0, 1)  # [batch_size * current_num_frames, num_channels, height, width]
             denoised_pred = self.scheduler.add_noise(
                 denoised_pred,
                 torch.randn_like(denoised_pred),
-                context_timestep * timestep / current_timestep
-            ).unflatten(0, denoised_pred.shape[:2])
+                next_timestep * torch.ones(
+                    [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
+            )
+            denoised_pred = denoised_pred.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
             with torch.no_grad():
                 self.generator(
                     noisy_image_or_video=denoised_pred,
