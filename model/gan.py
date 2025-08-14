@@ -134,7 +134,7 @@ class GAN(SelfForcingModel):
         denoised_timestep_from = None
         denoised_timestep_to = None
 
-        pred_image = torch.save("pred_image.pt", map_location="cpu").to("cuda")
+        pred_image = torch.load("pred_image.pt", map_location="cpu").to("cuda")
 
         # Step 2: Get timestep and add noise to generated/real latents
         min_timestep = denoised_timestep_to if self.ts_schedule and denoised_timestep_to is not None else self.min_score_timestep
