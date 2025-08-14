@@ -345,7 +345,7 @@ class Trainer:
         # Step 3: Store gradients for the generator (if training the generator)
         if train_generator:
             print("################### Beginning generator training step")
-            generator_loss, generator_log_dict = self.model.generator_loss(
+            generator_loss = self.model.generator_loss(
                 image_or_video_shape=image_or_video_shape,
                 clean_latent=clean_latent,
                 conditional_dict=conditional_dict,
