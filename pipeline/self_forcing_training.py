@@ -278,7 +278,8 @@ class SelfForcingTrainingPipeline:
                     timestep=context_timestep,
                     kv_cache=self.kv_cache1,
                     crossattn_cache=self.crossattn_cache,
-                    current_start=current_start_frame * self.frame_seq_length
+                    current_start=current_start_frame * self.frame_seq_length,
+                    seq_len = seq_len
                 )
 
             # Step 3.4: update the start and end frame indices
