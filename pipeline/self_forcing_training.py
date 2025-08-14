@@ -44,7 +44,7 @@ class SelfForcingTrainingPipeline:
 
         self.real_guidance_scale = 5
 
-        sampling_steps = 50
+        sampling_steps = 4
         num_train_timesteps = 1000
         shift = 5
         device = "cuda"
@@ -109,7 +109,7 @@ class SelfForcingTrainingPipeline:
             pred_real_image_cond - pred_real_image_uncond
         ) * self.real_guidance_scale
 
-        print("pred_real_image shape:", pred_real_image.shape)
+        print("############################# pred_real_image shape:", pred_real_image.shape)
 
         temp_x0 = self.sample_scheduler.step(
                 pred_real_image,
@@ -199,13 +199,14 @@ class SelfForcingTrainingPipeline:
                             crossattn_cache=self.crossattn_cache,
                             current_start=current_start_frame * self.frame_seq_length,
                             seq_len=seq_len,
-                        )
+                            t=current_timestep,
+                        ) # output [1, num_channels, num_frames, height, width]
                         next_timestep = self.denoising_step_list[index + 1]
                         noisy_input = self.sample_scheduler.add_noise(
-                            denoised_pred.flatten(0, 1),
-                            torch.randn_like(denoised_pred.flatten(0, 1)),
+                            denoised_pred,
+                            torch.randn_like(denoised_pred),
                             timestep * next_timestep / current_timestep,
-                        ).unflatten(0, denoised_pred.shape[:2])
+                        )
                 else:
                     # for getting real output
                     # with torch.set_grad_enabled(current_start_frame >= start_gradient_frame_index):
@@ -221,6 +222,7 @@ class SelfForcingTrainingPipeline:
                                 crossattn_cache=self.crossattn_cache,
                                 current_start=current_start_frame * self.frame_seq_length,
                                 seq_len=seq_len,
+                                t=current_timestep,
                             )
                     else:
                         denoised_pred = self.get_flow_pred(
@@ -233,6 +235,7 @@ class SelfForcingTrainingPipeline:
                             crossattn_cache=self.crossattn_cache,
                             current_start=current_start_frame * self.frame_seq_length,
                             seq_len=seq_len,
+                            t=current_timestep,
                         )
                     break
 
@@ -248,10 +251,9 @@ class SelfForcingTrainingPipeline:
             context_timestep = torch.ones_like(timestep) * self.context_noise
             # add context noise
             denoised_pred = self.scheduler.add_noise(
-                denoised_pred.flatten(0, 1),
-                torch.randn_like(denoised_pred.flatten(0, 1)),
-                context_timestep * torch.ones(
-                    [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
+                denoised_pred,
+                torch.randn_like(denoised_pred),
+                context_timestep * timestep / current_timestep
             ).unflatten(0, denoised_pred.shape[:2])
             with torch.no_grad():
                 self.generator(
