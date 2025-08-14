@@ -779,7 +779,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
 
         # begin_index is None when the scheduler is used for training or pipeline does not implement set_begin_index
         if self.begin_index is None:
-            print(timesteps)
             step_indices = [
                 self.index_for_timestep(t, schedule_timesteps)
                 for t in timesteps

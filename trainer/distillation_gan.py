@@ -348,7 +348,7 @@ class Trainer:
                 unconditional_dict=unconditional_dict,
                 frame_token=frame_token,
                 memory_token=memory_token,
-                clean_token=None#clean_token,
+                clean_token=clean_token,
             )
 
             generator_loss.backward()

@@ -273,8 +273,6 @@ class SelfForcingTrainingPipeline:
         all_num_frames = [self.num_frame_per_block] * num_blocks
         num_denoising_steps = len(self.denoising_step_list)
         exit_flags = self.generate_and_sync_list(len(all_num_frames), num_denoising_steps, device=noise.device)
-        print("Exit flags:", exit_flags)
-        print("Denoising step list:", self.denoising_step_list)
         start_gradient_frame_index = num_output_frames - 21
 
         # for block_index in range(num_blocks):
