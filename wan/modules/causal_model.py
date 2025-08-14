@@ -922,10 +922,10 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                 x = block(x, **kwargs)
 
         # head
-        x = self.head(x, e.unflatten(dim=0, sizes=t.shape).unsqueeze(2))
+        x = self.head(x, e)
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
-        return torch.stack(x)
+        return [u.float() for u in x]
 
     def _forward_train(
         self,
