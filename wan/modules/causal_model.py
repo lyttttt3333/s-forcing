@@ -989,17 +989,20 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         seq_lens = torch.tensor([u.size(1) for u in x], dtype=torch.long)
         assert seq_lens.max() <= seq_len
         x = torch.cat([
-            torch.cat([u, u.new_zeros(1, seq_lens[0] - u.size(1), u.size(2))],
+            torch.cat([u, u.new_zeros(1, seq_len - u.size(1), u.size(2))],
                       dim=1) for u in x
         ])
 
         # time embeddings
-        # with amp.autocast(dtype=torch.float32):
-        e = self.time_embedding(
-            sinusoidal_embedding_1d(self.freq_dim, t.flatten()).type_as(x))
-        e0 = self.time_projection(e).unflatten(
-            1, (6, self.dim)).unflatten(dim=0, sizes=t.shape)
-        # assert e.dtype == torch.float32 and e0.dtype == torch.float32
+        with torch.amp.autocast('cuda'):
+            bt = t.size(0)
+            print("t before flatten:", t.shape)
+            print("bt:", bt, "seq_len:", seq_len)
+            t = t.flatten()
+            e = self.time_embedding(
+                sinusoidal_embedding_1d(self.freq_dim,
+                                        t).unflatten(0, (bt, seq_len)).float())
+            e0 = self.time_projection(e).unflatten(2, (6, self.dim))
 
         # context
         context_lens = None
@@ -1026,28 +1029,28 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                     torch.stack([ u for u in state_context ]))
             context = torch.concat([text_context, state_context], dim=1)
 
-        if clip_fea is not None:
-            context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
-            context = torch.concat([context_clip, context], dim=1)
+        # if clip_fea is not None:
+        #     context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
+        #     context = torch.concat([context_clip, context], dim=1)
 
-        if clean_x is not None:
-            clean_x = [self.patch_embedding(u.unsqueeze(0)) for u in clean_x]
-            clean_x = [u.flatten(2).transpose(1, 2) for u in clean_x]
+        # if clean_x is not None:
+        #     clean_x = [self.patch_embedding(u.unsqueeze(0)) for u in clean_x]
+        #     clean_x = [u.flatten(2).transpose(1, 2) for u in clean_x]
 
-            seq_lens_clean = torch.tensor([u.size(1) for u in clean_x], dtype=torch.long)
-            assert seq_lens_clean.max() <= seq_len
-            clean_x = torch.cat([
-                torch.cat([u, u.new_zeros(1, seq_lens_clean[0] - u.size(1), u.size(2))], dim=1) for u in clean_x
-            ])
+        #     seq_lens_clean = torch.tensor([u.size(1) for u in clean_x], dtype=torch.long)
+        #     assert seq_lens_clean.max() <= seq_len
+        #     clean_x = torch.cat([
+        #         torch.cat([u, u.new_zeros(1, seq_lens_clean[0] - u.size(1), u.size(2))], dim=1) for u in clean_x
+        #     ])
 
-            x = torch.cat([clean_x, x], dim=1)
-            if aug_t is None:
-                aug_t = torch.zeros_like(t)
-            e_clean = self.time_embedding(
-                sinusoidal_embedding_1d(self.freq_dim, aug_t.flatten()).type_as(x))
-            e0_clean = self.time_projection(e_clean).unflatten(
-                1, (6, self.dim)).unflatten(dim=0, sizes=t.shape)
-            e0 = torch.cat([e0_clean, e0], dim=1)
+        #     x = torch.cat([clean_x, x], dim=1)
+        #     if aug_t is None:
+        #         aug_t = torch.zeros_like(t)
+        #     e_clean = self.time_embedding(
+        #         sinusoidal_embedding_1d(self.freq_dim, aug_t.flatten()).type_as(x))
+        #     e0_clean = self.time_projection(e_clean).unflatten(
+        #         1, (6, self.dim)).unflatten(dim=0, sizes=t.shape)
+        #     e0 = torch.cat([e0_clean, e0], dim=1)
 
         # arguments
         kwargs = dict(
@@ -1078,11 +1081,12 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             x = x[:, x.shape[1] // 2:]
 
         # head
-        x = self.head(x, e.unflatten(dim=0, sizes=t.shape).unsqueeze(2))
+        x = self.head(x, e)
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
-        return torch.stack(x)
+        return [u.float() for u in x]
+
 
     def forward(
         self,
