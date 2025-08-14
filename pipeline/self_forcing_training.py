@@ -45,7 +45,7 @@ class SelfForcingTrainingPipeline:
 
         sampling_steps = 50
         num_train_timesteps = 1000
-        shift = 
+        shift = 5
         device = "cuda"
 
         self.sample_scheduler = FlowUniPCMultistepScheduler(
