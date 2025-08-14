@@ -415,7 +415,7 @@ class Trainer:
     #     current_video = video.permute(0, 1, 3, 4, 2).cpu().numpy() * 255.0
     #     return current_video
     
-    def generate_video(self, batch):
+    def generate_video(self, batch, step):
         
         count = 0
         rank = dist.get_rank()
@@ -463,26 +463,26 @@ class Trainer:
                 if count >= MAX_COUNT:
                     break
 
-    dist.barrier()
+        dist.barrier()
 
-    if wandb.run is not None:
-        print("in main process")
-        all_video_infos = []
-        world_size = dist.get_world_size()
-        for r in range(world_size):
-            rank_txt = os.path.join("tmp", f"video_info_rank-{r}.txt")
-            print(rank_txt)
-            if os.path.exists(rank_txt):
-                print("exist")
-                with open(rank_txt, "r") as f:
-                    for line in f:
-                        base_name, output_path = line.strip().split(",", 1)
-                        all_video_infos.append((base_name, output_path))
+        if wandb.run is not None:
+            print("in main process")
+            all_video_infos = []
+            world_size = dist.get_world_size()
+            for r in range(world_size):
+                rank_txt = os.path.join("tmp", f"video_info_rank-{r}.txt")
+                print(rank_txt)
+                if os.path.exists(rank_txt):
+                    print("exist")
+                    with open(rank_txt, "r") as f:
+                        for line in f:
+                            base_name, output_path = line.strip().split(",", 1)
+                            all_video_infos.append((base_name, output_path))
 
-        for video_name, output_path in all_video_infos:
-            print("log", video_name)
-            wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=self.step)
-            # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
+            for video_name, output_path in all_video_infos:
+                print("log", video_name)
+                wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=step)
+                # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
 
 
 
@@ -571,7 +571,7 @@ class Trainer:
             
             if EVALUATION:
                 batch = self.dataset.get_examples()
-                self.generate_video(batch)
+                self.generate_video(batch,self.step)
 
             # Train the critic
             self.critic_optimizer.zero_grad(set_to_none=True)
