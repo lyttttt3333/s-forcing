@@ -44,20 +44,20 @@ class SelfForcingTrainingPipeline:
 
         self.real_guidance_scale = 5
 
-        # sampling_steps = 4
-        # num_train_timesteps = 1000
-        # shift = 5
-        # device = "cuda"
+        sampling_steps = 4
+        num_train_timesteps = 1000
+        shift = 5
+        device = "cuda"
 
-        # self.sample_scheduler = FlowUniPCMultistepScheduler(
-        #     num_train_timesteps=num_train_timesteps,
-        #     shift=1,
-        #     use_dynamic_shifting=False)
-        # self.sample_scheduler.set_timesteps(
-        #     sampling_steps, device=device, shift=shift)
-        # self.timesteps = self.sample_scheduler.timesteps
+        self.sample_scheduler = FlowUniPCMultistepScheduler(
+            num_train_timesteps=num_train_timesteps,
+            shift=1,
+            use_dynamic_shifting=False)
+        self.sample_scheduler.set_timesteps(
+            sampling_steps, device=device, shift=shift)
+        self.timesteps = self.sample_scheduler.timesteps
         
-        # self.denoising_step_list = self.timesteps
+        self.denoising_step_list = self.timesteps
 
         print("#################", self.denoising_step_list, "#################")
 
@@ -111,6 +111,8 @@ class SelfForcingTrainingPipeline:
             pred_real_image_cond - pred_real_image_uncond
         ) * self.real_guidance_scale
 
+        pred_real_image = pred_real_image.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
+
         print("############################# pred_real_image shape:", pred_real_image.shape)
 
         temp_x0 = self.sample_scheduler.step(
@@ -118,6 +120,9 @@ class SelfForcingTrainingPipeline:
                 t,
                 noisy_input,
                 return_dict=False)[0]
+        
+        temp_x0 = temp_x0.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
+        print("############################# temp_x0 shape:", temp_x0.shape)
         return temp_x0
 
     def inference_with_trajectory(
@@ -204,19 +209,19 @@ class SelfForcingTrainingPipeline:
                             t=current_timestep,
                         ) # output [1, num_channels, num_frames, height, width]
                         next_timestep = self.denoising_step_list[index + 1]
-                        denoised_pred = denoised_pred.transpose(1, 2).flatten(0, 1)  # [batch_size * current_num_frames, num_channels, height, width]
-                        noisy_input = self.scheduler.add_noise(
-                            denoised_pred,
-                            torch.randn_like(denoised_pred),
-                            next_timestep * torch.ones(
-                                [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
-                        )
-                        noisy_input = noisy_input.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
-                        # noisy_input = self.sample_scheduler.add_noise(
+                        # denoised_pred = denoised_pred.transpose(1, 2).flatten(0, 1)  # [batch_size * current_num_frames, num_channels, height, width]
+                        # noisy_input = self.scheduler.add_noise(
                         #     denoised_pred,
                         #     torch.randn_like(denoised_pred),
-                        #     timestep * next_timestep / current_timestep,
+                        #     next_timestep * torch.ones(
+                        #         [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
                         # )
+                        # noisy_input = noisy_input.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
+                        noisy_input = self.sample_scheduler.add_noise(
+                            denoised_pred,
+                            torch.randn_like(denoised_pred),
+                            timestep * next_timestep / current_timestep,
+                        )
                 else:
                     # for getting real output
                     # with torch.set_grad_enabled(current_start_frame >= start_gradient_frame_index):
@@ -260,14 +265,14 @@ class SelfForcingTrainingPipeline:
             # Step 3.3: rerun with timestep zero to update the cache
             context_timestep = torch.ones_like(timestep) * self.context_noise
             # add context noise
-            denoised_pred = denoised_pred.transpose(1, 2).flatten(0, 1)  # [batch_size * current_num_frames, num_channels, height, width]
-            denoised_pred = self.scheduler.add_noise(
-                denoised_pred,
-                torch.randn_like(denoised_pred),
-                next_timestep * torch.ones(
-                    [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
-            )
-            denoised_pred = denoised_pred.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
+            # denoised_pred = denoised_pred.transpose(1, 2).flatten(0, 1)  # [batch_size * current_num_frames, num_channels, height, width]
+            # denoised_pred = self.scheduler.add_noise(
+            #     denoised_pred,
+            #     torch.randn_like(denoised_pred),
+            #     next_timestep * torch.ones(
+            #         [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
+            # )
+            # denoised_pred = denoised_pred.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
             with torch.no_grad():
                 self.generator(
                     noisy_image_or_video=denoised_pred,
