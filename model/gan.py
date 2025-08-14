@@ -63,17 +63,17 @@ class GAN(SelfForcingModel):
         #     self.scheduler.alphas_cumprod = None
 
         
-        sampling_steps = 4
-        num_train_timesteps = 1000
-        shift = 5
-        device = "cuda"
+        # sampling_steps = 4
+        # num_train_timesteps = 1000
+        # shift = 5
+        # device = "cuda"
 
-        self.scheduler = FlowUniPCMultistepScheduler(
-            num_train_timesteps=num_train_timesteps,
-            shift=1,
-            use_dynamic_shifting=False)
-        self.scheduler.set_timesteps(
-            sampling_steps, device=device, shift=shift)
+        # self.scheduler = FlowUniPCMultistepScheduler(
+        #     num_train_timesteps=num_train_timesteps,
+        #     shift=1,
+        #     use_dynamic_shifting=False)
+        # self.scheduler.set_timesteps(
+        #     sampling_steps, device=device, shift=shift)
 
     def _run_cls_pred_branch(self,
                              noisy_image_or_video: torch.Tensor,
