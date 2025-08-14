@@ -395,7 +395,7 @@ class SelfForcingTrainingPipeline:
                     current_start=current_start_frame * self.frame_seq_length,
                     seq_len = seq_len
                 )
-            self.detach_kv_cache()
+            # self.detach_kv_cache()
 
             # Step 3.4: update the start and end frame indices
             current_start_frame += current_num_frames
