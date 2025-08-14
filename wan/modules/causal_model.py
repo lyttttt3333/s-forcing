@@ -412,17 +412,29 @@ class CausalHead(nn.Module):
         # modulation
         self.modulation = nn.Parameter(torch.randn(1, 2, dim) / dim**0.5)
 
+    # def forward(self, x, e):
+    #     r"""
+    #     Args:
+    #         x(Tensor): Shape [B, L1, C]
+    #         e(Tensor): Shape [B, F, 1, C]
+    #     """
+    #     # assert e.dtype == torch.float32
+    #     # with amp.autocast(dtype=torch.float32):
+    #     num_frames, frame_seqlen = e.shape[1], x.shape[1] // e.shape[1]
+    #     e = (self.modulation.unsqueeze(1) + e).chunk(2, dim=2)
+    #     x = (self.head(self.norm(x).unflatten(dim=1, sizes=(num_frames, frame_seqlen)) * (1 + e[1]) + e[0]))
+    #     return x
+    
     def forward(self, x, e):
         r"""
         Args:
             x(Tensor): Shape [B, L1, C]
-            e(Tensor): Shape [B, F, 1, C]
+            e(Tensor): Shape [B, L1, C]
         """
-        # assert e.dtype == torch.float32
-        # with amp.autocast(dtype=torch.float32):
-        num_frames, frame_seqlen = e.shape[1], x.shape[1] // e.shape[1]
-        e = (self.modulation.unsqueeze(1) + e).chunk(2, dim=2)
-        x = (self.head(self.norm(x).unflatten(dim=1, sizes=(num_frames, frame_seqlen)) * (1 + e[1]) + e[0]))
+        e = (self.modulation.unsqueeze(0) + e.unsqueeze(2)).chunk(2, dim=2)
+        x = (
+            self.head(
+                self.norm(x) * (1 + e[1].squeeze(2)) + e[0].squeeze(2)))
         return x
 
 
