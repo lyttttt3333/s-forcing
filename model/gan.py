@@ -154,6 +154,8 @@ class GAN(SelfForcingModel):
 
         critic_timestep = critic_timestep.clamp(self.min_step, self.max_step)
 
+        print("critic_timestep:", critic_timestep.shape)
+
         critic_noise = torch.randn_like(pred_image)
         noisy_fake_latent = self.scheduler.add_noise(
             pred_image,
