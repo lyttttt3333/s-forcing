@@ -82,7 +82,7 @@ def encode_images(vae, img, device):
         y1 = (ih - new_height) // 2
         cropped = img.crop((x1, y1, iw, y1 + new_height))
 
-    cropped.resize((target_w, target_h), Image.LANCZOS)
+    cropped = cropped.resize((target_w, target_h), Image.LANCZOS)
 
     # to tensor
     img = TF.to_tensor(cropped).sub_(0.5).div_(0.5).to(device).unsqueeze(1)
