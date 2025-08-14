@@ -93,6 +93,7 @@ class SelfForcingTrainingPipeline:
             conditional_dict=conditional_dict,
             timestep=timestep,
             kv_cache=kv_cache,
+            current_start=current_start,
             # memory_token=memory_token,
             seq_len=seq_len,
         )
@@ -102,6 +103,7 @@ class SelfForcingTrainingPipeline:
             conditional_dict=unconditional_dict,
             timestep=timestep,
             kv_cache=kv_cache,
+            current_start=current_start,
             seq_len=seq_len
         )
 
