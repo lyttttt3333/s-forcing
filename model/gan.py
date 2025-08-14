@@ -194,9 +194,8 @@ class GAN(SelfForcingModel):
         image_or_video_shape,
         conditional_dict: dict,
         unconditional_dict: dict,
-        clean_latent: torch.Tensor,
         real_image_or_video: torch.Tensor,
-        initial_latent: torch.Tensor = None,
+        frame_token: torch.Tensor = None,
         memory_token: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, dict]:
         """
@@ -217,9 +216,11 @@ class GAN(SelfForcingModel):
         # Step 1: Run generator on backward simulated noisy input
         with torch.no_grad():
             generated_image, _, denoised_timestep_from, denoised_timestep_to, num_sim_steps = self._run_generator(
-                image_or_video_shape=image_or_video_shape,
-                conditional_dict=conditional_dict,
-                initial_latent=initial_latent
+            image_or_video_shape=image_or_video_shape,
+            conditional_dict=conditional_dict,
+            unconditional_dict=unconditional_dict,
+            frame_token=frame_token,
+            memory_token=memory_token,
             )
 
         # Step 2: Get timestep and add noise to generated/real latents
@@ -229,9 +230,9 @@ class GAN(SelfForcingModel):
             min_timestep,
             max_timestep,
             image_or_video_shape[0],
-            image_or_video_shape[1],
+            image_or_video_shape[2],
             self.num_frame_per_block,
-            uniform_timestep=True
+            uniform_timestep=False
         )
 
         if self.critic_timestep_shift > 1:
@@ -242,27 +243,36 @@ class GAN(SelfForcingModel):
 
         critic_noise = torch.randn_like(generated_image)
         noisy_fake_latent = self.scheduler.add_noise(
-            generated_image.flatten(0, 1),
-            critic_noise.flatten(0, 1),
+            generated_image,
+            critic_noise,
             critic_timestep.flatten(0, 1)
-        ).unflatten(0, image_or_video_shape[:2])
+        )
 
         # Step 4: Compute the real GAN discriminator loss
-        if real_image_or_video is None:
-            real_image_or_video = torch.zeros_like(generated_image)
         noisy_real_latent = self.scheduler.add_noise(
-            real_image_or_video.flatten(0, 1),
-            critic_noise.flatten(0, 1),
+            real_image_or_video,
+            critic_noise,
             critic_timestep.flatten(0, 1)
-        ).unflatten(0, image_or_video_shape[:2])
+        )
 
-        conditional_dict_cloned = copy.deepcopy(conditional_dict)
-        conditional_dict_cloned["prompt_embeds"] = torch.concatenate(
-            (conditional_dict_cloned["prompt_embeds"], conditional_dict_cloned["prompt_embeds"]), dim=0)
+        # conditional_dict_cloned = copy.deepcopy(conditional_dict)
+        # conditional_dict_cloned["prompt_embeds"] = torch.concatenate(
+        #     (conditional_dict_cloned["prompt_embeds"], conditional_dict_cloned["prompt_embeds"]), dim=0)
+        # _, _, noisy_logit = self.fake_score(
+        #     noisy_image_or_video=torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0),
+        #     conditional_dict=conditional_dict_cloned,
+        #     timestep=torch.concatenate((critic_timestep, critic_timestep), dim=0),
+        #     classify_mode=True,
+        #     concat_time_embeddings=self.concat_time_embeddings
+        # )
+        # noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
+
+        critic_timestep = torch.concatenate((critic_timestep, critic_timestep), dim=0)
+        noisy_latent = torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0)
         _, _, noisy_logit = self.fake_score(
-            noisy_image_or_video=torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0),
-            conditional_dict=conditional_dict_cloned,
-            timestep=torch.concatenate((critic_timestep, critic_timestep), dim=0),
+            noisy_image_or_video=noisy_latent,
+            conditional_dict=conditional_dict,
+            timestep=critic_timestep,
             classify_mode=True,
             concat_time_embeddings=self.concat_time_embeddings
         )

@@ -323,7 +323,7 @@ class Trainer:
         frame_token = batch["frame_token"]
         text_token = batch["text_token"]
         memory_token = batch["memory_token"]
-        clean_latent = batch["clean_token"]
+        clean_token = batch["clean_token"]
 
         self.model.eval()  # prevent any randomness (e.g. dropout)
 
@@ -347,7 +347,7 @@ class Trainer:
             print("################### Beginning generator training step")
             generator_loss = self.model.generator_loss(
                 image_or_video_shape=image_or_video_shape,
-                clean_latent=clean_latent,
+                clean_latent=clean_token,
                 conditional_dict=conditional_dict,
                 unconditional_dict=unconditional_dict,
                 frame_token=frame_token,
@@ -358,6 +358,7 @@ class Trainer:
             generator_grad_norm = self.model.generator.clip_grad_norm_(
                 self.max_grad_norm_generator)
 
+            generator_log_dict = {}
             generator_log_dict.update({"generator_loss": generator_loss,
                                        "generator_grad_norm": generator_grad_norm})
 
@@ -371,8 +372,7 @@ class Trainer:
             image_or_video_shape=image_or_video_shape,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
-            clean_latent=clean_latent,
-            real_image_or_video=None,
+            real_image_or_video=clean_token,
             initial_latent=frame_token,
             memory_token=memory_token
         )
@@ -486,6 +486,7 @@ class Trainer:
             #         # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
 
             # Train the generator
+            TRAIN_GENERATOR = False
             if TRAIN_GENERATOR:
                 self.generator_optimizer.zero_grad(set_to_none=True)
                 extras_list = []
