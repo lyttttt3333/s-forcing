@@ -899,7 +899,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                 kwargs.update(
                     {
                         "kv_cache": kv_cache[block_index],
-                        "crossattn_cache": crossattn_cache[block_index],
+                        # "crossattn_cache": crossattn_cache[block_index],
                         "current_start": current_start,
                         "cache_start": cache_start
                     }
