@@ -442,7 +442,7 @@ class DMD(SelfForcingModel):
                 raise
 
             # sample videos
-            latent = noise
+            latent = noise # shape [48, 21, 44, 78]
             mask = torch.ones_like(noise)
             mask[:, 0] = 0
             latent = (1. - mask) * z + mask * latent

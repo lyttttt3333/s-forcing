@@ -138,6 +138,7 @@ class SelfForcingTrainingPipeline:
             device=noise.device,
             dtype=noise.dtype
         )
+        frame_token = frame_token.unsqueeze(0) if frame_token is not None else None
 
         # Step 1: Initialize KV cache to all zeros
         self._initialize_kv_cache(
@@ -163,13 +164,13 @@ class SelfForcingTrainingPipeline:
         # for block_index in range(num_blocks):
         for block_index, current_num_frames in enumerate(all_num_frames):
             noisy_input = noise[
-                :, current_start_frame : current_start_frame + current_num_frames]
+                :, :, current_start_frame : current_start_frame + current_num_frames]
 
             mask = torch.ones_like(noisy_input)
             if block_index == 0 and frame_token is not None:
-                mask[:, 0] = 0
+                mask[:, :, 0] = 0
             else:
-                frame_token = torch.zeros_like(noisy_input[:,0])
+                frame_token = torch.zeros_like(noisy_input)
 
             noisy_input = noisy_input * mask + frame_token * (1-mask)
 
@@ -181,7 +182,7 @@ class SelfForcingTrainingPipeline:
                 else:
                     exit_flag = (index == exit_flags[block_index])  # Only backprop at the randomly selected timestep (consistent across all ranks)
 
-                temp_ts = (mask[0][:, ::2, ::2] * current_timestep).flatten()
+                temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
 
                 if not exit_flag:
@@ -201,8 +202,7 @@ class SelfForcingTrainingPipeline:
                         noisy_input = self.sample_scheduler.add_noise(
                             denoised_pred.flatten(0, 1),
                             torch.randn_like(denoised_pred.flatten(0, 1)),
-                            next_timestep * torch.ones(
-                                [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
+                            timestep * next_timestep / current_timestep,
                         ).unflatten(0, denoised_pred.shape[:2])
                 else:
                     # for getting real output
@@ -240,7 +240,7 @@ class SelfForcingTrainingPipeline:
                 
 
             # Step 3.2: record the model's output
-            output[:, current_start_frame:current_start_frame + current_num_frames] = denoised_pred
+            output[:, :, current_start_frame:current_start_frame + current_num_frames] = denoised_pred
 
             # Step 3.3: rerun with timestep zero to update the cache
             context_timestep = torch.ones_like(timestep) * self.context_noise
