@@ -328,7 +328,8 @@ class GAN(SelfForcingModel):
                             conditional_dict,
                             unconditional_dict,
                             frame_token,
-                            memory_token):
+                            memory_token,
+                            clean_token=None) -> torch.Tensor:
         with torch.no_grad():
             # latent_video, _, denoised_timestep_from, denoised_timestep_to = self._run_generator(
             #     image_or_video_shape=image_or_video_shape,
@@ -341,8 +342,12 @@ class GAN(SelfForcingModel):
             denoised_timestep_to = None
 
             latent_video = torch.load("pred_image.pt", map_location="cpu").to("cuda")
-            video = self.vae.decode_to_pixel([latent_video[0]])[0]
-
-        return video
+            gen_video = self.vae.decode_to_pixel([latent_video[0]])[0]
+            if clean_token is not None:
+                src_vide = self.vae.decode_to_pixel([clean_token[0]])[0]
+                video = torch.cat((src_vide, gen_video), dim=-1)
+                return video
+            else:
+                return gen_video
             
 

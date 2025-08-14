@@ -345,11 +345,11 @@ class Trainer:
             print("################### Beginning generator training step")
             generator_loss = self.model.generator_loss(
                 image_or_video_shape=image_or_video_shape,
-                clean_latent=clean_token,
                 conditional_dict=conditional_dict,
                 unconditional_dict=unconditional_dict,
                 frame_token=frame_token,
-                memory_token=memory_token
+                memory_token=memory_token,
+                clean_token=None#clean_token,
             )
 
             generator_loss.backward()
@@ -444,7 +444,8 @@ class Trainer:
                     conditional_dict=conditional_dict,
                     unconditional_dict=unconditional_dict,
                     frame_token=frame_token,
-                    memory_token=memory_token
+                    memory_token=memory_token,
+                    clean_token=clean_token
                 )
                 print("decoder video shape",video.shape)
 
