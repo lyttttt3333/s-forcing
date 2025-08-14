@@ -292,6 +292,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
 
 
         if logits is not None:
+            print("##################### Logits shape:", logits.shape, logits)
             return flow_pred, None, logits
         
         pred_x0 = self._convert_flow_pred_to_x0(
