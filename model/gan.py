@@ -331,13 +331,15 @@ class GAN(SelfForcingModel):
                             memory_token,
                             clean_token=None) -> torch.Tensor:
         with torch.no_grad():
-            latent_video, _, denoised_timestep_from, denoised_timestep_to = self._run_generator(
-                image_or_video_shape=image_or_video_shape,
-                conditional_dict=conditional_dict,
-                unconditional_dict=unconditional_dict,
-                frame_token=frame_token,
-                memory_token=memory_token,
-                )
+            latent_video = self._consistency_backward_simulation(
+                noise=torch.randn(image_or_video_shape,
+                                device=self.device, dtype=self.dtype),
+                conditional_dict = conditional_dict,
+                unconditional_dict = unconditional_dict,
+                frame_token = frame_token,
+                memory_token = memory_token,
+                inference=True,
+            )
             # denoised_timestep_from = None
             # denoised_timestep_to = None
 

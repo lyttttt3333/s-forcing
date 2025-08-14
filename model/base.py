@@ -183,7 +183,8 @@ class SelfForcingModel(BaseModel):
         conditional_dict: dict,
         unconditional_dict: dict,
         frame_token: torch.tensor = None,
-        memory_token: torch.tensor = None
+        memory_token: torch.tensor = None,
+        inference = False,
     ) -> torch.Tensor:
         """
         Simulate the generator's input from noise to avoid training/inference mismatch.
@@ -199,14 +200,22 @@ class SelfForcingModel(BaseModel):
         """
         if self.inference_pipeline is None:
             self._initialize_inference_pipeline()
-
-        return self.inference_pipeline.inference_with_trajectory(
-            noise = noise,
-            conditional_dict =conditional_dict,
-            unconditional_dict = unconditional_dict,
-            frame_token = frame_token,
-            memory_token = memory_token,
-        )
+        if not inference:
+            return self.inference_pipeline.inference_with_trajectory(
+                noise = noise,
+                conditional_dict =conditional_dict,
+                unconditional_dict = unconditional_dict,
+                frame_token = frame_token,
+                memory_token = memory_token,
+            )
+        else:
+            return self.inference_pipeline.inference(
+                noise = noise,
+                conditional_dict = conditional_dict,
+                unconditional_dict = unconditional_dict,
+                frame_token = frame_token,
+                memory_token = memory_token,
+            )
 
     def _initialize_inference_pipeline(self):
         """
