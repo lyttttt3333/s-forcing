@@ -91,7 +91,7 @@ class CausalWanSelfAttention(nn.Module):
         seq_lens,
         grid_sizes,
         freqs,
-        block_mask,
+        block_mask = None,
         kv_cache=None,
         current_start=0,
         cache_start=None,
@@ -160,7 +160,7 @@ class CausalWanSelfAttention(nn.Module):
                     query=padded_roped_query.transpose(2, 1),
                     key=padded_roped_key.transpose(2, 1),
                     value=padded_v.transpose(2, 1),
-                    block_mask=block_mask
+                    # block_mask=block_mask
                 )[:, :, :-padded_length].transpose(2, 1)
 
             else:
@@ -191,7 +191,7 @@ class CausalWanSelfAttention(nn.Module):
                     query=padded_roped_query.transpose(2, 1),
                     key=padded_roped_key.transpose(2, 1),
                     value=padded_v.transpose(2, 1),
-                    block_mask=block_mask
+                    # block_mask=block_mask
                 )[:, :, :-padded_length].transpose(2, 1)
         else:
             frame_seqlen = math.prod(grid_sizes[0][1:]).item()
@@ -349,7 +349,7 @@ class CausalWanAttentionBlock(nn.Module):
         freqs,
         context,
         context_lens,
-        block_mask,
+        block_mask=None,
         kv_cache=None,
         crossattn_cache=None,
         current_start=0,
@@ -374,7 +374,11 @@ class CausalWanAttentionBlock(nn.Module):
         # self-attention
         y = self.self_attn(
             self.norm1(x) * (1 + e[1].squeeze(2)) + e[0].squeeze(2),
-            seq_lens, grid_sizes, freqs)
+            seq_lens, grid_sizes, freqs,
+            kv_cache=kv_cache,
+            current_start=current_start,
+            cache_start=cache_start)
+        
         with torch.amp.autocast('cuda', dtype=torch.bfloat16):
             x = x + y * e[2].squeeze(2)
 
@@ -1076,9 +1080,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                 )
             else:
                 x = block(x, **kwargs)
-
-        if clean_x is not None:
-            x = x[:, x.shape[1] // 2:]
 
         # head
         x = self.head(x, e)
