@@ -36,28 +36,29 @@ def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
 vae = WanVAEWrapper()
 vae.requires_grad_(False)
 latent = torch.load("pred_image.pt", map_location="cpu").to("cuda")[0][:,:3]
+latent = torch.zeros([48, 1, 30, 60], device="cuda", dtype=torch.bfloat16) 
 with torch.no_grad():
     # latent = vae.encode_to_latent([video])[0]
     print(latent.shape)
     video = vae.decode_to_pixel([latent])
     print(video[0].shape)
 
-output_path = "pred_video.mp4"
-save_video(video[0], output_path, fps=16, quality=5)
+# output_path = "pred_video.mp4"
+# save_video(video[0], output_path, fps=16, quality=5)
 
-import wandb
-import os
+# import wandb
+# import os
 
-wandb.login(host="https://api.wandb.ai", key="5409d3b960b01b25cec0f6abb5361b4022f0cc41")
-wandb.init(
-    mode="online",
-    entity="liyitong-Tsinghua University",
-    project="self-forcing",
-)
+# wandb.login(host="https://api.wandb.ai", key="5409d3b960b01b25cec0f6abb5361b4022f0cc41")
+# wandb.init(
+#     mode="online",
+#     entity="liyitong-Tsinghua University",
+#     project="self-forcing",
+# )
 
-video_path = "pred_video.mp4"
-basename = os.path.basename(video_path)
-wandb.log({f"{basename}": wandb.Video(video_path, fps=16, format="mp4")})
+# video_path = "pred_video.mp4"
+# basename = os.path.basename(video_path)
+# wandb.log({f"{basename}": wandb.Video(video_path, fps=16, format="mp4")})
 
 
 
