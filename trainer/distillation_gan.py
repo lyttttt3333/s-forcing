@@ -541,7 +541,6 @@ class Trainer:
                         {
                             "generator_loss": generator_log_dict["generator_loss"].mean().item(),
                             "generator_grad_norm": generator_log_dict["generator_grad_norm"].mean().item(),
-                            "dmdtrain_gradient_norm": generator_log_dict["dmdtrain_gradient_norm"].mean().item()
                         }
                     )
 
