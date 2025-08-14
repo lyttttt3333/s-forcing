@@ -170,12 +170,12 @@ class Trainer:
             wrap_strategy=config.generator_fsdp_wrap_strategy
         )
 
-        self.model.real_score = fsdp_wrap(
-            self.model.real_score,
-            sharding_strategy=config.sharding_strategy,
-            mixed_precision=config.mixed_precision,
-            wrap_strategy=config.real_score_fsdp_wrap_strategy
-        )
+        # self.model.real_score = fsdp_wrap(
+        #     self.model.real_score,
+        #     sharding_strategy=config.sharding_strategy,
+        #     mixed_precision=config.mixed_precision,
+        #     wrap_strategy=config.real_score_fsdp_wrap_strategy
+        # )
 
         self.model.fake_score = fsdp_wrap(
             self.model.fake_score,
