@@ -140,19 +140,11 @@ class SelfForcingModel(BaseModel):
 
         # During training, the number of generated frames should be uniformly sampled from
         # [21, self.num_training_frames], but still being a multiple of self.num_frame_per_block
-        min_num_frames = 20 if self.args.independent_first_frame else 21
-        max_num_frames = self.num_training_frames - 1 if self.args.independent_first_frame else self.num_training_frames
-        assert max_num_frames % self.num_frame_per_block == 0
-        assert min_num_frames % self.num_frame_per_block == 0
-        max_num_blocks = max_num_frames // self.num_frame_per_block
-        min_num_blocks = min_num_frames // self.num_frame_per_block
-        num_generated_blocks = torch.randint(min_num_blocks, max_num_blocks + 1, (1,), device=self.device)
+        num_generated_blocks = 21 // self.num_frame_per_block
+        num_generated_blocks = torch.tensor(num_generated_blocks, device=self.device)
         dist.broadcast(num_generated_blocks, src=0)
-        num_generated_blocks = num_generated_blocks.item()
+        num_generated_blocks = int(num_generated_blocks.item())
         num_generated_frames = num_generated_blocks * self.num_frame_per_block
-        if self.args.independent_first_frame and initial_latent is None:
-            num_generated_frames += 1
-            min_num_frames += 1
         # Sync num_generated_frames across all processes
         noise_shape[1] = num_generated_frames
 
@@ -179,15 +171,17 @@ class SelfForcingModel(BaseModel):
         else:
             pred_image_or_video_last_21 = pred_image_or_video
 
-        if num_generated_frames != min_num_frames:
-            # Currently, we do not use gradient for the first chunk, since it contains image latents
-            gradient_mask = torch.ones_like(pred_image_or_video_last_21, dtype=torch.bool)
-            if self.args.independent_first_frame:
-                gradient_mask[:, :1] = False
-            else:
-                gradient_mask[:, :self.num_frame_per_block] = False
-        else:
-            gradient_mask = None
+        # if num_generated_frames != min_num_frames:
+        #     # Currently, we do not use gradient for the first chunk, since it contains image latents
+        #     gradient_mask = torch.ones_like(pred_image_or_video_last_21, dtype=torch.bool)
+        #     if self.args.independent_first_frame:
+        #         gradient_mask[:, :1] = False
+        #     else:
+        #         gradient_mask[:, :self.num_frame_per_block] = False
+        # else:
+        #     gradient_mask = None
+
+        gradient_mask = None
 
         pred_image_or_video_last_21 = pred_image_or_video_last_21.to(self.dtype)
         return pred_image_or_video_last_21, gradient_mask, denoised_timestep_from, denoised_timestep_to

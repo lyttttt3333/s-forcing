@@ -323,7 +323,7 @@ class Trainer:
         frame_token = batch["frame_token"]
         text_token = batch["text_token"]
         memory_token = batch["memory_token"]
-        clean_latent = batch["clean_latent"]
+        clean_latent = batch["clean_token"]
 
         self.model.eval()  # prevent any randomness (e.g. dropout)
 
