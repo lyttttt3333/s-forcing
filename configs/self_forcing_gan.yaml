@@ -44,8 +44,8 @@ image_or_video_shape:
 - 1
 - 48
 - 21
-- 44
-- 78
+- 30
+- 40 
 distribution_loss: gan
 trainer: gan
 gradient_checkpointing: true

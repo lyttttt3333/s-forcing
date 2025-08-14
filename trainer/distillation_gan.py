@@ -161,7 +161,7 @@ class Trainer:
             self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, resume_path, is_trainable=True)
         self.model.fake_score.print_trainable_parameters() 
 
-        
+        self.image_or_video_shape = list(self.config.image_or_video_shape)
         
         self.model.generator = fsdp_wrap(
             self.model.generator,
@@ -314,7 +314,11 @@ class Trainer:
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
             if key == "clean_token":
-                batch[key] = torch.zeros([1,48,21,44,78]).to(self.dtype).to(self.device)
+                batch[key] = torch.zeros(self.image_or_video_shape).to(self.dtype).to(self.device)
+            if key == "frame_token":
+                image_shape = self.image_or_video_shape
+                image_shape[2] = 1 
+                batch[key] = torch.zeros(image_shape).to(self.dtype).to(self.device)
         return batch
 
     def fwdbwd_one_step(self, batch, train_generator):
@@ -329,9 +333,6 @@ class Trainer:
         if self.step % 20 == 0:
             torch.cuda.empty_cache()
 
-
-        image_or_video_shape = list(self.config.image_or_video_shape)
-
         # Step 2: Extract the conditional infos
         with torch.no_grad():
             conditional_dict = {'prompt_embeds': text_token}
@@ -342,7 +343,7 @@ class Trainer:
         # Step 3: Store gradients for the generator (if training the generator)
         if train_generator:
             generator_loss = self.model.generator_loss(
-                image_or_video_shape=image_or_video_shape,
+                image_or_video_shape=self.image_or_video_shape,
                 conditional_dict=conditional_dict,
                 unconditional_dict=unconditional_dict,
                 frame_token=frame_token,
@@ -364,7 +365,7 @@ class Trainer:
 
         # Step 4: Store gradients for the critic (if training the critic)
         critic_loss, critic_log_dict = self.model.critic_loss(
-            image_or_video_shape=image_or_video_shape,
+            image_or_video_shape=self.image_or_video_shape,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
             real_image_or_video=clean_token,
@@ -434,11 +435,9 @@ class Trainer:
                 base_name = batch["base_name"][0]
                 print("base_name", base_name)
 
-                image_or_video_shape = list(self.config.image_or_video_shape)
-
 
                 video = self.model.generator_inference(
-                    image_or_video_shape=image_or_video_shape,
+                    image_or_video_shape=self.image_or_video_shape,
                     conditional_dict=conditional_dict,
                     unconditional_dict=unconditional_dict,
                     frame_token=frame_token,

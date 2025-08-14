@@ -237,8 +237,8 @@ class CausalWanSelfAttention(nn.Module):
             )
             kv_cache["global_end_index"].fill_(current_end)
             kv_cache["local_end_index"].fill_(local_end_index)
-            kv_cache["k"][:, local_start_index:local_end_index] = kv_cache["k"][:, local_start_index:local_end_index].detach()
-            kv_cache["v"][:, local_start_index:local_end_index] = kv_cache["v"][:, local_start_index:local_end_index].detach()
+            # kv_cache["k"][:, local_start_index:local_end_index] = kv_cache["k"][:, local_start_index:local_end_index].detach()
+            # kv_cache["v"][:, local_start_index:local_end_index] = kv_cache["v"][:, local_start_index:local_end_index].detach()
 
         # output
         x = x.flatten(2)
