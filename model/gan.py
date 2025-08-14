@@ -120,21 +120,21 @@ class GAN(SelfForcingModel):
             - generator_log_dict: a dictionary containing the intermediate tensors for logging.
         """
         # Step 1: Unroll generator to obtain fake videos
-        # pred_image, gradient_mask, denoised_timestep_from, denoised_timestep_to = self._run_generator(
-        #     image_or_video_shape=image_or_video_shape,
-        #     conditional_dict=conditional_dict,
-        #     unconditional_dict=unconditional_dict,
-        #     frame_token=frame_token,
-        #     memory_token=memory_token,
-        # )
-        # # print("############## pred_image shape:", pred_image.shape)
-        # print("denoised_timestep_from:", denoised_timestep_from)
-        # print("denoised_timestep_to:", denoised_timestep_to)
+        pred_image, gradient_mask, denoised_timestep_from, denoised_timestep_to = self._run_generator(
+            image_or_video_shape=image_or_video_shape,
+            conditional_dict=conditional_dict,
+            unconditional_dict=unconditional_dict,
+            frame_token=frame_token,
+            memory_token=memory_token,
+        )
+        # print("############## pred_image shape:", pred_image.shape)
+        print("denoised_timestep_from:", denoised_timestep_from)
+        print("denoised_timestep_to:", denoised_timestep_to)
 
-        denoised_timestep_from = None
-        denoised_timestep_to = None
+        # denoised_timestep_from = None
+        # denoised_timestep_to = None
 
-        pred_image = torch.load("pred_image.pt", map_location="cpu").to("cuda")
+        # pred_image = torch.load("pred_image.pt", map_location="cpu").to("cuda")
 
         # Step 2: Get timestep and add noise to generated/real latents
         min_timestep = denoised_timestep_to if self.ts_schedule and denoised_timestep_to is not None else self.min_score_timestep
