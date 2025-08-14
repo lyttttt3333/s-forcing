@@ -316,7 +316,7 @@ class Trainer:
             if key == "clean_token":
                 batch[key] = torch.zeros(self.image_or_video_shape).to(self.dtype).to(self.device)
             if key == "frame_token":
-                image_shape = [1,48,1,30,40]
+                image_shape = [48,1,30,40]
                 batch[key] = torch.zeros(image_shape).to(self.dtype).to(self.device)
         return batch
 

@@ -417,6 +417,15 @@ class SelfForcingTrainingPipeline:
 
         return output, denoised_timestep_from, denoised_timestep_to
 
+    def detach_kv_cache(self):
+        """
+        Detach all tensors in kv_cache1 from the computation graph.
+        """
+        for block_cache in self.kv_cache1:
+            for key in block_cache:
+                if torch.is_tensor(block_cache[key]):
+                    block_cache[key] = block_cache[key].detach()
+
     def _initialize_kv_cache(self, batch_size, dtype, device):
         """
         Initialize a Per-GPU KV cache for the Wan model.
