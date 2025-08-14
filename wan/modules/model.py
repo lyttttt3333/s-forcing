@@ -692,9 +692,6 @@ class WanModel(ModelMixin, ConfigMixin):
 
         # embeddings
         conv_input = x[0].unsqueeze(0)
-        print("####",conv_input.shape)
-        print("conv_input.shape:", conv_input.shape)
-        print("expected in_dim:", self.patch_embedding.in_channels)
         x = [self.patch_embedding(conv_input)]
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])
@@ -766,7 +763,6 @@ class WanModel(ModelMixin, ConfigMixin):
                 return module(*inputs, **kwargs)
             return custom_forward
 
-        gan_idx = 0
         for ii, block in enumerate(self.blocks):
             if torch.is_grad_enabled() and self.gradient_checkpointing:
                 x = torch.utils.checkpoint.checkpoint(
