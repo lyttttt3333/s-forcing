@@ -44,7 +44,7 @@ class SelfForcingTrainingPipeline:
 
         self.real_guidance_scale = 5
 
-        self.sampling_steps = 50
+        self.sampling_steps = 4
         num_train_timesteps = 1000
         shift = 5
         device = "cuda"
