@@ -431,6 +431,8 @@ class CausalHead(nn.Module):
             x(Tensor): Shape [B, L1, C]
             e(Tensor): Shape [B, L1, C]
         """
+        e = e.to(torch.bfloat16)
+        x = x.to(torch.bfloat16)
         e = (self.modulation.unsqueeze(0) + e.unsqueeze(2)).chunk(2, dim=2)
         x = (
             self.head(
