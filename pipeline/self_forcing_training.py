@@ -96,7 +96,7 @@ class SelfForcingTrainingPipeline:
             noisy_image_or_video=noisy_input,
             conditional_dict=conditional_dict,
             timestep=timestep,
-            memory_token=memory_token,
+            # memory_token=memory_token,
             seq_len=seq_len,
         )
 
