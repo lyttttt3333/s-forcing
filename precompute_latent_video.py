@@ -117,7 +117,7 @@ def main():
         if f.lower().endswith(".mp4")
     ]
     video_files.sort()
-    
+
 
     vae = WanVAEWrapper().to(torch.float16).to(device)
 
@@ -126,7 +126,7 @@ def main():
     target_h = 480
     target_w = 640
 
-    for i in range(rank, len(video_files), world_size):
+    for i in range(rank+100, len(video_files), world_size):
         video_path = video_files[i]
         base_name = os.path.basename(video_path).split(".")[0]
         save_path = os.path.join(output_dir, f"{base_name}.pth")
