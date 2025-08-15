@@ -199,6 +199,8 @@ class SelfForcingTrainingPipeline:
 
                 noisy_input = noisy_input * mask + frame_token * (1-mask)
             
+            denoised_pred = denoised_pred * mask + frame_token * (1-mask)
+            
             self.updata_3d_state(conditional_dict, idx = block_index, memory_token = memory_token)
                 
 
@@ -367,6 +369,8 @@ class SelfForcingTrainingPipeline:
                     break
 
                 noisy_input = noisy_input * mask + frame_token * (1-mask)
+
+            denoised_pred = denoised_pred * mask + frame_token * (1-mask)
             
             self.updata_3d_state(conditional_dict, idx = block_index, memory_token = memory_token)
                 
