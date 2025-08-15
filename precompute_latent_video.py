@@ -82,6 +82,7 @@ def video_to_tensor(video_path: str, target_frames: int, target_h: int, target_w
 
     cap.release()
     if len(frames) < target_frames:
+        print(f"############ {len(frames)} and {target_frames} ###########")
         # 补齐帧
         while len(frames) < target_frames:
             frames.append(frames[-1].clone())
