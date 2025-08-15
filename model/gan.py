@@ -342,6 +342,7 @@ class GAN(SelfForcingModel):
             gen_video = self.vae.decode_to_pixel([latent_video[0]])[0]
             if clean_token is not None:
                 src_vide = self.vae.decode_to_pixel([clean_token[0]])[0]
+                print(f"src_vide shape: {src_vide.shape}, gen_video shape: {gen_video.shape}")
                 video = torch.cat((src_vide, gen_video), dim=-1)
                 return video
             else:

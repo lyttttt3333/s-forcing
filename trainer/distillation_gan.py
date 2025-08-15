@@ -532,9 +532,6 @@ class Trainer:
             critic_log_dict = merge_dict_list(extras_list)
             self.critic_optimizer.step()
 
-            # Increment the step since we finished gradient update
-            self.step += 1
-
             # Create EMA params (if not already created)
             if (self.step >= self.config.ema_start_step) and \
                     (self.generator_ema is None) and (self.config.ema_weight > 0):
@@ -581,3 +578,6 @@ class Trainer:
                     if not self.disable_wandb:
                         wandb.log({"per iteration time": current_time - self.previous_time}, step=self.step)
                     self.previous_time = current_time
+
+            # Increment the step since we finished gradient update
+            self.step += 1
