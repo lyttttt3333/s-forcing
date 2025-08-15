@@ -57,4 +57,4 @@ model_kwargs:
 num_class: 2
 resume_path: null
 discriminator_warmup_steps: 300
-eval_interval: 300
+eval_interval: 200
