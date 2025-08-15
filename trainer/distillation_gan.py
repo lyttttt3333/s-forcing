@@ -443,7 +443,6 @@ class Trainer:
                 unconditional_dict = {'prompt_embeds': embed}
 
                 base_name = batch["base_name"][0]
-                print("base_name", base_name)
 
 
                 video = self.model.generator_inference(
@@ -454,7 +453,6 @@ class Trainer:
                     memory_token=memory_token,
                     clean_token=clean_token
                 )
-                print("decoder video shape",video.shape)
 
                 output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
                 f.write(f"{base_name},{output_path}\n")
@@ -472,21 +470,17 @@ class Trainer:
         dist.barrier()
 
         if wandb.run is not None:
-            print("in main process")
             all_video_infos = []
             world_size = dist.get_world_size()
             for r in range(world_size):
                 rank_txt = os.path.join("tmp", f"video_info_rank-{r}.txt")
-                print(rank_txt)
                 if os.path.exists(rank_txt):
-                    print("exist")
                     with open(rank_txt, "r") as f:
                         for line in f:
                             base_name, output_path = line.strip().split(",", 1)
                             all_video_infos.append((base_name, output_path, r))
 
             for video_name, output_path, rank in all_video_infos:
-                print("log", video_name)
                 wandb.log({f"gen/video_{rank}": wandb.Video(output_path, fps=16, format="mp4")},step=step)
                 # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
 
