@@ -323,6 +323,7 @@ class Trainer:
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
             if key == "clean_token":
+                path = batch[key][0]
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor.unsqueeze(0)  # Ensure it has batch dimension
             # if key == "frame_token":
