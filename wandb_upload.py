@@ -26,7 +26,7 @@ wandb.init(
 video_dir = "tmp"
 mp4_files = glob.glob(os.path.join(video_dir, "*.mp4"))
 
-mp4_files = ["test.mp4"]  # For testing, replace with actual video filess
+mp4_files = ["test-0.mp4"]  # For testing, replace with actual video filess
 
 for video_path in mp4_files:
     basename = os.path.basename(video_path)
