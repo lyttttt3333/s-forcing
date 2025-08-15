@@ -522,7 +522,7 @@ class Trainer:
             if TRAIN_GENERATOR:
                 print("(Gen) Training step %d" % self.step)
             else:
-                print("(Des) Training step %d" % self.step)
+                print("(Dis) Training step %d" % self.step)
 
 
             
