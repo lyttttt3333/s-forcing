@@ -80,9 +80,10 @@ def video_to_tensor(video_path: str, target_frames: int, target_h: int, target_w
         if len(frames) >= target_frames:
             break
 
+    print(f"############ {len(frames)} and {target_frames} ###########")
+
     cap.release()
     if len(frames) < target_frames:
-        print(f"############ {len(frames)} and {target_frames} ###########")
         # 补齐帧
         while len(frames) < target_frames:
             frames.append(frames[-1].clone())
@@ -115,7 +116,7 @@ def main():
         for f in os.listdir(input_dir)
         if f.lower().endswith(".mp4")
     ]
-    video_files.sort()
+    video_files.sort()[100:]
 
     vae = WanVAEWrapper().to(torch.float16).to(device)
 
