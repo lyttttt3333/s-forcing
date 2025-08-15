@@ -9,6 +9,8 @@ from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
 
 import torchvision.transforms.functional as TF
+import imageio
+from tqdm import tqdm
 
 def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
     """
