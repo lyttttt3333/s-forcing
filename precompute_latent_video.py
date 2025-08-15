@@ -9,6 +9,32 @@ from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
 
 import torchvision.transforms.functional as TF
+import imageio
+from tqdm import tqdm
+
+def save_video(video_tensor, save_path, fps=16, quality=9, ffmpeg_params=None):
+    """
+    保存一个形状为 [C, T, H, W] 的视频张量到文件
+    video_tensor: torch.Tensor, float32, 值域 [-1, 1] 或 [0, 1]
+    """
+    assert video_tensor.dim() == 4, "video_tensor 必须是 4 维 [C, T, H, W]"
+    
+    # 转到 CPU，避免 GPU 张量直接参与 numpy 转换
+    video_tensor = video_tensor.detach().cpu()
+
+    # [-1, 1] → [0, 255]
+    if video_tensor.min() < 0:
+        video_tensor = (video_tensor + 1) / 2  # [-1,1] → [0,1]
+    video_tensor = (video_tensor * 255).clamp(0, 255).byte()
+
+    # [C, T, H, W] → [T, H, W, C]
+    video_tensor = video_tensor.permute(1, 2, 3, 0).numpy()
+
+    # 保存视频
+    writer = imageio.get_writer(save_path, fps=fps, quality=quality, ffmpeg_params=ffmpeg_params)
+    for frame in tqdm(video_tensor, desc="Saving video"):
+        writer.append_data(frame)
+    writer.close()
 
 
 def center_crop_resize(img: Image.Image, target_h: int, target_w: int) -> Image.Image:
@@ -39,20 +65,25 @@ def video_to_tensor(video_path: str, target_frames: int, target_h: int, target_w
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
+    frame_count = 0  # 记录当前已读取的帧数
     frames = []
-    for i in range(0, total_frames, 2):  # 每隔一帧取一次
-        cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+
+    while frame_count < total_frames and len(frames) < target_frames:
         success, frame = cap.read()
         if not success:
             break
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(frame_rgb)
-        img = center_crop_resize(img, target_h, target_w)
-        img_tensor = TF.to_tensor(img).sub_(0.5).div_(0.5)  # [-1, 1]
-        frames.append(img_tensor)
+        
+        # 每隔一帧取一次（只保留偶数帧）
+        if frame_count % 2 == 0:
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame_rgb)
+            img = center_crop_resize(img, target_h, target_w)
+            img_tensor = TF.to_tensor(img).sub_(0.5).div_(0.5)  # [-1, 1]
+            frames.append(img_tensor)
+        
+        frame_count += 1
 
-        if len(frames) >= target_frames:
-            break
+    print(f"############ {len(frames)} and {target_frames} ###########")
 
     cap.release()
     if len(frames) < target_frames:
@@ -90,6 +121,7 @@ def main():
     ]
     video_files.sort()
 
+
     vae = WanVAEWrapper().to(torch.float16).to(device)
 
     # 设置目标视频形状
@@ -104,6 +136,9 @@ def main():
 
         video_tensor = video_to_tensor(video_path, target_frames, target_h, target_w, device)
         video_tensor = video_tensor[0]
+        # save_path = f"test-{rank}.mp4" # For testing, change this to your desired path
+        # save_video(video_tensor, save_path)
+        # break
         latent = encode_video(vae, video_tensor).to(torch.bfloat16)
         torch.save(latent, save_path)
         print(f"[GPU {rank}] done {base_name}")

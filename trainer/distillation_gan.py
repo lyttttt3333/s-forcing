@@ -268,7 +268,7 @@ class Trainer:
         self.load_embed_dict(embed_dict_path)
 
     def save(self):
-        print("Start gathering distributed model states...")
+        print("#################### Start gathering distributed model states...")
         save_path = os.path.join(self.output_path, f"checkpoint_model_{self.step:06d}")
         save_path_score = os.path.join(save_path, "fake_score_model")
         save_path_generator = os.path.join(save_path, "generator_model")
@@ -323,6 +323,7 @@ class Trainer:
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
             if key == "clean_token":
+                path = batch[key][0]
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor.unsqueeze(0)  # Ensure it has batch dimension
             # if key == "frame_token":
@@ -442,7 +443,6 @@ class Trainer:
                 unconditional_dict = {'prompt_embeds': embed}
 
                 base_name = batch["base_name"][0]
-                print("base_name", base_name)
 
 
                 video = self.model.generator_inference(
@@ -453,7 +453,6 @@ class Trainer:
                     memory_token=memory_token,
                     clean_token=clean_token
                 )
-                print("decoder video shape",video.shape)
 
                 output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
                 f.write(f"{base_name},{output_path}\n")
@@ -471,21 +470,17 @@ class Trainer:
         dist.barrier()
 
         if wandb.run is not None:
-            print("in main process")
             all_video_infos = []
             world_size = dist.get_world_size()
             for r in range(world_size):
                 rank_txt = os.path.join("tmp", f"video_info_rank-{r}.txt")
-                print(rank_txt)
                 if os.path.exists(rank_txt):
-                    print("exist")
                     with open(rank_txt, "r") as f:
                         for line in f:
                             base_name, output_path = line.strip().split(",", 1)
                             all_video_infos.append((base_name, output_path, r))
 
             for video_name, output_path, rank in all_video_infos:
-                print("log", video_name)
                 wandb.log({f"gen/video_{rank}": wandb.Video(output_path, fps=16, format="mp4")},step=step)
                 # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
 
@@ -531,9 +526,6 @@ class Trainer:
             extras_list.append(extra)
             critic_log_dict = merge_dict_list(extras_list)
             self.critic_optimizer.step()
-
-            # Increment the step since we finished gradient update
-            self.step += 1
 
             # Create EMA params (if not already created)
             if (self.step >= self.config.ema_start_step) and \
@@ -581,3 +573,6 @@ class Trainer:
                     if not self.disable_wandb:
                         wandb.log({"per iteration time": current_time - self.previous_time}, step=self.step)
                     self.previous_time = current_time
+
+            # Increment the step since we finished gradient update
+            self.step += 1
