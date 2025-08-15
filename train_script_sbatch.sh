@@ -8,9 +8,9 @@
 #SBATCH --mail-type=BEGIN               # Send email when job starts
 #SBATCH --mail-use=liyitong.thu@gmail.com   # Destination Email
 
-source ~/miniforge3/bin/activate
-conda activate verl
+git pull origin master
 
-torchrun --nnodes=1 --nproc_per_node=4 --master_port=29509 train.py \
-  --config_path configs/self_forcing_dmd.yaml \
-  --logdir logs/self_forcing_afetr_3000 \
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+torchrun --nnodes=1 --nproc_per_node=8 --master_port=29505 train.py \
+  --config_path configs/self_forcing_gan.yaml \
+  --logdir logs/
