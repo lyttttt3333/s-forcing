@@ -295,16 +295,16 @@ class Trainer:
             self.model.fake_score)
         
         state_dict = {
-            "generator": des_state_dict,
+            "des": des_state_dict,
         }
 
         if self.is_main_process:
             os.makedirs(os.path.join(self.output_path,
                         f"checkpoint_model_{self.step:06d}"), exist_ok=True)
             torch.save(state_dict, os.path.join(self.output_path,
-                       f"checkpoint_model_{self.step:06d}", "model.pt"))
+                       f"checkpoint_model_{self.step:06d}", "des.pt"))
             print("Model saved to", os.path.join(self.output_path,
-                  f"checkpoint_model_{self.step:06d}", "model.pt"))
+                  f"checkpoint_model_{self.step:06d}", "des.pt"))
             
 
     def load_embed_dict(self, embed_dict_root):
