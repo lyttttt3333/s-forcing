@@ -65,20 +65,23 @@ def video_to_tensor(video_path: str, target_frames: int, target_h: int, target_w
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
+    frame_count = 0  # 记录当前已读取的帧数
     frames = []
-    for i in range(0, total_frames, 2):  # 每隔一帧取一次
-        cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+
+    while frame_count < total_frames and len(frames) < target_frames:
         success, frame = cap.read()
         if not success:
             break
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(frame_rgb)
-        img = center_crop_resize(img, target_h, target_w)
-        img_tensor = TF.to_tensor(img).sub_(0.5).div_(0.5)  # [-1, 1]
-        frames.append(img_tensor)
-
-        if len(frames) >= target_frames:
-            break
+        
+        # 每隔一帧取一次（只保留偶数帧）
+        if frame_count % 2 == 0:
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame_rgb)
+            img = center_crop_resize(img, target_h, target_w)
+            img_tensor = TF.to_tensor(img).sub_(0.5).div_(0.5)  # [-1, 1]
+            frames.append(img_tensor)
+        
+        frame_count += 1
 
     print(f"############ {len(frames)} and {target_frames} ###########")
 
