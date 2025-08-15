@@ -515,7 +515,7 @@ class Trainer:
                 if self.generator_ema is not None:
                     self.generator_ema.update(self.model.generator)
             
-            if True:
+            if EVALUATION:
                 self.generate_video(self.step)
 
             # Train the critic
