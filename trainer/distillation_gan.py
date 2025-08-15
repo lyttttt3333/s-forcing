@@ -482,11 +482,11 @@ class Trainer:
                     with open(rank_txt, "r") as f:
                         for line in f:
                             base_name, output_path = line.strip().split(",", 1)
-                            all_video_infos.append((base_name, output_path))
+                            all_video_infos.append((base_name, output_path, r))
 
-            for video_name, output_path in all_video_infos:
+            for video_name, output_path, rank in all_video_infos:
                 print("log", video_name)
-                wandb.log({f"gen/video_{video_name}": wandb.Video(output_path, fps=16, format="mp4")},step=step)
+                wandb.log({f"gen/video_{rank}": wandb.Video(output_path, fps=16, format="mp4")},step=step)
                 # wandb.log({f"src/video_{video_name}": wandb.Video(input_path, fps=15, format="mp4")},step=steps)
 
 
@@ -500,13 +500,15 @@ class Trainer:
 
             # Only update generator and critic outside the warmup phase
             TRAIN_GENERATOR = not self.in_discriminator_warmup and self.step % self.config.dfake_gen_update_ratio == 0
+            EVALUATION = not self.in_discriminator_warmup and self.step % self.config.eval_interval == 0
+
             if TRAIN_GENERATOR:
                 print("(Gen) Training step %d" % self.step)
             else:
                 print("(Des) Training step %d" % self.step)
 
 
-            EVALUATION = False
+            
             if TRAIN_GENERATOR:
                 self.generator_optimizer.zero_grad(set_to_none=True)
                 extras_list = []
