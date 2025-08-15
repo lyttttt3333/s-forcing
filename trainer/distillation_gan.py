@@ -131,20 +131,20 @@ class Trainer:
 
 
 
-        if config.resume_path is None:
-            lora_config = get_lora_config()
-            self.model.generator = PeftModel(
-                    self.model.generator, 
-                    lora_config,
-                    adapter_name="default",
-                    autocast_adapter_dtype=True,
-                    low_cpu_mem_usage=False
-                )
-        else:
-            resume_path = os.path.join(config.resume_path, "generator_model")
-            print(f"Load from {resume_path}")
-            self.model.generator = PeftModel.from_pretrained(self.model.generator, resume_path, is_trainable=True)
-        self.model.generator.print_trainable_parameters() 
+        # if config.resume_path is None:
+        #     lora_config = get_lora_config()
+        #     self.model.generator = PeftModel(
+        #             self.model.generator, 
+        #             lora_config,
+        #             adapter_name="default",
+        #             autocast_adapter_dtype=True,
+        #             low_cpu_mem_usage=False
+        #         )
+        # else:
+        #     resume_path = os.path.join(config.resume_path, "generator_model")
+        #     print(f"Load from {resume_path}")
+        #     self.model.generator = PeftModel.from_pretrained(self.model.generator, resume_path, is_trainable=True)
+        # self.model.generator.print_trainable_parameters() 
 
         # if config.resume_path is None:
         #     lora_config = get_lora_config()
