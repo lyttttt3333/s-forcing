@@ -307,7 +307,7 @@ class GAN(SelfForcingModel):
             r2_grad = (noisy_fake_logit_perturbed - noisy_fake_logit) / self.r2_sigma
             r2_loss = self.r2_weight * torch.mean((r2_grad)**2)
         else:
-            r2_loss = torch.zeros_like(r2_loss)
+            r2_loss = torch.zeros_like(gan_D_loss)
 
         critic_log_dict = {
             "critic_timestep": critic_timestep.detach(),
