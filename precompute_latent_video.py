@@ -132,7 +132,7 @@ def main():
 
         video_tensor = video_to_tensor(video_path, target_frames, target_h, target_w, device)
         video_tensor = video_tensor[0]
-        save_path = "test.mp4" # For testing, change this to your desired path
+        save_path = f"test-{rank}.mp4" # For testing, change this to your desired path
         save_video(video_tensor, save_path)
         break
         # latent = encode_video(vae, video_tensor).to(torch.bfloat16)
