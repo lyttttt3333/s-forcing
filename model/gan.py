@@ -340,6 +340,7 @@ class GAN(SelfForcingModel):
 
             # latent_video = torch.load("pred_image.pt", map_location="cpu").to("cuda")
             gen_video = self.vae.decode_to_pixel([latent_video[0]])[0]
+            print("##############",clean_token.shape, gen_video.shape)
             if clean_token is not None:
                 src_vide = self.vae.decode_to_pixel([clean_token[0]])[0]
                 print(f"src_vide shape: {src_vide.shape}, gen_video shape: {gen_video.shape}")
