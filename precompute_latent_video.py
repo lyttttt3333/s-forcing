@@ -129,19 +129,19 @@ def main():
     target_h = 480
     target_w = 640
 
-    for i in range(rank+100, len(video_files), world_size):
+    for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
         base_name = os.path.basename(video_path).split(".")[0]
         save_path = os.path.join(output_dir, f"{base_name}.pth")
 
         video_tensor = video_to_tensor(video_path, target_frames, target_h, target_w, device)
         video_tensor = video_tensor[0]
-        save_path = f"test-{rank}.mp4" # For testing, change this to your desired path
-        save_video(video_tensor, save_path)
-        break
-        # latent = encode_video(vae, video_tensor).to(torch.bfloat16)
-        # torch.save(latent, save_path)
-        # print(f"[GPU {rank}] done {base_name}")
+        # save_path = f"test-{rank}.mp4" # For testing, change this to your desired path
+        # save_video(video_tensor, save_path)
+        # break
+        latent = encode_video(vae, video_tensor).to(torch.bfloat16)
+        torch.save(latent, save_path)
+        print(f"[GPU {rank}] done {base_name}")
 
 
 if __name__ == "__main__":
