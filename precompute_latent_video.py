@@ -12,7 +12,7 @@ import torchvision.transforms.functional as TF
 import imageio
 from tqdm import tqdm
 
-def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
+def save_video(video_tensor, save_path, fps=16, quality=9, ffmpeg_params=None):
     """
     保存一个形状为 [C, T, H, W] 的视频张量到文件
     video_tensor: torch.Tensor, float32, 值域 [-1, 1] 或 [0, 1]
