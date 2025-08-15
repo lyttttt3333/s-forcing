@@ -146,20 +146,20 @@ class Trainer:
             self.model.generator = PeftModel.from_pretrained(self.model.generator, resume_path, is_trainable=True)
         self.model.generator.print_trainable_parameters() 
 
-        if config.resume_path is None:
-            lora_config = get_lora_config()
-            self.model.fake_score = PeftModel(
-                    self.model.fake_score, 
-                    lora_config,
-                    adapter_name="default",
-                    autocast_adapter_dtype=True,
-                    low_cpu_mem_usage=False
-                )
-        else:
-            resume_path = os.path.join(config.resume_path, "fake_score_model")
-            print(f"Load from {resume_path}")
-            self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, resume_path, is_trainable=True)
-        self.model.fake_score.print_trainable_parameters() 
+        # if config.resume_path is None:
+        #     lora_config = get_lora_config()
+        #     self.model.fake_score = PeftModel(
+        #             self.model.fake_score, 
+        #             lora_config,
+        #             adapter_name="default",
+        #             autocast_adapter_dtype=True,
+        #             low_cpu_mem_usage=False
+        #         )
+        # else:
+        #     resume_path = os.path.join(config.resume_path, "fake_score_model")
+        #     print(f"Load from {resume_path}")
+        #     self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, resume_path, is_trainable=True)
+        # self.model.fake_score.print_trainable_parameters() 
 
         self.image_or_video_shape = list(self.config.image_or_video_shape)
         self.discriminator_warmup_steps = getattr(config, "discriminator_warmup_steps", 0)
