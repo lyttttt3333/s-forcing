@@ -117,7 +117,7 @@ def main():
         if f.lower().endswith(".mp4")
     ]
     video_files.sort()
-    print(video_files)#[100:]
+    
 
     vae = WanVAEWrapper().to(torch.float16).to(device)
 
