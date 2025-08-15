@@ -53,4 +53,4 @@ print("Memory token shape:", torch.load(memory_pth_path, map_location="cpu").sha
 frame_pth_path = glob.glob(frame_token_dir + '/*.pth')[0]
 print("Frame token shape:", torch.load(frame_pth_path, map_location="cpu").shape)
 video_pth_path = glob.glob(video_token_dir + '/*.pth')[0]
-print("Frame token shape:", torch.load(video_pth_path, map_location="cpu").shape)
+print("Video token shape:", torch.load(video_pth_path, map_location="cpu").shape)
