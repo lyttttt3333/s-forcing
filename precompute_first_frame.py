@@ -117,8 +117,10 @@ def main():
         save_path = os.path.join(output_dir,f"{base_name}.pth")
         image = get_first_frame_as_pil(video_path)
         latent = encode_images(vae, image, device).to(torch.bfloat16)
-        torch.save(latent, save_path)
-        print(f"[GPU {rank}] done {base_name}")
+        print(latent.shape)
+        #torch.save(latent, save_path)
+        #print(f"[GPU {rank}] done {base_name}")
+        break
 
 if __name__ == "__main__":
     main()
