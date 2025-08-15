@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=self_forcing_gan
 #SBATCH --partition interactive,polar,grizzly,polar3,polar4,backfill_singlenode,batch_singlenode,backfill_block1
-#SBATCH --account=av_alpamayo_research
+#SBATCH --account=av_alpamayo_cosmos
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=128
