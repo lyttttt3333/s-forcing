@@ -131,35 +131,35 @@ class Trainer:
 
 
 
-        if config.resume_path is None:
-            lora_config = get_lora_config()
-            self.model.generator = PeftModel(
-                    self.model.generator, 
-                    lora_config,
-                    adapter_name="default",
-                    autocast_adapter_dtype=True,
-                    low_cpu_mem_usage=False
-                )
-        else:
-            resume_path = os.path.join(config.resume_path, "generator_model")
-            print(f"Load from {resume_path}")
-            self.model.generator = PeftModel.from_pretrained(self.model.generator, resume_path, is_trainable=True)
-        self.model.generator.print_trainable_parameters() 
+        # if config.resume_path is None:
+        #     lora_config = get_lora_config()
+        #     self.model.generator = PeftModel(
+        #             self.model.generator, 
+        #             lora_config,
+        #             adapter_name="default",
+        #             autocast_adapter_dtype=True,
+        #             low_cpu_mem_usage=False
+        #         )
+        # else:
+        #     resume_path = os.path.join(config.resume_path, "generator_model")
+        #     print(f"Load from {resume_path}")
+        #     self.model.generator = PeftModel.from_pretrained(self.model.generator, resume_path, is_trainable=True)
+        # self.model.generator.print_trainable_parameters() 
 
-        if config.resume_path is None:
-            lora_config = get_lora_config()
-            self.model.fake_score = PeftModel(
-                    self.model.fake_score, 
-                    lora_config,
-                    adapter_name="default",
-                    autocast_adapter_dtype=True,
-                    low_cpu_mem_usage=False
-                )
-        else:
-            resume_path = os.path.join(config.resume_path, "fake_score_model")
-            print(f"Load from {resume_path}")
-            self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, resume_path, is_trainable=True)
-        self.model.fake_score.print_trainable_parameters() 
+        # if config.resume_path is None:
+        #     lora_config = get_lora_config()
+        #     self.model.fake_score = PeftModel(
+        #             self.model.fake_score, 
+        #             lora_config,
+        #             adapter_name="default",
+        #             autocast_adapter_dtype=True,
+        #             low_cpu_mem_usage=False
+        #         )
+        # else:
+        #     resume_path = os.path.join(config.resume_path, "fake_score_model")
+        #     print(f"Load from {resume_path}")
+        #     self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, resume_path, is_trainable=True)
+        # self.model.fake_score.print_trainable_parameters() 
 
         
         
@@ -265,42 +265,44 @@ class Trainer:
         self.max_grad_norm_critic = getattr(config, "max_grad_norm_critic", 10.0)
         self.previous_time = None
 
+        self.image_or_video_shape = list(self.config.image_or_video_shape)
+
         embed_dict_path = "ref_lib"
         self.load_embed_dict(embed_dict_path)
 
     def save(self):
         print("Start gathering distributed model states...")
-        save_path = os.path.join(self.output_path, f"checkpoint_model_{self.step:06d}")
-        save_path_score = os.path.join(save_path, "fake_score_model")
-        save_path_generator = os.path.join(save_path, "generator_model")
-        os.makedirs(save_path_score, exist_ok=True)
-        os.makedirs(save_path_generator, exist_ok=True)
-        self.model.fake_score.save_pretrained(save_path_score)
-        self.model.generator.save_pretrained(save_path_generator)
-        # generator_state_dict = fsdp_state_dict(
-        #     self.model.generator)
-        # critic_state_dict = fsdp_state_dict(
-        #     self.model.fake_score)
+        # save_path = os.path.join(self.output_path, f"checkpoint_model_{self.step:06d}")
+        # save_path_score = os.path.join(save_path, "fake_score_model")
+        # save_path_generator = os.path.join(save_path, "generator_model")
+        # os.makedirs(save_path_score, exist_ok=True)
+        # os.makedirs(save_path_generator, exist_ok=True)
+        # self.model.fake_score.save_pretrained(save_path_score)
+        # self.model.generator.save_pretrained(save_path_generator)
+        generator_state_dict = fsdp_state_dict(
+            self.model.generator)
+        critic_state_dict = fsdp_state_dict(
+            self.model.fake_score)
 
-        # if self.config.ema_start_step < self.step:
-        #     state_dict = {
-        #         "generator": generator_state_dict,
-        #         "critic": critic_state_dict,
-        #         "generator_ema": self.generator_ema.state_dict(),
-        #     }
-        # else:
-        #     state_dict = {
-        #         "generator": generator_state_dict,
-        #         "critic": critic_state_dict,
-        #     }
+        if self.config.ema_start_step < self.step:
+            state_dict = {
+                "generator": generator_state_dict,
+                "critic": critic_state_dict,
+                "generator_ema": self.generator_ema.state_dict(),
+            }
+        else:
+            state_dict = {
+                "generator": generator_state_dict,
+                "critic": critic_state_dict,
+            }
 
-        # if self.is_main_process:
-        #     os.makedirs(os.path.join(self.output_path,
-        #                 f"checkpoint_model_{self.step:06d}"), exist_ok=True)
-        #     torch.save(state_dict, os.path.join(self.output_path,
-        #                f"checkpoint_model_{self.step:06d}", "model.pt"))
-        #     print("Model saved to", os.path.join(self.output_path,
-        #           f"checkpoint_model_{self.step:06d}", "model.pt"))
+        if self.is_main_process:
+            os.makedirs(os.path.join(self.output_path,
+                        f"checkpoint_model_{self.step:06d}"), exist_ok=True)
+            torch.save(state_dict, os.path.join(self.output_path,
+                       f"checkpoint_model_{self.step:06d}", "model.pt"))
+            print("Model saved to", os.path.join(self.output_path,
+                  f"checkpoint_model_{self.step:06d}", "model.pt"))
 
     def load_embed_dict(self, embed_dict_root):
         file_changed = False
@@ -398,16 +400,7 @@ class Trainer:
             torch.cuda.empty_cache()
 
         # Step 1: Get the next batch of text prompts
-        if self.config.i2v:
-            clean_latent = None
-            image_latent = frame_token
-        else:
-            clean_latent = None
-            image_latent = None
-
-        batch_size = 1
-        image_or_video_shape = list(self.config.image_or_video_shape)
-        image_or_video_shape[0] = batch_size
+        
 
         # Step 2: Extract the conditional infos
         with torch.no_grad():
@@ -420,11 +413,10 @@ class Trainer:
         if train_generator:
             print("################### Beginning generator training step")
             generator_loss, generator_log_dict = self.model.generator_loss(
-                image_or_video_shape=image_or_video_shape,
+                image_or_video_shape=self.image_or_video_shape,
                 conditional_dict=conditional_dict,
                 unconditional_dict=unconditional_dict,
-                clean_latent=clean_latent,
-                initial_latent=image_latent if self.config.i2v else None,
+                frame_token=frame_token,
                 memory_token=memory_token
             )
 

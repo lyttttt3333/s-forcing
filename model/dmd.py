@@ -180,6 +180,8 @@ class DMD(SelfForcingModel):
         image_or_video: torch.Tensor,
         conditional_dict: dict,
         unconditional_dict: dict,
+        frame_token,
+        memory_token,
         gradient_mask: Optional[torch.Tensor] = None,
         denoised_timestep_from: int = 0,
         denoised_timestep_to: int = 0,
@@ -197,7 +199,7 @@ class DMD(SelfForcingModel):
         """
         original_latent = image_or_video
 
-        batch_size, num_frame = image_or_video.shape[:2]
+        batch_size, _, num_frame = image_or_video.shape[:3]
 
         with torch.no_grad():
             # Step 1: Randomly sample timestep based on the given schedule and corresponding noise
@@ -219,15 +221,22 @@ class DMD(SelfForcingModel):
                     (1 + (self.timestep_shift - 1) * (timestep / 1000)) * 1000
             timestep = timestep.clamp(self.min_step, self.max_step)
 
+            # noise = torch.randn_like(image_or_video)
+            # noisy_latent = self.scheduler.add_noise(
+            #     image_or_video.flatten(0, 1),
+            #     noise.flatten(0, 1),
+            #     timestep.flatten(0, 1)
+            # ).detach().unflatten(0, (batch_size, num_frame))
+
             noise = torch.randn_like(image_or_video)
             noisy_latent = self.scheduler.add_noise(
-                image_or_video.flatten(0, 1),
-                noise.flatten(0, 1),
+                image_or_video,
+                noise,
                 timestep.flatten(0, 1)
-            ).detach().unflatten(0, (batch_size, num_frame))
+            )
 
             mask = torch.ones_like(noisy_latent)
-            mask[:, 0] = 0
+            mask[:, :, 0] = 0
             noisy_latent = noisy_latent * mask + image_or_video * (1-mask)
 
             # Step 2: Compute the KL grad
@@ -253,9 +262,8 @@ class DMD(SelfForcingModel):
         image_or_video_shape,
         conditional_dict: dict,
         unconditional_dict: dict,
-        clean_latent: torch.Tensor,
-        initial_latent: torch.Tensor = None,
-        memory_token: torch.Tensor = None
+        frame_token: torch.Tensor = None,
+        memory_token: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noise and compute the DMD loss.
@@ -275,11 +283,10 @@ class DMD(SelfForcingModel):
         pred_image, gradient_mask, denoised_timestep_from, denoised_timestep_to = self._run_generator(
             image_or_video_shape=image_or_video_shape,
             conditional_dict=conditional_dict,
-            initial_latent=initial_latent,
+            unconditional_dict=unconditional_dict,
+            frame_token=frame_token,
             memory_token=memory_token,
         )
-
-        conditional_dict["state"] = memory_token[-1].unsqueeze(0)
 
         # Step 2: Compute the DMD loss
         dmd_loss, dmd_log_dict = self.compute_distribution_matching_loss(

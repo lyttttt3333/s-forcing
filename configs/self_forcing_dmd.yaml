@@ -44,10 +44,10 @@ negative_prompt: '色调艳丽，过曝，静态，细节模糊不清，字幕�
 dfake_gen_update_ratio: 5
 image_or_video_shape:
 - 1
-- 21
 - 48
-- 44
-- 78
+- 21
+- 30
+- 40 
 distribution_loss: dmd
 trainer: score_distillation
 gradient_checkpointing: true
