@@ -198,7 +198,7 @@ if __name__ == "__main__":
         sample_scheduler.set_timesteps(5, device=device, shift=5)
 
         
-        trajectory = generate_from_latent(real_score=model.generator,
+        trajectory = generate_from_latent(real_score=model,
                                 sample_scheduler=sample_scheduler,
                                 frame_token=frame_token,
                                 uncond_dict=unconditional_dict,
