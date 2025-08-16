@@ -163,12 +163,13 @@ def init_model(device):
 if __name__ == "__main__":
 
     output_folder = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/ode_latent"
-    dist.init_process_group(
-        backend="nccl",         # 可选：nccl（GPU）、gloo（CPU/GPU）、mpi
-        init_method="env://",   # 用环境变量指定地址和端口
-        world_size=8,           # 总进程数（可省略，如果使用 torchrun 启动，会自动从环境变量读取）
-        rank=0                  # 当前进程的 rank（也可从环境变量读取）
-    )
+    # dist.init_process_group(
+    #     backend="nccl",         # 可选：nccl（GPU）、gloo（CPU/GPU）、mpi
+    #     init_method="env://",   # 用环境变量指定地址和端口
+    #     world_size=8,           # 总进程数（可省略，如果使用 torchrun 启动，会自动从环境变量读取）
+    #     rank=0                  # 当前进程的 rank（也可从环境变量读取）
+    # )
+    launch_distributed_job()
     global_rank = dist.get_rank()
 
     device = torch.cuda.current_device()
