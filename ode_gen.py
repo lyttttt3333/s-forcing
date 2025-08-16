@@ -131,18 +131,13 @@ def load_batch(batch, dtype, device):
 
 def init_model(device):
     model = WanDiffusionWrapper()
+    model.requires_grad_(False)
         
     model = fsdp_wrap(
         model,
         sharding_strategy="full",
         mixed_precision=True,
         wrap_strategy="size"
-    )
-
-    model.set_module_grad(
-        {
-            "model": False
-        }
     )
 
     scheduler = FlowUniPCMultistepScheduler(
