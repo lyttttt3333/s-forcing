@@ -62,6 +62,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
         trajectory = []
 
         for _, t in enumerate(tqdm(sample_scheduler.timesteps)):
+            print("#############",t)
 
             latent_model_input = latent.to(device)
             timestep = [t]
