@@ -362,8 +362,8 @@ class Trainer:
 
         self.model.eval()  
 
-        # if self.step % 20 == 0:
-        torch.cuda.empty_cache()
+        if self.step % 20 == 0:
+            torch.cuda.empty_cache()
 
         # Step 2: Extract the conditional infos
         with torch.no_grad():
