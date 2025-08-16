@@ -130,7 +130,15 @@ def load_batch(batch, dtype, device):
     return batch
 
 def init_model(device):
-    model = WanDiffusionWrapper().to(device).to(torch.bfloat16)
+    model = WanDiffusionWrapper()
+        
+    model = fsdp_wrap(
+        model,
+        sharding_strategy="full",
+        mixed_precision=True,
+        wrap_strategy="size"
+    )
+
     model.set_module_grad(
         {
             "model": False
