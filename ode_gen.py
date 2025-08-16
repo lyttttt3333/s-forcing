@@ -62,13 +62,11 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
         trajectory = []
 
         for _, t in enumerate(tqdm(sample_scheduler.timesteps)):
-            print("#############",t)
 
             latent_model_input = latent.to(device)
             timestep = [t]
 
             timestep = torch.stack(timestep).to(device)
-            print(f"before {mask.shape}")
             temp_ts = (mask[0][:, ::2, ::2] * timestep).flatten()
             # print(f"first stage {temp_ts.shape}")
             # print(f"##################time_step", temp_ts.size(0), seq_len)
@@ -110,10 +108,13 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             latent = temp_x0.squeeze(0)
             latent = (1. - mask) * z + mask * latent
 
-            trajectory.append(latent.unsqueeze(0))
+            if int(t.item()) in select_index:
+                trajectory.append(latent.unsqueeze(0))
+
+            print("end first iter")
 
     trajectory = torch.stack(trajectory, dim=1)
-    trajectory = trajectory[:, select_index]
+    # trajectory = trajectory[:, select_index]
 
     return trajectory
 
