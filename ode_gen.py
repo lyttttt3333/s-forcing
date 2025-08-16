@@ -157,7 +157,7 @@ def init_model(device):
 
 if __name__ == "__main__":
 
-    output_folder = "xxx"
+    output_folder = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/ode_latent"
 
     launch_distributed_job()
     global_rank = dist.get_rank()
