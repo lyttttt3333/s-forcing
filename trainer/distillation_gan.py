@@ -117,50 +117,6 @@ class Trainer:
         # Save pretrained model state_dicts to CPU
         self.fake_score_state_dict_cpu = self.model.fake_score.state_dict()
 
-        # # print(config)
-        # if getattr(config, "generator_ckpt", False):
-        #     print(f"Loading pretrained generator from {config.generator_ckpt}")
-        #     state_dict = torch.load(config.generator_ckpt, map_location="cpu")
-        #     if "generator" in state_dict:
-        #         state_dict = state_dict["generator"]
-        #     elif "model" in state_dict:
-        #         state_dict = state_dict["model"]
-        #     self.model.generator.load_state_dict(
-        #         state_dict, strict=True
-        #     )
-
-
-
-        # if config.resume_path is None:
-        #     lora_config = get_lora_config()
-        #     self.model.generator = PeftModel(
-        #             self.model.generator, 
-        #             lora_config,
-        #             adapter_name="default",
-        #             autocast_adapter_dtype=True,
-        #             low_cpu_mem_usage=False
-        #         )
-        # else:
-        #     resume_path = os.path.join(config.resume_path, "generator_model")
-        #     print(f"Load from {resume_path}")
-        #     self.model.generator = PeftModel.from_pretrained(self.model.generator, resume_path, is_trainable=True)
-        # self.model.generator.print_trainable_parameters() 
-
-        # if config.resume_path is None:
-        #     lora_config = get_lora_config()
-        #     self.model.fake_score = PeftModel(
-        #             self.model.fake_score, 
-        #             lora_config,
-        #             adapter_name="default",
-        #             autocast_adapter_dtype=True,
-        #             low_cpu_mem_usage=False
-        #         )
-        # else:
-        #     resume_path = os.path.join(config.resume_path, "fake_score_model")
-        #     print(f"Load from {resume_path}")
-        #     self.model.fake_score = PeftModel.from_pretrained(self.model.fake_score, resume_path, is_trainable=True)
-        # self.model.fake_score.print_trainable_parameters() 
-
         self.image_or_video_shape = list(self.config.image_or_video_shape)
         self.discriminator_warmup_steps = getattr(config, "discriminator_warmup_steps", 0)
         
@@ -171,19 +127,12 @@ class Trainer:
             wrap_strategy=config.generator_fsdp_wrap_strategy
         )
 
-        # self.model.real_score = fsdp_wrap(
-        #     self.model.real_score,
+        # self.model.fake_score = fsdp_wrap(
+        #     self.model.fake_score,
         #     sharding_strategy=config.sharding_strategy,
         #     mixed_precision=config.mixed_precision,
-        #     wrap_strategy=config.real_score_fsdp_wrap_strategy
+        #     wrap_strategy=config.fake_score_fsdp_wrap_strategy
         # )
-
-        self.model.fake_score = fsdp_wrap(
-            self.model.fake_score,
-            sharding_strategy=config.sharding_strategy,
-            mixed_precision=config.mixed_precision,
-            wrap_strategy=config.fake_score_fsdp_wrap_strategy
-        )
 
         # self.model.text_encoder = fsdp_wrap(
         #     self.model.text_encoder,
@@ -373,76 +322,25 @@ class Trainer:
             unconditional_dict = {'prompt_embeds': embed}
 
         # Step 3: Store gradients for the generator (if training the generator)
-        if train_generator:
-            generator_loss = self.model.generator_loss(
-                image_or_video_shape=self.image_or_video_shape,
-                conditional_dict=conditional_dict,
-                unconditional_dict=unconditional_dict,
-                frame_token=frame_token,
-                memory_token=memory_token,
-                clean_token=clean_token,
-            )
-            print("############# begin generator loss")
-            generator_loss.backward()
-            generator_grad_norm = self.model.generator.clip_grad_norm_(
-                self.max_grad_norm_generator)
-
-            generator_log_dict = {}
-            generator_log_dict.update({"generator_loss": generator_loss,
-                                       "generator_grad_norm": generator_grad_norm})
-
-            return generator_log_dict
-        else:
-            generator_log_dict = {}
-
-        # Step 4: Store gradients for the critic (if training the critic)
-        critic_loss, critic_log_dict = self.model.critic_loss(
+        generator_loss = self.model.generator_loss(
             image_or_video_shape=self.image_or_video_shape,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
-            real_image_or_video=clean_token,
             frame_token=frame_token,
-            memory_token=memory_token
+            memory_token=memory_token,
+            clean_token=clean_token,
         )
+        print("############# begin generator loss")
+        generator_loss.backward()
+        generator_grad_norm = self.model.generator.clip_grad_norm_(
+            self.max_grad_norm_generator)
 
-        critic_loss.backward()
-        critic_grad_norm = self.model.fake_score.clip_grad_norm_(
-            self.max_grad_norm_critic)
+        generator_log_dict = {}
+        generator_log_dict.update({"generator_loss": generator_loss,
+                                    "generator_grad_norm": generator_grad_norm})
 
-        critic_log_dict.update({"critic_loss": critic_loss,
-                                "critic_grad_norm": critic_grad_norm})
+        return generator_log_dict
 
-        return critic_log_dict
-
-    # def generate_video(self, pipeline, prompts, image=None):
-    #     batch_size = len(prompts)
-    #     if image is not None:
-    #         image = image.squeeze(0).unsqueeze(0).unsqueeze(2).to(device="cuda", dtype=torch.bfloat16)
-
-    #         # Encode the input image as the first latent
-    #         initial_latent = pipeline.vae.encode_to_latent(image).to(device="cuda", dtype=torch.bfloat16)
-    #         initial_latent = initial_latent.repeat(batch_size, 1, 1, 1, 1)
-    #         sampled_noise = torch.randn(
-    #             [batch_size, self.model.num_training_frames - 1, 16, 60, 104],
-    #             device="cuda",
-    #             dtype=self.dtype
-    #         )
-    #     else:
-    #         initial_latent = None
-    #         sampled_noise = torch.randn(
-    #             [batch_size, self.model.num_training_frames, 16, 60, 104],
-    #             device="cuda",
-    #             dtype=self.dtype
-    #         )
-
-    #     video, _ = pipeline.inference(
-    #         noise=sampled_noise,
-    #         text_prompts=prompts,
-    #         return_latents=True,
-    #         initial_latent=initial_latent
-    #     )
-    #     current_video = video.permute(0, 1, 3, 4, 2).cpu().numpy() * 255.0
-    #     return current_video
     
     def generate_video(self, step):
         
@@ -513,41 +411,20 @@ class Trainer:
 
         while True:
 
-            self.in_discriminator_warmup = self.step < self.discriminator_warmup_steps
-
-            # Only update generator and critic outside the warmup phase
-            TRAIN_GENERATOR = not self.in_discriminator_warmup and self.step % self.config.dfake_gen_update_ratio == 0
             EVALUATION = self.step % self.config.eval_interval == 0
-
-            if TRAIN_GENERATOR:
-                print("(Gen) Training step %d" % self.step)
-            else:
-                print("(Dis) Training step %d" % self.step)
-
-
             
-            if TRAIN_GENERATOR:
-                self.generator_optimizer.zero_grad(set_to_none=True)
-                extras_list = []
-                batch = next(self.dataloader)
-                extra = self.fwdbwd_one_step(batch, True)
-                extras_list.append(extra)
-                generator_log_dict = merge_dict_list(extras_list)
-                self.generator_optimizer.step()
-                if self.generator_ema is not None:
-                    self.generator_ema.update(self.model.generator)
+            self.generator_optimizer.zero_grad(set_to_none=True)
+            extras_list = []
+            batch = next(self.dataloader)
+            extra = self.fwdbwd_one_step(batch, True)
+            extras_list.append(extra)
+            generator_log_dict = merge_dict_list(extras_list)
+            self.generator_optimizer.step()
+            if self.generator_ema is not None:
+                self.generator_ema.update(self.model.generator)
             
             if EVALUATION:
                 self.generate_video(self.step)
-
-            # Train the critic
-            self.critic_optimizer.zero_grad(set_to_none=True)
-            extras_list = []
-            batch = next(self.dataloader)
-            extra = self.fwdbwd_one_step(batch, False)
-            extras_list.append(extra)
-            critic_log_dict = merge_dict_list(extras_list)
-            self.critic_optimizer.step()
 
             # Create EMA params (if not already created)
             if (self.step >= self.config.ema_start_step) and \
@@ -563,18 +440,10 @@ class Trainer:
             # Logging
             if self.is_main_process:
                 wandb_loss_dict = {}
-                if TRAIN_GENERATOR:
-                    wandb_loss_dict.update(
-                        {
-                            "generator_loss": generator_log_dict["generator_loss"].mean().item(),
-                            "generator_grad_norm": generator_log_dict["generator_grad_norm"].mean().item(),
-                        }
-                    )
-
                 wandb_loss_dict.update(
                     {
-                        "critic_loss": critic_log_dict["critic_loss"].mean().item(),
-                        "critic_grad_norm": critic_log_dict["critic_grad_norm"].mean().item()
+                        "generator_loss": generator_log_dict["generator_loss"].mean().item(),
+                        "generator_grad_norm": generator_log_dict["generator_grad_norm"].mean().item(),
                     }
                 )
 
