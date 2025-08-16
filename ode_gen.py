@@ -146,7 +146,7 @@ def init_model(device):
                     use_dynamic_shifting=False)
 
     global_dict_path = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/s-forcing/ref_lib/global_embed_dict.pt"
-    global_text_token = torch.load(global_dict_path, map_location="cpu").to(device).to(torch.bfloat16)
+    global_text_token = torch.load(global_dict_path, map_location="cpu")["prompt_embeds"].to(device).to(torch.bfloat16)
     unconditional_dict = {'prompt_embeds': global_text_token}
 
     meta_path = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/meta.csv"
