@@ -285,7 +285,7 @@ class GAN(SelfForcingModel):
             noisy_real_logit_perturbed = self._run_cls_pred_branch(
                 noisy_image_or_video=noisy_real_latent_perturbed,
                 conditional_dict=conditional_dict,
-                timestep=critic_timestep
+                timestep=critic_timestep[0].unsqueeze(0)
             )
 
             r1_grad = (noisy_real_logit_perturbed - noisy_real_logit) / self.r1_sigma
@@ -301,7 +301,7 @@ class GAN(SelfForcingModel):
             noisy_fake_logit_perturbed = self._run_cls_pred_branch(
                 noisy_image_or_video=noisy_fake_latent_perturbed,
                 conditional_dict=conditional_dict,
-                timestep=critic_timestep
+                timestep=critic_timestep[0].unsqueeze(0)
             )
 
             r2_grad = (noisy_fake_logit_perturbed - noisy_fake_logit) / self.r2_sigma
