@@ -84,7 +84,6 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 noisy_image_or_video=latent_model_input.unsqueeze(0),
                 conditional_dict=cond_dict,
                 timestep=timestep,
-                memory_condition=False,
                 seq_len=seq_len,
             )
 
@@ -92,7 +91,6 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 noisy_image_or_video=latent_model_input.unsqueeze(0),
                 conditional_dict=uncond_dict,
                 timestep=timestep,
-                memory_condition=False,
                 seq_len=seq_len,
             )
 
