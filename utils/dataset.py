@@ -43,7 +43,7 @@ class MixedDataset(Dataset):
     def __init__(self, meta_path, root_dir):
 
         df = pd.read_csv(meta_path)
-        self.base_name_list = df["basename"].astype(str).tolist()
+        self.base_name_list = df["basename"].astype(str).tolist()[:1000]
         self.root_dir = root_dir
 
     def __len__(self):
