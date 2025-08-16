@@ -187,7 +187,7 @@ if __name__ == "__main__":
         conditional_dict = {'prompt_embeds': text_token}
 
 
-        sample_scheduler.set_timesteps(5, device=device, shift=5)
+        sample_scheduler.set_timesteps(50, device=device, shift=5)
 
         
         trajectory = generate_from_latent(real_score=model,
@@ -196,7 +196,7 @@ if __name__ == "__main__":
                                 uncond_dict=unconditional_dict,
                                 cond_dict=conditional_dict,
                                 device=device,
-                                select_index=[0,1,3,4])
+                                select_index=[0,36,44,49])
                                 #[0, 36, 44, -1])
         
         torch.save(
