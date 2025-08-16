@@ -31,8 +31,8 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
     sp_size = 1
     patch_size = (1, 2, 2)
     vae_stride = (4, 16, 16)
-    ow = 1248 
-    oh = 704
+    ow = 640
+    oh = 480
     F = 84
     real_guidance_scale = 5.0
     
