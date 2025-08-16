@@ -61,24 +61,18 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
         trajectory = []
 
-        for _, t in enumerate(tqdm(sample_scheduler.timesteps)):
+        for idx, t in enumerate(tqdm(sample_scheduler.timesteps)):
 
             latent_model_input = latent.to(device)
             timestep = [t]
 
             timestep = torch.stack(timestep).to(device)
             temp_ts = (mask[0][:, ::2, ::2] * timestep).flatten()
-            # print(f"first stage {temp_ts.shape}")
-            # print(f"##################time_step", temp_ts.size(0), seq_len)
             temp_ts = torch.cat([
                 temp_ts,
                 temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
             ])
-            # print(f"second stage {temp_ts.shape}")
             timestep = temp_ts.unsqueeze(0)
-            # print("##################time_step",timestep.shape)
-            # print("##################", timestep)
-
 
             pred_real_image_cond = real_score(
                 noisy_image_or_video=latent_model_input.unsqueeze(0),
@@ -106,7 +100,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             latent = temp_x0.squeeze(0)
             latent = (1. - mask) * z + mask * latent
 
-            if int(t.item()) in select_index:
+            if idx in select_index:
                 trajectory.append(latent.unsqueeze(0))
 
             print("end first iter")
