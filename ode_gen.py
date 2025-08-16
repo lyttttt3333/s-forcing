@@ -103,8 +103,6 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             if idx in select_index:
                 trajectory.append(latent.unsqueeze(0))
 
-            print("end first iter")
-
     trajectory = torch.stack(trajectory, dim=1)
     # trajectory = trajectory[:, select_index]
 
