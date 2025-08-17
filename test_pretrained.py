@@ -54,9 +54,9 @@ video_files.sort()
 
 vae = WanVAEWrapper().to(torch.float16).to(device)
 vae.requires_grad_(False)
-latent = torch.load(video_files[0], map_location="cpu").to("cuda")[0]
+latent = torch.load(video_files[0], map_location="cpu").to("cuda")[0].to(torch.bfloat16)
 print(latent.shape)
-latent = torch.zeros([48, 21, 30, 40], device="cuda", dtype=torch.bfloat16) 
+# latent = torch.zeros([48, 21, 30, 40], device="cuda", dtype=torch.bfloat16) 
 # video = torch.zeros([3, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
 with torch.no_grad():
     # latent = vae.encode_to_latent([video])[0]
