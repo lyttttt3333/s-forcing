@@ -54,6 +54,7 @@ class ODERegression(BaseModel):
         self.denoising_step_list = []
         for step in sample_step:
             self.denoising_step_list.append(full_timestep[step].to("cpu").to(torch.int64))
+        self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
         print("######### denoise step", self.denoising_step_list)
 
 
@@ -84,13 +85,13 @@ class ODERegression(BaseModel):
         # Step 1: Randomly choose a timestep for each frame
         index = self._get_timestep(
             0,
-            len(self.denoising_step_list),
+            self.denoising_step_list.shape[0],
             batch_size,
             num_frames,
             self.num_frame_per_block,
             uniform_timestep=False
         )
-        index[:, 0] = len(self.denoising_step_list) - 1
+        index[:, 0] = self.denoising_step_list.shape[0] - 1
 
         noisy_input = torch.gather(
             ode_latent, dim=1,
@@ -98,9 +99,7 @@ class ODERegression(BaseModel):
                 -1, -1, -1, num_channels, height, width).to(self.device)
         ).squeeze(1)
 
-        print(index)
-
-        timestep = self.denoising_step_list[index].to(self.device)
+        timestep = self.denoising_step_list[index[0]].to(self.device)
 
         # if self.extra_noise_step > 0:
         #     random_timestep = torch.randint(0, self.extra_noise_step, [
