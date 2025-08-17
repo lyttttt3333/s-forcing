@@ -99,7 +99,7 @@ class ODERegression(BaseModel):
                 -1, -1, -1, num_channels, height, width).to(self.device)
         ).squeeze(1)
 
-        timestep = self.denoising_step_list[index[0]].to(self.device)
+        timestep = self.denoising_step_list[index].to(self.device)
 
         # if self.extra_noise_step > 0:
         #     random_timestep = torch.randint(0, self.extra_noise_step, [
