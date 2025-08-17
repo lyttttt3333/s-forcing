@@ -6,6 +6,7 @@ from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
 import imageio
 from tqdm import tqdm
+import torch.distributed as dist
 
 import torch
 
@@ -33,7 +34,13 @@ def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
         writer.append_data(frame)
     writer.close()
 
-vae = WanVAEWrapper()
+dist.init_process_group(backend="nccl")
+rank = dist.get_rank()
+world_size = dist.get_world_size()
+torch.cuda.set_device(rank)
+device = "cuda"
+
+vae = WanVAEWrapper().to(torch.float16).to(device)
 vae.requires_grad_(False)
 latent = torch.load("pred_image.pt", map_location="cpu").to("cuda")[0][:,:3]
 latent = torch.zeros([48, 21, 30, 40], device="cuda", dtype=torch.bfloat16) 
