@@ -7,7 +7,6 @@ from utils.misc import (
     set_seed
 )
 import torch.distributed as dist
-from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 from omegaconf import OmegaConf
 import torch
 import wandb
@@ -112,20 +111,6 @@ class Trainer:
         self.previous_time = None
         embed_dict_path = "ref_lib"
         self.load_embed_dict(embed_dict_path)
-
-
-        self.scheduler = FlowUniPCMultistepScheduler(
-                        num_train_timesteps=1000,
-                        shift=1,
-                        use_dynamic_shifting=False)
-        self.scheduler.set_timesteps(50, device=self.device, shift=5)
-        full_timestep = self.scheduler.timesteps
-        sample_step = [0,36,44,49]
-        self.denoising_step_list = []
-        for step in sample_step:
-            self.denoising_step_list.append(full_timestep[step])
-        print("######### denoise step", self.denoising_step_list)
-
 
     def load_embed_dict(self, embed_dict_root):
         file_changed = False

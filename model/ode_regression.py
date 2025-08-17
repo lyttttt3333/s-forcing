@@ -4,6 +4,7 @@ import torch
 
 from model.base import BaseModel
 from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
+from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 
 class ODERegression(BaseModel):
@@ -42,6 +43,19 @@ class ODERegression(BaseModel):
 
         # Step 2: Initialize all hyperparameters
         self.timestep_shift = getattr(args, "timestep_shift", 1.0)
+
+        self.scheduler = FlowUniPCMultistepScheduler(
+                        num_train_timesteps=1000,
+                        shift=1,
+                        use_dynamic_shifting=False)
+        self.scheduler.set_timesteps(50, device=self.device, shift=5)
+        full_timestep = self.scheduler.timesteps
+        sample_step = [0,36,44,49]
+        self.denoising_step_list = []
+        for step in sample_step:
+            self.denoising_step_list.append(int(full_timestep[step].item()))
+        print("######### denoise step", self.denoising_step_list)
+
 
     def _initialize_models(self, args, device):
         self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
