@@ -109,6 +109,39 @@ class Trainer:
 
         self.max_grad_norm = 10.0
         self.previous_time = None
+        embed_dict_path = "ref_lib"
+        self.load_embed_dict(embed_dict_path)
+
+    def load_embed_dict(self, embed_dict_root):
+        file_changed = False
+        self.model.text_encoder = None
+        global_dict_path = os.path.join(embed_dict_root, "global_embed_dict.pt")
+
+        if not os.path.exists(global_dict_path):
+            self.global_embed_dict = {}
+            if self.model.text_encoder is None:
+                self.model.load_text_model()
+                self.model.text_encoder = fsdp_wrap(
+                    self.model.text_encoder,
+                    sharding_strategy=self.config.sharding_strategy,
+                    mixed_precision=self.config.mixed_precision,
+                    wrap_strategy=self.config.text_encoder_fsdp_wrap_strategy,
+                    cpu_offload=getattr(self.config, "text_encoder_cpu_offload", False)
+                )
+            unconditional_dict = self.model.text_encoder(
+                text_prompts=[self.config.negative_prompt])
+            unconditional_dict = {k: v.detach().to("cpu", dtype=self.dtype)
+                                    for k, v in unconditional_dict.items()}
+            self.global_embed_dict = unconditional_dict
+            os.makedirs(os.path.dirname(global_dict_path), exist_ok=True)
+            torch.save(self.global_embed_dict, global_dict_path)
+            print("Global dict saved to", global_dict_path)
+        else:
+            self.global_embed_dict = torch.load(global_dict_path, map_location="cpu")
+
+
+        if self.model.text_encoder is not None:
+            self.model.delete_text_model()
 
     def save(self):
         print("Start gathering distributed model states...")
@@ -161,8 +194,7 @@ class Trainer:
         text_token = batch["text_token"]
         ode_latent = batch["ode_latent"].to(
             device=self.device, dtype=self.dtype)
-        
-        print("############ ode shape", ode_latent.shape)
+        # [1, 4, 48, 21, 30, 40]
         
         with torch.no_grad():
             conditional_dict = {'prompt_embeds': text_token}
