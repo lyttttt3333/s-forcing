@@ -1,6 +1,6 @@
 import gc
 import logging
-from utils.dataset import ODERegressionLMDBDataset, cycle
+from utils.dataset import ODERegressionLMDBDataset, cycle, MixedDataset
 from model import ODERegression
 from collections import defaultdict
 from utils.misc import (
@@ -66,13 +66,6 @@ class Trainer:
             mixed_precision=config.mixed_precision,
             wrap_strategy=config.generator_fsdp_wrap_strategy
         )
-        self.model.text_encoder = fsdp_wrap(
-            self.model.text_encoder,
-            sharding_strategy=config.sharding_strategy,
-            mixed_precision=config.mixed_precision,
-            wrap_strategy=config.text_encoder_fsdp_wrap_strategy,
-            cpu_offload=getattr(config, "text_encoder_cpu_offload", False)
-        )
 
         if not config.no_visualize or config.load_raw_video:
             self.model.vae = self.model.vae.to(
@@ -87,8 +80,9 @@ class Trainer:
         )
 
         # Step 3: Initialize the dataloader
-        dataset = ODERegressionLMDBDataset(
-            config.data_path, max_pair=getattr(config, "max_pair", int(1e8)))
+        meta_path = self.config.meta_path
+        root_dir = self.config.root_dir
+        dataset = MixedDataset(meta_path, root_dir)
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset, shuffle=True, drop_last=True)
         dataloader = torch.utils.data.DataLoader(
@@ -102,13 +96,13 @@ class Trainer:
 
         ##############################################################################################################
         # 7. (If resuming) Load the model and optimizer, lr_scheduler, ema's statedicts
-        if getattr(config, "generator_ckpt", False):
-            print(f"Loading pretrained generator from {config.generator_ckpt}")
-            state_dict = torch.load(config.generator_ckpt, map_location="cpu")[
-                'generator']
-            self.model.generator.load_state_dict(
-                state_dict, strict=True
-            )
+        # if getattr(config, "generator_ckpt", False):
+        #     print(f"Loading pretrained generator from {config.generator_ckpt}")
+        #     state_dict = torch.load(config.generator_ckpt, map_location="cpu")[
+        #         'generator']
+        #     self.model.generator.load_state_dict(
+        #         state_dict, strict=True
+        #     )
 
         ##############################################################################################################
 
@@ -130,6 +124,18 @@ class Trainer:
                        f"checkpoint_model_{self.step:06d}", "model.pt"))
             print("Model saved to", os.path.join(self.output_path,
                   f"checkpoint_model_{self.step:06d}", "model.pt"))
+            
+    def load_batch(self, batch):
+        for key in batch.keys():
+            if key != "base_name" and key != "clean_token":
+                path = batch[key][0]
+                tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
+                batch[key] = tensor
+            if key == "clean_token":
+                path = batch[key][0]
+                tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
+                batch[key] = tensor.unsqueeze(0)  # Ensure it has batch dimension
+        return batch
 
     def train_one_step(self):
         VISUALIZE = self.step % 100 == 0
@@ -137,19 +143,35 @@ class Trainer:
 
         # Step 1: Get the next batch of text prompts
         batch = next(self.dataloader)
-        text_prompts = batch["prompts"]
+        batch = self.load_batch(batch)
+        
+
+        frame_token = batch["frame_token"]
+        memory_token = batch["memory_token"]
+        clean_token = batch["clean_token"]
+
+        text_token = batch["text_token"]
         ode_latent = batch["ode_latent"].to(
             device=self.device, dtype=self.dtype)
+        
+        print("############ ode shape", ode_latent.shape)
+        
+        with torch.no_grad():
+            conditional_dict = {'prompt_embeds': text_token}
+
+            embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
+            unconditional_dict = {'prompt_embeds': embed}
 
         # Step 2: Extract the conditional infos
-        with torch.no_grad():
-            conditional_dict = self.model.text_encoder(
-                text_prompts=text_prompts)
+        # with torch.no_grad():
+        #     conditional_dict = self.model.text_encoder(
+        #         text_prompts=text_prompts)
 
         # Step 3: Train the generator
         generator_loss, log_dict = self.model.generator_loss(
             ode_latent=ode_latent,
-            conditional_dict=conditional_dict
+            conditional_dict=conditional_dict,
+            unconditional_dict=unconditional_dict,
         )
 
         unnormalized_loss = log_dict["unnormalized_loss"]

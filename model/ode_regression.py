@@ -99,7 +99,7 @@ class ODERegression(BaseModel):
 
         return noisy_input, timestep
 
-    def generator_loss(self, ode_latent: torch.Tensor, conditional_dict: dict) -> Tuple[torch.Tensor, dict]:
+    def generator_loss(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, sam) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noisy latents and compute the ODE regression loss.
         Input:
@@ -116,23 +116,37 @@ class ODERegression(BaseModel):
         noisy_input, timestep = self._prepare_generator_input(
             ode_latent=ode_latent)
 
-        _, pred_image_or_video = self.generator(
+        _, pred_real_image_cond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=conditional_dict,
             timestep=timestep
         )
 
+        _, pred_real_image_uncond = self.generator(
+            noisy_image_or_video=noisy_input,
+            conditional_dict=unconditional_dict,
+            timestep=timestep
+        )
+
+        pred_real_image = pred_real_image_cond + (
+            pred_real_image_cond - pred_real_image_uncond
+        ) * 5
+
+        pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
+                                                xt=noisy_input,
+                                                timestep=timestep)
+
         # Step 2: Compute the regression loss
         mask = timestep != 0
 
         loss = F.mse_loss(
-            pred_image_or_video[mask], target_latent[mask], reduction="mean")
+            pred_real_image[mask], target_latent[mask], reduction="mean")
 
         log_dict = {
-            "unnormalized_loss": F.mse_loss(pred_image_or_video, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
+            "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
             "timestep": timestep.float().mean(dim=1).detach(),
             "input": noisy_input.detach(),
-            "output": pred_image_or_video.detach(),
+            "output": pred_real_image.detach(),
         }
 
         return loss, log_dict
