@@ -21,13 +21,13 @@ class ODERegression(BaseModel):
 
         self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
         self.generator.model.requires_grad_(True)
-        if getattr(args, "generator_ckpt", False):
-            print(f"Loading pretrained generator from {args.generator_ckpt}")
-            state_dict = torch.load(args.generator_ckpt, map_location="cpu")[
-                'generator']
-            self.generator.load_state_dict(
-                state_dict, strict=True
-            )
+        # if getattr(args, "generator_ckpt", False):
+        #     print(f"Loading pretrained generator from {args.generator_ckpt}")
+        #     state_dict = torch.load(args.generator_ckpt, map_location="cpu")[
+        #         'generator']
+        #     self.generator.load_state_dict(
+        #         state_dict, strict=True
+        #     )
 
         self.num_frame_per_block = getattr(args, "num_frame_per_block", 1)
 
@@ -75,8 +75,7 @@ class ODERegression(BaseModel):
             self.num_frame_per_block,
             uniform_timestep=False
         )
-        if self.args.i2v:
-            index[:, 0] = len(self.denoising_step_list) - 1
+        index[:, 0] = len(self.denoising_step_list) - 1
 
         noisy_input = torch.gather(
             ode_latent, dim=1,
