@@ -36,11 +36,11 @@ def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
 vae = WanVAEWrapper()
 vae.requires_grad_(False)
 latent = torch.load("pred_image.pt", map_location="cpu").to("cuda")[0][:,:3]
-latent = torch.zeros([48, 1, 30, 40], device="cuda", dtype=torch.bfloat16) 
-video = torch.zeros([3, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
+latent = torch.zeros([48, 21, 30, 40], device="cuda", dtype=torch.bfloat16) 
+# video = torch.zeros([3, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
 with torch.no_grad():
-    latent = vae.encode_to_latent([video])[0]
-    print(latent.shape)
+    # latent = vae.encode_to_latent([video])[0]
+    # print(latent.shape)
     video = vae.decode_to_pixel([latent])
     print(video[0].shape)
 
