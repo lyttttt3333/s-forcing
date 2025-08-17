@@ -103,7 +103,7 @@ class ODERegression(BaseModel):
 
         return noisy_input, timestep
 
-    def generator_loss(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, sam) -> Tuple[torch.Tensor, dict]:
+    def generator_loss(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noisy latents and compute the ODE regression loss.
         Input:
