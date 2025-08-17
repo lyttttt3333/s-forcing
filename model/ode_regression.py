@@ -53,7 +53,7 @@ class ODERegression(BaseModel):
         sample_step = [0,36,44,49]
         self.denoising_step_list = []
         for step in sample_step:
-            self.denoising_step_list.append(int(full_timestep[step].item()))
+            self.denoising_step_list.append(full_timestep[step].to("cpu").to(torch.int64))
         print("######### denoise step", self.denoising_step_list)
 
 
