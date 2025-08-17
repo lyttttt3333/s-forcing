@@ -58,17 +58,17 @@ print(video_files[0])
 latent = torch.load(video_files[0], map_location="cpu")#.to("cuda")[0].to(torch.bfloat16)
 for key in latent.keys():
     latent_tensor = latent[key]
-latent_tensor = latent_tensor.to("cuda").to(torch.bfloat16)
-print(latent_tensor.shape)
+latent_tensor = latent_tensor.to("cuda").to(torch.bfloat16)[0]
 # latent = torch.zeros([48, 21, 30, 40], device="cuda", dtype=torch.bfloat16) 
 # video = torch.zeros([3, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
 with torch.no_grad():
+    for i in range(latent_tensor.shape[0]):
     # latent = vae.encode_to_latent([video])[0]
     # print(latent.shape)
-    video = vae.decode_to_pixel([latent])
-    save_video(video_tensor=video[0],
-               save_path=f"tmp/test_1132.mp4",
-               fps=16)
+        video = vae.decode_to_pixel([latent_tensor[i]])
+        save_video(video_tensor=video[0],
+                save_path=f"tmp/test_1132_{i}.mp4",
+                fps=16)
 
 # output_path = "pred_video.mp4"
 # save_video(video[0], output_path, fps=16, quality=5)
