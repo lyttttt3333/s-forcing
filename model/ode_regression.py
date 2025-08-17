@@ -43,12 +43,12 @@ class ODERegression(BaseModel):
         # Step 2: Initialize all hyperparameters
         self.timestep_shift = getattr(args, "timestep_shift", 1.0)
 
-    def _initialize_models(self, args):
+    def _initialize_models(self, args, device):
         self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
         self.generator.model.requires_grad_(True)
 
-        self.text_encoder = WanTextEncoder()
-        self.text_encoder.requires_grad_(False)
+        # self.text_encoder = WanTextEncoder()
+        # self.text_encoder.requires_grad_(False)
 
         self.vae = WanVAEWrapper()
         self.vae.requires_grad_(False)
