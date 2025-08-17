@@ -4,10 +4,13 @@ from wan.modules.model import WanModel, RegisterTokens, GanAttentionBlock
 
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
+
+from utils.dataset import MixedDataset
 import imageio
 from tqdm import tqdm
 import torch.distributed as dist
 
+import os
 import torch
 
 def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
@@ -40,16 +43,28 @@ world_size = dist.get_world_size()
 torch.cuda.set_device(rank)
 device = "cuda"
 
+input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/ode_latent"
+
+video_files = [
+    os.path.join(input_dir, f)
+    for f in os.listdir(input_dir)
+    if f.lower().endswith(".pt")
+]
+video_files.sort()
+
 vae = WanVAEWrapper().to(torch.float16).to(device)
 vae.requires_grad_(False)
-latent = torch.load("pred_image.pt", map_location="cpu").to("cuda")[0][:,:3]
+latent = torch.load(video_files[0], map_location="cpu").to("cuda")[0]
+print(latent.shape)
 latent = torch.zeros([48, 21, 30, 40], device="cuda", dtype=torch.bfloat16) 
 # video = torch.zeros([3, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
 with torch.no_grad():
     # latent = vae.encode_to_latent([video])[0]
     # print(latent.shape)
     video = vae.decode_to_pixel([latent])
-    print(video[0].shape)
+    save_video(video_tensor=video[0],
+               save_path=f"tmp/test_1132.mp4",
+               fps=16)
 
 # output_path = "pred_video.mp4"
 # save_video(video[0], output_path, fps=16, quality=5)
