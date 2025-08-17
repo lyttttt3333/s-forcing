@@ -64,6 +64,7 @@ class ODERegression(BaseModel):
             - noisy_input: a tensor containing the selected latent [batch_size, num_frames, num_channels, height, width].
             - timestep: a tensor containing the corresponding timestep [batch_size].
         """
+        ode_latent = ode_latent.transpose(3,2)
         batch_size, num_denoising_steps, num_frames, num_channels, height, width = ode_latent.shape
 
         # Step 1: Randomly choose a timestep for each frame
@@ -95,6 +96,10 @@ class ODERegression(BaseModel):
         #     ).detach().unflatten(0, (batch_size, num_frames)).type_as(noisy_input)
 
         #     noisy_input[timestep == 0] = perturbed_noisy_input[timestep == 0]
+
+        print(noisy_input.shape)
+
+        noisy_input = noisy_input.transpose(3,2)
 
         return noisy_input, timestep
 
