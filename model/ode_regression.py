@@ -114,7 +114,7 @@ class ODERegression(BaseModel):
 
         print(noisy_input.shape)
 
-        noisy_input = noisy_input.transpose(3,2)
+        noisy_input = noisy_input.transpose(2,1)
 
         return noisy_input, timestep
 
