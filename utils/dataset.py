@@ -60,7 +60,7 @@ class MixedDataset(Dataset):
         video_token_path = os.path.join(self.root_dir, "video_token")
         video_token_path = os.path.join(video_token_path, base_name + ".pth")
         ode_latent_path = os.path.join(self.root_dir, "ode_latent")
-        ode_latent_path = os.path.join(ode_latent_path, base_name + ".pth")
+        ode_latent_path = os.path.join(ode_latent_path, base_name + ".pt")
         batch = {
             "text_token": text_token_path,
             "memory_token": memory_token_path,
