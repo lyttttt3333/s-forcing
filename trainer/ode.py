@@ -136,8 +136,12 @@ class Trainer:
                 path = batch[key][0]
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor.unsqueeze(0)  # Ensure it has batch dimension
+            if key == "ode_latent":
+                path = batch[key][0]
+                tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
+                batch[key] = tensor
         base_name = batch["base_name"][0]
-        ode_latent = batch["ode_latent"][0][base_name]
+        ode_latent = batch["ode_latent"][base_name]
         batch["ode_latent"] = ode_latent
         return batch
 
