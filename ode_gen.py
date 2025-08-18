@@ -54,7 +54,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
     ):
 
         # sample videos
-        latent = noise # shape [48, 21, 44, 78]
+        latent = noise # shape [48, 21, 40, 60]
         mask = torch.ones_like(noise)
         mask[:, 0] = 0
         latent = (1. - mask) * z + mask * latent
@@ -73,6 +73,8 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
             ])
             timestep = temp_ts.unsqueeze(0)
+
+            print(seq_len, timestep.shape)
 
             pred_real_image_cond = real_score(
                 noisy_image_or_video=latent_model_input.unsqueeze(0),
@@ -199,10 +201,11 @@ if __name__ == "__main__":
                                 select_index=[0,36,44,49])
                                 #[0, 36, 44, -1])
         
-        torch.save(
-            {base_name: trajectory.cpu().detach()},
-            os.path.join(output_folder, f"{base_name}.pt")
-        )
+        # torch.save(
+        #     {base_name: trajectory.cpu().detach()},
+        #     os.path.join(output_folder, f"{base_name}.pt")
+        # )
+        break
 
         print(f"GPU[{global_rank}]: {base_name} {trajectory.shape}")
 
