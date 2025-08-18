@@ -120,7 +120,7 @@ class ODERegression(BaseModel):
 
         return noisy_input, timestep
 
-    def generator_loss(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
+    def generator_loss(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, step) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noisy latents and compute the ODE regression loss.
         Input:
@@ -150,16 +150,18 @@ class ODERegression(BaseModel):
             seq_len=seq_len,
         ).to(torch.bfloat16)
 
-        pred_real_image_uncond = self.generator(
-            noisy_image_or_video=noisy_input,
-            conditional_dict=unconditional_dict,
-            timestep=timestep,
-            seq_len=seq_len,
-        ).to(torch.bfloat16)
+        # pred_real_image_uncond = self.generator(
+        #     noisy_image_or_video=noisy_input,
+        #     conditional_dict=unconditional_dict,
+        #     timestep=timestep,
+        #     seq_len=seq_len,
+        # ).to(torch.bfloat16)
 
-        pred_real_image = pred_real_image_cond + (
-            pred_real_image_cond - pred_real_image_uncond
-        ) * 5
+        # pred_real_image = pred_real_image_cond + (
+        #     pred_real_image_cond - pred_real_image_uncond
+        # ) * 5
+
+        pred_real_image = pred_real_image_cond
 
         pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                 xt=noisy_input,
@@ -323,16 +325,18 @@ class ODERegression(BaseModel):
                     seq_len=seq_len,
                 ).to(torch.bfloat16)
 
-                pred_real_image_uncond = self.generator(
-                    noisy_image_or_video=noisy_input,
-                    conditional_dict=unconditional_dict,
-                    timestep=timestep,
-                    seq_len=seq_len,
-                ).to(torch.bfloat16)
+                # pred_real_image_uncond = self.generator(
+                #     noisy_image_or_video=noisy_input,
+                #     conditional_dict=unconditional_dict,
+                #     timestep=timestep,
+                #     seq_len=seq_len,
+                # ).to(torch.bfloat16)
 
-                pred_real_image = pred_real_image_cond + (
-                    pred_real_image_cond - pred_real_image_uncond
-                ) * 5
+                # pred_real_image = pred_real_image_cond + (
+                #     pred_real_image_cond - pred_real_image_uncond
+                # ) * 5
+
+                pred_real_image = pred_real_image_cond
 
                 pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                         xt=noisy_input,
