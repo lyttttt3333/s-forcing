@@ -280,7 +280,7 @@ class ODERegression(BaseModel):
             noisy_input, timestep_frame_level = self._prepare_generator_input(
                 ode_latent=ode_latent, eval=True)
             # noisy input [1,48,21,30,40]
-
+            noisy_input_initial = noisy_input.clone()
             # noisy_input = torch.randn_like(noisy_input)
 
             timestep = timestep_frame_level.clone()
@@ -332,7 +332,7 @@ class ODERegression(BaseModel):
             log_dict = {
                 "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
                 "timestep": timestep.float().mean(dim=1).detach(),
-                "input": noisy_input.detach(),
+                "input": noisy_input_initial.detach(),
                 "output": trajectory.detach(),
             }
 
