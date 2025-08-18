@@ -365,7 +365,7 @@ class WanDiffusionWrapper(torch.nn.Module):
         timestep_id = torch.argmin(
             (timesteps.unsqueeze(0) - timestep.unsqueeze(1)).abs(), dim=1)
         sigma_t = sigmas[timestep_id].reshape(1, 1, -1, 1, 1)
-        print("###########", sigma_t.shape)
+        print("###########", sigma_t.shape, flow_pred.shape)
         x0_pred = xt - sigma_t * flow_pred
         return x0_pred.to(original_dtype)
 
