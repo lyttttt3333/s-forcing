@@ -162,7 +162,7 @@ class ODERegression(BaseModel):
 
         pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                 xt=noisy_input,
-                                                timestep=timestep)
+                                                timestep=timestep.reshape(-1))
 
         # Step 2: Compute the regression loss
         mask = timestep != 0
