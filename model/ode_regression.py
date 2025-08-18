@@ -135,6 +135,7 @@ class ODERegression(BaseModel):
         noisy_input, timestep = self._prepare_generator_input(
             ode_latent=ode_latent)
         # noisy input [1,48,21,30,40]
+        print("initial", timestep.shape)
         timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
         timestep = timestep.reshape(1,-1)
 
