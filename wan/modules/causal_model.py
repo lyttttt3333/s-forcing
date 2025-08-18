@@ -190,7 +190,7 @@ class CausalWanSelfAttention(nn.Module):
                     query=padded_roped_query.transpose(2, 1),
                     key=padded_roped_key.transpose(2, 1),
                     value=padded_v.transpose(2, 1),
-                    # block_mask=block_mask
+                    block_mask=block_mask
                 )[:, :, :-padded_length].transpose(2, 1)
         else:
             frame_seqlen = math.prod(grid_sizes[0][1:]).item()
@@ -237,8 +237,6 @@ class CausalWanSelfAttention(nn.Module):
             )
             kv_cache["global_end_index"].fill_(current_end)
             kv_cache["local_end_index"].fill_(local_end_index)
-            # kv_cache["k"][:, local_start_index:local_end_index] = kv_cache["k"][:, local_start_index:local_end_index].detach()
-            # kv_cache["v"][:, local_start_index:local_end_index] = kv_cache["v"][:, local_start_index:local_end_index].detach()
 
         # output
         x = x.flatten(2)
@@ -359,7 +357,8 @@ class CausalWanAttentionBlock(nn.Module):
             seq_lens, grid_sizes, freqs,
             kv_cache=kv_cache,
             current_start=current_start,
-            cache_start=cache_start)
+            cache_start=cache_start,
+            block_mask=block_mask)
         
         with torch.amp.autocast('cuda', dtype=torch.bfloat16):
             x = x + y * e[2].squeeze(2)
