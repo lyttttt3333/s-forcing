@@ -142,14 +142,14 @@ class ODERegression(BaseModel):
         seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
         print(seq_len, timestep.shape)
 
-        _, pred_real_image_cond = self.generator(
+        pred_real_image_cond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=conditional_dict,
             timestep=timestep,
             seq_len=seq_len,
         )
 
-        _, pred_real_image_uncond = self.generator(
+        pred_real_image_uncond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=unconditional_dict,
             timestep=timestep,
