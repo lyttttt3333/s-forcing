@@ -250,7 +250,7 @@ class Trainer:
         self.generator_optimizer.step()
 
         # Step 4: Visualization
-        if VISUALIZE:
+        if VISUALIZE and self.is_main_process:
             # Visualize the input, output, and ground truth
             input = log_dict["input"][0]
             output = log_dict["output"][0]
