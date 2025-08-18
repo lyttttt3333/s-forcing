@@ -181,7 +181,7 @@ class ODERegression(BaseModel):
 
         return loss, log_dict
     
-    def eval(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
+    def eval_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noisy latents and compute the ODE regression loss.
         Input:

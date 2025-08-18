@@ -232,7 +232,7 @@ class Trainer:
 
         # Step 4: Visualization
         if VISUALIZE:
-            log_dict = self.model.eval(ode_latent=ode_latent,
+            log_dict = self.model.eval_multi_step(ode_latent=ode_latent,
                             conditional_dict=conditional_dict,
                             unconditional_dict=unconditional_dict)
             # Visualize the input, output, and ground truth
