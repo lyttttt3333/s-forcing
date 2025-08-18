@@ -251,8 +251,8 @@ class ODERegression(BaseModel):
             log_dict = {
                 "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
                 "timestep": timestep.float().mean(dim=1).detach(),
-                "input": trajectory.detach(),
-                "output": pred_real_image.detach(),
+                "input": noisy_input.detach(),
+                "output": trajectory.detach(),
             }
 
             return log_dict
