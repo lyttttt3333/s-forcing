@@ -165,7 +165,8 @@ class ODERegression(BaseModel):
                                                 timestep=timestep_frame_level.reshape(-1))
 
         # Step 2: Compute the regression loss
-        mask = timestep != 0
+        mask = timestep_frame_level != 0
+        mask = mask.view(1, 1, -1, 1, 1)
 
         print("#############",pred_real_image.shape, target_latent.shape, mask.shape)
 
