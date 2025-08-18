@@ -218,6 +218,8 @@ class ODERegression(BaseModel):
 
             timestep = timestep_frame_level.clone()
             timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
+            # timestep_frame_level [1,21]
+            # timestep [1,21,300] -> [1,21*300]
 
 
 
