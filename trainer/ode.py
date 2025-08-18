@@ -291,7 +291,7 @@ class Trainer:
             # input_video = 255.0 * (input_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
             # output_video = 255.0 * (output_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
             # ground_truth_video = 255.0 * (ground_truth_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
-
+            os.makedirs("tmp", exist_ok=True)
             save_video(video, f"tmp/video_{rank}.mp4", fps=16)
 
         if self.is_main_process:
