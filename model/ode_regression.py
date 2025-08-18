@@ -316,8 +316,6 @@ class ODERegression(BaseModel):
                 # timestep_frame_level [1,21]
                 # timestep [1,21,300] -> [1,21*300]
 
-
-
                 pred_real_image_cond = self.generator(
                     noisy_image_or_video=noisy_input,
                     conditional_dict=conditional_dict,
