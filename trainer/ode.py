@@ -295,8 +295,10 @@ class Trainer:
             # ground_truth_video = 255.0 * (ground_truth_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
             os.makedirs("tmp", exist_ok=True)
             save_video(video, f"tmp/video_{rank}.mp4", fps=16)
+        
+        dist.barrier()
 
-        if self.is_main_process:
+        if VISUALIZE and self.is_main_process:
 
             for rank in range(self.world_size):
             # Visualize the input, output, and ground truth
