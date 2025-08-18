@@ -257,9 +257,9 @@ class Trainer:
             ground_truth = ode_latent[0, -1]
             print("#############", input.shape, output.shape, ground_truth.shape)
 
-            input_video = self.model.vae.decode_to_pixel([input])
-            output_video = self.model.vae.decode_to_pixel([output])
-            ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])
+            input_video = self.model.vae.decode_to_pixel([input])[0]
+            output_video = self.model.vae.decode_to_pixel([output])[0]
+            ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])[0]
             input_video = 255.0 * (input_video.cpu().numpy() * 0.5 + 0.5)
             output_video = 255.0 * (output_video.cpu().numpy() * 0.5 + 0.5)
             ground_truth_video = 255.0 * (ground_truth_video.cpu().numpy() * 0.5 + 0.5)
