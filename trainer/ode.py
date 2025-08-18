@@ -29,7 +29,7 @@ class Trainer:
         global_rank = dist.get_rank()
         self.world_size = dist.get_world_size()
 
-        self.dtype = torch.float32 #torch.bfloat16 #if config.mixed_precision else torch.float32
+        self.dtype = torch.bfloat16 #torch.bfloat16 #if config.mixed_precision else torch.float32
         self.device = torch.cuda.current_device()
         self.is_main_process = global_rank == 0
         self.disable_wandb = config.disable_wandb
