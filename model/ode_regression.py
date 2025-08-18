@@ -325,6 +325,9 @@ class ODERegression(BaseModel):
                 pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                         xt=noisy_input,
                                                         timestep=timestep_frame_level.reshape(-1))
+                
+                trajectory.append(pred_real_image)
+                
                 if i !=2 :
                     pred_real_image = self.generator.scheduler.add_noise(pred_real_image,
                                                                         torch.rand_like(pred_real_image),
@@ -332,7 +335,7 @@ class ODERegression(BaseModel):
                 
                 noisy_input = pred_real_image
 
-                trajectory.append(pred_real_image)
+                
 
             trajectory = torch.cat(trajectory, dim = 0)
 
