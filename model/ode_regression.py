@@ -175,7 +175,7 @@ class ODERegression(BaseModel):
         loss = F.mse_loss(
             pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
         
-        print("##############", loss.dtype())
+        print("##############", loss.dtype)
 
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
