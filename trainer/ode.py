@@ -16,6 +16,30 @@ import numpy as np
 
 from utils.distributed import barrier, fsdp_wrap, fsdp_state_dict, launch_distributed_job
 
+def save_video(video_tensor, save_path, fps=30, quality=9, ffmpeg_params=None):
+    """
+    保存一个形状为 [C, T, H, W] 的视频张量到文件
+    video_tensor: torch.Tensor, float32, 值域 [-1, 1] 或 [0, 1]
+    """
+    assert video_tensor.dim() == 4, "video_tensor 必须是 4 维 [C, T, H, W]"
+    
+    # 转到 CPU，避免 GPU 张量直接参与 numpy 转换
+    video_tensor = video_tensor.detach().cpu()
+
+    # [-1, 1] → [0, 255]
+    if video_tensor.min() < 0:
+        video_tensor = (video_tensor + 1) / 2  # [-1,1] → [0,1]
+    video_tensor = (video_tensor * 255).clamp(0, 255).byte()
+
+    # [C, T, H, W] → [T, H, W, C]
+    video_tensor = video_tensor.permute(1, 2, 3, 0).numpy()
+
+    # 保存视频
+    writer = imageio.get_writer(save_path, fps=fps, quality=quality, ffmpeg_params=ffmpeg_params)
+    for frame in tqdm(video_tensor, desc="Saving video"):
+        writer.append_data(frame)
+    writer.close()
+
 
 class Trainer:
     def __init__(self, config):
@@ -251,28 +275,32 @@ class Trainer:
         self.generator_optimizer.step()
 
         # Step 4: Visualization
-        if VISUALIZE and self.is_main_process:
+        if VISUALIZE:
             # Visualize the input, output, and ground truth
             input = log_dict["input"][0]
             output = log_dict["output"][0]
             ground_truth = ode_latent[0, -1]
-            
+
+            rank = dist.get_rank()
 
             input_video = self.model.vae.decode_to_pixel([input])[0]
             output_video = self.model.vae.decode_to_pixel([output])[0]
             ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])[0]
-            input_video = 255.0 * (input_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
-            output_video = 255.0 * (output_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
-            ground_truth_video = 255.0 * (ground_truth_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
 
-            print("#############", input_video.shape, output_video.shape, ground_truth_video.shape)
+            video = torch.cat([input_video,output_video,ground_truth_video],dim=-1)
+            # input_video = 255.0 * (input_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
+            # output_video = 255.0 * (output_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
+            # ground_truth_video = 255.0 * (ground_truth_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
 
+            save_video(video, f"tmp/video_{rank}.mp4", fps=16)
+
+        if self.is_main_process:
+
+            for rank in range(self.world_size):
             # Visualize the input, output, and ground truth
-            wandb.log({
-                "input": wandb.Video(input_video, caption="Input", fps=16, format="mp4"),
-                "output": wandb.Video(output_video, caption="Output", fps=16, format="mp4"),
-                "ground_truth": wandb.Video(ground_truth_video, caption="Ground Truth", fps=16, format="mp4"),
-            }, step=self.step)
+                wandb.log({
+                    "input": wandb.Video(f"tmp/video_{rank}.mp4", caption=f"Input/rank_{rank}", fps=16, format="mp4"),
+                }, step=self.step)
 
         # Step 5: Logging
         if self.is_main_process and not self.disable_wandb:
