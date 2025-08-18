@@ -20,8 +20,8 @@ class ODERegression(BaseModel):
 
         # Step 1: Initialize all models
 
-        self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
-        self.generator.model.requires_grad_(True)
+        # self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
+        # self.generator.model.requires_grad_(True)
         # if getattr(args, "generator_ckpt", False):
         #     print(f"Loading pretrained generator from {args.generator_ckpt}")
         #     state_dict = torch.load(args.generator_ckpt, map_location="cpu")[
@@ -58,15 +58,15 @@ class ODERegression(BaseModel):
         print("######### denoise step", self.denoising_step_list)
 
 
-    def _initialize_models(self, args, device):
-        self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
-        self.generator.model.requires_grad_(True)
+    # def _initialize_models(self, args, device):
+    #     self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
+    #     self.generator.model.requires_grad_(True)
 
-        # self.text_encoder = WanTextEncoder()
-        # self.text_encoder.requires_grad_(False)
+    #     # self.text_encoder = WanTextEncoder()
+    #     # self.text_encoder.requires_grad_(False)
 
-        self.vae = WanVAEWrapper()
-        self.vae.requires_grad_(False)
+    #     self.vae = WanVAEWrapper()
+    #     self.vae.requires_grad_(False)
 
     @torch.no_grad()
     def _prepare_generator_input(self, ode_latent: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -130,8 +130,6 @@ class ODERegression(BaseModel):
             - log_dict: a dictionary containing additional information for loss timestep breakdown.
         """
         # Step 1: Run generator on noisy latents
-        print("ode_latent ###########", ode_latent.dtype)
-        assert 0
         target_latent = ode_latent[:, -1]
 
         noisy_input, timestep_frame_level = self._prepare_generator_input(
@@ -142,7 +140,6 @@ class ODERegression(BaseModel):
         timestep = timestep.reshape(1,-1)
 
         seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
-        print(seq_len, timestep.shape)
 
         pred_real_image_cond = self.generator(
             noisy_image_or_video=noisy_input,
@@ -161,6 +158,9 @@ class ODERegression(BaseModel):
         pred_real_image = pred_real_image_cond + (
             pred_real_image_cond - pred_real_image_uncond
         ) * 5
+
+        print("pred_real_image ###########", pred_real_image.dtype)
+        assert 0
 
         pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                 xt=noisy_input,
