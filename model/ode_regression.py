@@ -134,17 +134,23 @@ class ODERegression(BaseModel):
 
         noisy_input, timestep = self._prepare_generator_input(
             ode_latent=ode_latent)
+        # noisy input [1,48,21,30,40]
+
+        seq_len = int(noisy_input[-3]*noisy_input[-2]*noisy_input[-1]/4)
+        print(seq_len)
 
         _, pred_real_image_cond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=conditional_dict,
-            timestep=timestep
+            timestep=timestep,
+            seq_len=seq_len,
         )
 
         _, pred_real_image_uncond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=unconditional_dict,
-            timestep=timestep
+            timestep=timestep,
+            seq_len=seq_len,
         )
 
         pred_real_image = pred_real_image_cond + (
