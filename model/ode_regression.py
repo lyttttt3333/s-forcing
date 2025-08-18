@@ -83,7 +83,7 @@ class ODERegression(BaseModel):
 
         # Step 1: Randomly choose a timestep for each frame
         index = self._get_timestep(
-            1,
+            2,
             self.denoising_step_list.shape[0],
             batch_size,
             num_frames,
