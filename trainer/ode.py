@@ -250,11 +250,12 @@ class Trainer:
         self.generator_optimizer.step()
 
         # Step 4: Visualization
-        if VISUALIZE and not self.config.no_visualize and not self.config.disable_wandb and self.is_main_process:
+        if VISUALIZE:
             # Visualize the input, output, and ground truth
             input = log_dict["input"]
             output = log_dict["output"]
             ground_truth = ode_latent[:, -1]
+            print("#############", input.shape, output.shape, ground_truth.shape)
 
             input_video = self.model.vae.decode_to_pixel(input)
             output_video = self.model.vae.decode_to_pixel(output)
