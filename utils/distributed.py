@@ -24,8 +24,8 @@ def fsdp_wrap(module, sharding_strategy="full", mixed_precision=False, wrap_stra
     if mixed_precision:
         mixed_precision_policy = MixedPrecision(
             param_dtype=torch.bfloat16,
-            reduce_dtype=torch.bfloat16,
-            buffer_dtype=torch.bfloat16,
+            reduce_dtype=torch.float32,
+            buffer_dtype=torch.float32,
             cast_forward_inputs=False
         )
     else:

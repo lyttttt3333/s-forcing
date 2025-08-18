@@ -772,6 +772,8 @@ class WanModel(ModelMixin, ConfigMixin):
                 x = block(x, **kwargs)
 
         # head
+        x = x.to(torch.bfloat16)
+        e = e.to(torch.bfloat16)
         x = self.head(x, e)
 
         # unpatchify
