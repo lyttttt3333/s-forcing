@@ -130,6 +130,8 @@ class ODERegression(BaseModel):
             - log_dict: a dictionary containing additional information for loss timestep breakdown.
         """
         # Step 1: Run generator on noisy latents
+        print("ode_latent ###########", ode_latent.dtype)
+        assert 0
         target_latent = ode_latent[:, -1]
 
         noisy_input, timestep_frame_level = self._prepare_generator_input(
