@@ -255,11 +255,13 @@ class ODERegression(BaseModel):
             
 
             # trajectory.append(pred_real_image)
-        mask = timestep_frame_level != (self.denoising_step_list.shape[0] - 1)
-        mask = mask.view(-1)
+        # mask = timestep_frame_level != (self.denoising_step_list.shape[0] - 1)
+        # mask = mask.view(-1)
 
+        # loss = F.mse_loss(
+        #     pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
         loss = F.mse_loss(
-            pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
+            pred_real_image, target_latent, reduction="mean").float()
         # trajectory = torch.cat(trajectory, dim = 0)
 
         log_dict = {
