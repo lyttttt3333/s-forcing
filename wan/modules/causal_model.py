@@ -947,32 +947,32 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             self.freqs = self.freqs.to(device)
 
         # Construct blockwise causal attn mask
-        self.block_mask = None
-        # if self.block_mask is None:
-        #     if clean_x is not None:
-        #         if self.independent_first_frame:
-        #             raise NotImplementedError()
-        #         else:
-        #             self.block_mask = self._prepare_teacher_forcing_mask(
-        #                 device, num_frames=x.shape[2],
-        #                 frame_seqlen=x.shape[-2] * x.shape[-1] // (self.patch_size[1] * self.patch_size[2]),
-        #                 num_frame_per_block=self.num_frame_per_block
-        #             )
-        #     else:
-        #         if self.independent_first_frame:
-        #             self.block_mask = self._prepare_blockwise_causal_attn_mask_i2v(
-        #                 device, num_frames=x.shape[2],
-        #                 frame_seqlen=x.shape[-2] * x.shape[-1] // (self.patch_size[1] * self.patch_size[2]),
-        #                 num_frame_per_block=self.num_frame_per_block,
-        #                 local_attn_size=self.local_attn_size
-        #             )
-        #         else:
-        #             self.block_mask = self._prepare_blockwise_causal_attn_mask(
-        #                 device, num_frames=x.shape[2],
-        #                 frame_seqlen=x.shape[-2] * x.shape[-1] // (self.patch_size[1] * self.patch_size[2]),
-        #                 num_frame_per_block=self.num_frame_per_block,
-        #                 local_attn_size=self.local_attn_size
-        #             )
+        # self.block_mask = None
+        if self.block_mask is None:
+            if clean_x is not None:
+                if self.independent_first_frame:
+                    raise NotImplementedError()
+                else:
+                    self.block_mask = self._prepare_teacher_forcing_mask(
+                        device, num_frames=x.shape[2],
+                        frame_seqlen=x.shape[-2] * x.shape[-1] // (self.patch_size[1] * self.patch_size[2]),
+                        num_frame_per_block=self.num_frame_per_block
+                    )
+            else:
+                if self.independent_first_frame:
+                    self.block_mask = self._prepare_blockwise_causal_attn_mask_i2v(
+                        device, num_frames=x.shape[2],
+                        frame_seqlen=x.shape[-2] * x.shape[-1] // (self.patch_size[1] * self.patch_size[2]),
+                        num_frame_per_block=self.num_frame_per_block,
+                        local_attn_size=self.local_attn_size
+                    )
+                else:
+                    self.block_mask = self._prepare_blockwise_causal_attn_mask(
+                        device, num_frames=x.shape[2],
+                        frame_seqlen=x.shape[-2] * x.shape[-1] // (self.patch_size[1] * self.patch_size[2]),
+                        num_frame_per_block=self.num_frame_per_block,
+                        local_attn_size=self.local_attn_size
+                    )
 
         if y is not None:
             x = [torch.cat([u, v], dim=0) for u, v in zip(x, y)]
@@ -1051,8 +1051,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             grid_sizes=grid_sizes,
             freqs=self.freqs,
             context=context,
-            context_lens=context_lens)
-            # block_mask=self.block_mask)
+            context_lens=context_lens,
+            block_mask=self.block_mask)
 
         def create_custom_forward(module):
             def custom_forward(*inputs, **kwargs):
