@@ -162,7 +162,7 @@ class ODERegression(BaseModel):
                                                 timestep=timestep_frame_level.reshape(-1))
 
         # Step 2: Compute the regression loss
-        mask = timestep_frame_level != 0
+        mask = timestep_frame_level != (self.denoising_step_list.shape[0] - 1)
         mask = mask.view(-1)
 
         loss = F.mse_loss(
