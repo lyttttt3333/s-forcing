@@ -277,36 +277,6 @@ class Trainer:
             self.max_grad_norm)
         self.generator_optimizer.step()
 
-        # Step 4: Visualization
-        if VISUALIZE:
-            # Visualize the input, output, and ground truth
-            input = log_dict["input"][0]
-            output = log_dict["output"][0]
-            ground_truth = ode_latent[0, -1]
-
-            rank = dist.get_rank()
-
-            input_video = self.model.vae.decode_to_pixel([input])[0]
-            output_video = self.model.vae.decode_to_pixel([output])[0]
-            ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])[0]
-
-            video = torch.cat([input_video,output_video,ground_truth_video],dim=-1)
-            # input_video = 255.0 * (input_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
-            # output_video = 255.0 * (output_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
-            # ground_truth_video = 255.0 * (ground_truth_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
-            os.makedirs("tmp", exist_ok=True)
-            save_video(video, f"tmp/video_{rank}.mp4", fps=16)
-        
-        dist.barrier()
-
-        if VISUALIZE and self.is_main_process:
-
-            for rank in range(self.world_size):
-            # Visualize the input, output, and ground truth
-                wandb.log({
-                    f"gen/video_{rank}": wandb.Video(f"tmp/video_{rank}.mp4", caption=f"Input/rank_{rank}", fps=16, format="mp4"),
-                }, step=self.step)
-
         # Step 5: Logging
         if self.is_main_process and not self.disable_wandb:
             wandb_loss_dict = {
@@ -320,6 +290,44 @@ class Trainer:
             if dist.get_rank() == 0:
                 logging.info("DistGarbageCollector: Running GC.")
             gc.collect()
+
+        # Step 4: Visualization
+        if VISUALIZE:
+            log_dict = self.model.eval(ode_latent=ode_latent,
+                            conditional_dict=conditional_dict,
+                            unconditional_dict=unconditional_dict)
+            # Visualize the input, output, and ground truth
+            input = log_dict["input"][0]
+            ground_truth = ode_latent[0, -1]
+            output_1step = log_dict["output"][0,0]
+            output_2step = log_dict["output"][0,1]
+            output_3step = log_dict["output"][0,2]
+
+
+            rank = dist.get_rank()
+            
+            # input_video = self.model.vae.decode_to_pixel([input])[0]
+            ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])[0]
+            output_video_1step = self.model.vae.decode_to_pixel([output_1step])[0]
+            output_video_2step = self.model.vae.decode_to_pixel([output_2step])[0]
+            output_video_3step = self.model.vae.decode_to_pixel([output_3step])[0]
+            
+
+            video_1row = torch.cat([output_video_1step,output_video_2step],dim=-1)
+            video_2row = torch.cat([output_video_3step,ground_truth_video],dim=-1)
+            video = torch.cat([video_1row,video_2row],dim=-2)
+            os.makedirs("tmp", exist_ok=True)
+            save_video(video, f"tmp/video_{rank}.mp4", fps=16)
+        
+        dist.barrier()
+
+        if VISUALIZE and self.is_main_process:
+
+            for rank in range(self.world_size):
+            # Visualize the input, output, and ground truth
+                wandb.log({
+                    f"gen/video_{rank}": wandb.Video(f"tmp/video_{rank}.mp4", caption=f"Input/rank_{rank}", fps=16, format="mp4"),
+                }, step=self.step)
 
     def train(self):
         while True:
