@@ -322,7 +322,7 @@ class Trainer:
     def train(self):
         while True:
             self.train_one_step()
-            if (not self.config.no_save) and self.step % self.config.log_iters == 0:
+            if self.step % self.config.log_iters == 0:
                 self.save()
                 torch.cuda.empty_cache()
 
