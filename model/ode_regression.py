@@ -159,8 +159,8 @@ class ODERegression(BaseModel):
             pred_real_image_cond - pred_real_image_uncond
         ) * 5
 
-        print("pred_real_image ###########", pred_real_image.dtype)
-        assert 0
+        # print("pred_real_image ###########", pred_real_image.dtype)
+        # assert 0
 
         pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                 xt=noisy_input,
