@@ -132,10 +132,10 @@ class ODERegression(BaseModel):
         # Step 1: Run generator on noisy latents
         target_latent = ode_latent[:, -1]
 
-        noisy_input, timestep = self._prepare_generator_input(
+        noisy_input, timestep_frame_level = self._prepare_generator_input(
             ode_latent=ode_latent)
         # noisy input [1,48,21,30,40]
-        print("initial", timestep.shape)
+        timestep = timestep_frame_level.clone()
         timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
         timestep = timestep.reshape(1,-1)
 
@@ -162,7 +162,7 @@ class ODERegression(BaseModel):
 
         pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                 xt=noisy_input,
-                                                timestep=timestep.reshape(-1))
+                                                timestep=timestep_frame_level.reshape(-1))
 
         # Step 2: Compute the regression loss
         mask = timestep != 0
