@@ -299,16 +299,16 @@ class Trainer:
             gathered_unnormalized_loss = unnormalized_loss
             gathered_timestep = timestep
 
-        loss_breakdown = defaultdict(list)
-        stats = {}
+        # loss_breakdown = defaultdict(list)
+        # stats = {}
 
-        for index, t in enumerate(timestep):
-            loss_breakdown[str(int(t.item()) // 250 * 250)].append(
-                unnormalized_loss[index].item())
+        # for index, t in enumerate(timestep):
+        #     loss_breakdown[str(int(t.item()) // 250 * 250)].append(
+        #         unnormalized_loss[index].item())
 
-        for key_t in loss_breakdown.keys():
-            stats["loss_at_time_" + key_t] = sum(loss_breakdown[key_t]) / \
-                len(loss_breakdown[key_t])
+        # for key_t in loss_breakdown.keys():
+        #     stats["loss_at_time_" + key_t] = sum(loss_breakdown[key_t]) / \
+        #         len(loss_breakdown[key_t])
 
         self.generator_optimizer.zero_grad()
         generator_loss.backward()
@@ -346,7 +346,7 @@ class Trainer:
             wandb_loss_dict = {
                 "generator_loss": generator_loss.item(),
                 "generator_grad_norm": generator_grad_norm.item(),
-                **stats
+                # **stats
             }
             wandb.log(wandb_loss_dict, step=self.step)
 
