@@ -99,7 +99,7 @@ class ODERegression(BaseModel):
                 -1, -1, -1, num_channels, height, width).to(self.device)
         ).squeeze(1)
 
-        timestep = self.denoising_step_list[index].to(self.device)
+        timestep = self.denoising_step_list[index].to(self.device).to(self.dtype)
 
         # if self.extra_noise_step > 0:
         #     random_timestep = torch.randint(0, self.extra_noise_step, [
@@ -146,14 +146,14 @@ class ODERegression(BaseModel):
             conditional_dict=conditional_dict,
             timestep=timestep,
             seq_len=seq_len,
-        )
+        ).to(torch.bfloat16)
 
         pred_real_image_uncond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=unconditional_dict,
             timestep=timestep,
             seq_len=seq_len,
-        )
+        ).to(torch.bfloat16)
 
         pred_real_image = pred_real_image_cond + (
             pred_real_image_cond - pred_real_image_uncond
@@ -174,6 +174,8 @@ class ODERegression(BaseModel):
 
         loss = F.mse_loss(
             pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
+        
+        print("##############", loss.dtype())
 
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
