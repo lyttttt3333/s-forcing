@@ -12,6 +12,7 @@ import torch
 import wandb
 import time
 import os
+import numpy as np
 
 from utils.distributed import barrier, fsdp_wrap, fsdp_state_dict, launch_distributed_job
 
@@ -260,9 +261,9 @@ class Trainer:
             input_video = self.model.vae.decode_to_pixel([input])[0]
             output_video = self.model.vae.decode_to_pixel([output])[0]
             ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])[0]
-            input_video = 255.0 * (input_video.cpu().numpy() * 0.5 + 0.5)
-            output_video = 255.0 * (output_video.cpu().numpy() * 0.5 + 0.5)
-            ground_truth_video = 255.0 * (ground_truth_video.cpu().numpy() * 0.5 + 0.5)
+            input_video = 255.0 * (input_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
+            output_video = 255.0 * (output_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
+            ground_truth_video = 255.0 * (ground_truth_video.permute(1, 2, 3, 0).cpu().numpy() * 0.5 + 0.5).astype(np.uint8)
 
             print("#############", input_video.shape, output_video.shape, ground_truth_video.shape)
 
