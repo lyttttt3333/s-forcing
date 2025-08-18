@@ -166,12 +166,12 @@ class ODERegression(BaseModel):
 
         # Step 2: Compute the regression loss
         mask = timestep_frame_level != 0
-        mask = mask.view(1, 1, -1, 1, 1)
+        mask = mask.view(-1)
 
         print("#############",pred_real_image.shape, target_latent.shape, mask.shape)
 
         loss = F.mse_loss(
-            pred_real_image[mask], target_latent[mask], reduction="mean")
+            pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean")
 
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
