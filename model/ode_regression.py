@@ -245,12 +245,13 @@ class ODERegression(BaseModel):
                                                     xt=noisy_input,
                                                     timestep=timestep_frame_level.reshape(-1))
 
-            noisy_input = pred_real_image.detach()
+            noisy_input = pred_real_image.clone()
             
             if i !=2 :
                 noisy_input = self.generator.scheduler.add_noise(noisy_input,
                                                                     torch.rand_like(noisy_input),
                                                                     torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[i+1])
+                noisy_input = noisy_input.detach()
             
             
 
