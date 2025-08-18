@@ -245,7 +245,11 @@ class ODERegression(BaseModel):
             noisy_input = pred_real_image.detach()
 
             # trajectory.append(pred_real_image)
+        mask = timestep_frame_level != (self.denoising_step_list.shape[0] - 1)
+        mask = mask.view(-1)
 
+        loss = F.mse_loss(
+            pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
         # trajectory = torch.cat(trajectory, dim = 0)
 
         log_dict = {
@@ -255,7 +259,7 @@ class ODERegression(BaseModel):
             "output": pred_real_image.detach(),
         }
 
-        return log_dict
+        return loss, log_dict
 
 
     def eval_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
