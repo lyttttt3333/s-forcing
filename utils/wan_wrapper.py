@@ -356,7 +356,6 @@ class WanDiffusionWrapper(torch.nn.Module):
         """
         # use higher precision for calculations
         original_dtype = flow_pred.dtype
-        print("##########", original_dtype)
         flow_pred, xt, sigmas, timesteps = map(
             lambda x: x.to(original_dtype).to(flow_pred.device), [flow_pred, xt,
                                                         self.scheduler.sigmas,

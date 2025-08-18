@@ -55,7 +55,6 @@ class ODERegression(BaseModel):
         for step in sample_step:
             self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
         self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
-        print("######### denoise step", self.denoising_step_list)
 
 
     # def _initialize_models(self, args, device):
@@ -159,9 +158,6 @@ class ODERegression(BaseModel):
             pred_real_image_cond - pred_real_image_uncond
         ) * 5
 
-        # print("pred_real_image ###########", pred_real_image.dtype)
-        # assert 0
-
         pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                                                 xt=noisy_input,
                                                 timestep=timestep_frame_level.reshape(-1))
@@ -170,12 +166,8 @@ class ODERegression(BaseModel):
         mask = timestep_frame_level != 0
         mask = mask.view(-1)
 
-        print("#############",pred_real_image.shape, target_latent.shape, mask.shape)
-
         loss = F.mse_loss(
             pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
-        
-        print("##############", loss.dtype)
 
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),

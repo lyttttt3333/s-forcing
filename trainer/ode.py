@@ -300,7 +300,6 @@ class Trainer:
         if VISUALIZE and self.is_main_process:
 
             for rank in range(self.world_size):
-                print(f"################ upload rank-{rank} video")
             # Visualize the input, output, and ground truth
                 wandb.log({
                     f"gen/video_{rank}": wandb.Video(f"tmp/video_{rank}.mp4", caption=f"Input/rank_{rank}", fps=16, format="mp4"),
