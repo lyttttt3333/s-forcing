@@ -136,7 +136,7 @@ class ODERegression(BaseModel):
             ode_latent=ode_latent)
         # noisy input [1,48,21,30,40]
 
-        seq_len = int(noisy_input[-3]*noisy_input[-2]*noisy_input[-1]/4)
+        seq_len = int(noisy_input.shape[2]*noisy_input.shape[4]*noisy_input.shape[5]/4)
         print(seq_len)
 
         _, pred_real_image_cond = self.generator(
