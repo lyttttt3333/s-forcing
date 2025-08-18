@@ -315,6 +315,31 @@ class Trainer:
             self.max_grad_norm)
         self.generator_optimizer.step()
 
+        if VISUALIZE:
+            input = log_dict["input"][0]
+            output = log_dict["output"][0]
+            ground_truth = ode_latent[0, -1]
+        
+            rank = dist.get_rank()
+            
+            input_video = self.model.vae.decode_to_pixel([input])[0]
+            output_video = self.model.vae.decode_to_pixel([output])[0]
+            ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])[0]
+            
+            video = torch.cat([input_video,output_video,ground_truth_video],dim=-1)
+            os.makedirs("tmp", exist_ok=True)
+            save_video(video, f"tmp/video_train_{rank}.mp4", fps=16)
+        
+        dist.barrier()
+
+        if VISUALIZE and self.is_main_process:
+
+            for rank in range(self.world_size):
+            # Visualize the input, output, and ground truth
+                wandb.log({
+                    f"gen/video_train_{rank}": wandb.Video(f"tmp/video_train_{rank}.mp4", caption=f"Input/train_rank_{rank}", fps=16, format="mp4"),
+                }, step=self.step)
+
         # Step 5: Logging
         if self.is_main_process and not self.disable_wandb:
             wandb_loss_dict = {
