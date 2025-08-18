@@ -167,6 +167,8 @@ class ODERegression(BaseModel):
         # Step 2: Compute the regression loss
         mask = timestep != 0
 
+        print("#############",pred_real_image.shape, target_latent.shape, mask.shape)
+
         loss = F.mse_loss(
             pred_real_image[mask], target_latent[mask], reduction="mean")
 
