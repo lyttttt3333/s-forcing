@@ -164,7 +164,6 @@ class CausalWanSelfAttention(nn.Module):
                 )[:, :, :-padded_length].transpose(2, 1)
 
             else:
-                print("######## call block attention")
                 roped_query = rope_apply(q, grid_sizes, freqs).type_as(v)
                 roped_key = rope_apply(k, grid_sizes, freqs).type_as(v)
 
