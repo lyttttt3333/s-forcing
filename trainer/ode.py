@@ -205,6 +205,8 @@ class Trainer:
         return batch
 
     def train_one_step(self):
+        if self.is_main_process:
+            print(f"###### training step {self.step}")
         VISUALIZE = self.step % 100 == 0
         self.model.eval()  # prevent any randomness (e.g. dropout)
 
