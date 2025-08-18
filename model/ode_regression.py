@@ -210,7 +210,7 @@ class ODERegression(BaseModel):
 
         trajectory = []
 
-        iteration = step % 3
+        iteration = 2
         for i in range(iteration+1):
 
             timestep_frame_level = torch.ones_like(timestep_frame_level) * self.denoising_step_list[i]
