@@ -156,7 +156,7 @@ class ODERegression(BaseModel):
 
         noisy_input = self.generator.scheduler.add_noise(original_samples=target_latent,
                                  noise=torch.randn_like(target_latent),
-                                 timesteps=timestep.view(-1))
+                                 timestep=timestep.view(-1))
     
 
 
