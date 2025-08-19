@@ -133,7 +133,7 @@ class ODERegression(BaseModel):
             - noisy_input: a tensor containing the selected latent [batch_size, num_frames, num_channels, height, width].
             - timestep: a tensor containing the corresponding timestep [batch_size].
         """
-        ode_latent = target_latent.transpose(2,1)
+        target_latent = target_latent.transpose(2,1)
         batch_size, num_frames, num_channels, height, width = target_latent.shape
 
         # Step 1: Randomly choose a timestep for each frame
