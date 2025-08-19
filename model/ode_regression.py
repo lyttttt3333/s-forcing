@@ -146,9 +146,11 @@ class ODERegression(BaseModel):
             uniform_timestep=False
         )
 
+        index[:, 0] = self.denoising_step_list.shape[0] - 1
+
         timestep = self.denoising_step_list[index].to(self.device).to(self.dtype)
 
-        print(f"########### {timestep.view(-1)} ############")
+        print(f"########### {timestep.view(-1)} {timestep.shape} ############")
 
         noisy_input = self.scheduler.add_noise(original_samples=target_latent,
                                  noise=torch.randn_like(target_latent),
