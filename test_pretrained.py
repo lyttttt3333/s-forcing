@@ -19,6 +19,7 @@ import wandb
 wandb.login(host="https://api.wandb.ai", key="5409d3b960b01b25cec0f6abb5361b4022f0cc41")
 wandb.init(
     mode="online",
+    name="check",
     entity="liyitong-Tsinghua University",
     project="self-forcing",
 )
@@ -82,7 +83,7 @@ with torch.no_grad():
                 save_path=f"tmp/test_1840_{i}.mp4",
                 fps=16)
     for i in range(latent_tensor.shape[0]):
-        wandb.log({f"{i}_video": wandb.Video(f"tmp/test_1132_{i}.mp4", fps=16, format="mp4")})
+        wandb.log({f"{i}_video": wandb.Video(f"tmp/test_1840_{i}.mp4", fps=16, format="mp4")})
 
 # output_path = "pred_video.mp4"
 # save_video(video[0], output_path, fps=16, quality=5)
