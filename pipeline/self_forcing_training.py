@@ -98,20 +98,20 @@ class SelfForcingTrainingPipeline:
             seq_len=seq_len,
         )
 
-        pred_real_image_uncond = self.generator(
-            noisy_image_or_video=noisy_input,
-            conditional_dict=unconditional_dict,
-            timestep=timestep,
-            kv_cache=kv_cache,
-            current_start=current_start,
-            seq_len=seq_len
-        )
+        # pred_real_image_uncond = self.generator(
+        #     noisy_image_or_video=noisy_input,
+        #     conditional_dict=unconditional_dict,
+        #     timestep=timestep,
+        #     kv_cache=kv_cache,
+        #     current_start=current_start,
+        #     seq_len=seq_len
+        # )
 
-        pred_real_image = pred_real_image_cond + (
-            pred_real_image_cond - pred_real_image_uncond
-        ) * self.real_guidance_scale
+        # pred_real_image = pred_real_image_cond + (
+        #     pred_real_image_cond - pred_real_image_uncond
+        # ) * self.real_guidance_scale
 
-        pred_real_image = pred_real_image.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
+        pred_real_image = pred_real_image_cond.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
 
 
         temp_x0 = self.sample_scheduler.step(
