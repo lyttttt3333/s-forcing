@@ -55,7 +55,7 @@ class ODERegression(BaseModel):
         # for step in sample_step:
         #     self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
         # denoising_step_list = [1000, 750, 500, 250]
-        # self.denoising_step_list = torch.tensor(denoising_step_list).to(self.device).to(torch.int64)
+        self.denoising_step_list = self.denoising_step_list.to(self.device).to(torch.int64)
 
 
     # def _initialize_models(self, args, device):
