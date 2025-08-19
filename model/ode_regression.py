@@ -150,6 +150,7 @@ class ODERegression(BaseModel):
         index[:, 0] = self.denoising_step_list.shape[0] - 1
 
         timestep = self.denoising_step_list[index].to(self.device).to(self.dtype)
+        timestep[0,0] = 0
 
         print(f"########### {timestep.view(-1)} {timestep.shape} ############")
 
