@@ -49,13 +49,27 @@ class SelfForcingTrainingPipeline:
         shift = 5
         device = "cuda"
 
-        self.sample_scheduler = FlowUniPCMultistepScheduler(
-            num_train_timesteps=num_train_timesteps,
-            shift=1,
-            use_dynamic_shifting=False)
-        self.sample_scheduler.set_timesteps(
-            self.sampling_steps, device=device, shift=shift)
-        self.denoising_step_list = self.sample_scheduler.timesteps
+        self.scheduler = self.generator.get_scheduler()
+
+        scheduler = FlowUniPCMultistepScheduler(
+                        num_train_timesteps=1000,
+                        shift=1,
+                        use_dynamic_shifting=False)
+        scheduler.set_timesteps(50, device=self.device, shift=5)
+        full_timestep = scheduler.timesteps
+        sample_step = [0,36,44,49]
+        self.denoising_step_list = []
+        for step in sample_step:
+            self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
+        self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
+
+        # self.sample_scheduler = FlowUniPCMultistepScheduler(
+        #     num_train_timesteps=num_train_timesteps,
+        #     shift=1,
+        #     use_dynamic_shifting=False)
+        # self.sample_scheduler.set_timesteps(
+        #     self.sampling_steps, device=device, shift=shift)
+        # self.denoising_step_list = self.sample_scheduler.timesteps
 
     def generate_and_sync_list(self, num_blocks, num_denoising_steps, device):
         rank = dist.get_rank() if dist.is_initialized() else 0
@@ -82,6 +96,7 @@ class SelfForcingTrainingPipeline:
                     unconditional_dict,
                     memory_token,
                     timestep,
+                    timestep_frame,
                     t,
                     kv_cache,
                     crossattn_cache,
@@ -111,15 +126,21 @@ class SelfForcingTrainingPipeline:
         #     pred_real_image_cond - pred_real_image_uncond
         # ) * self.real_guidance_scale
 
-        pred_real_image = pred_real_image_cond.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
+        # pred_real_image = pred_real_image_cond.unsqueeze(0)  # [1, num_channels, num_frames, height, width]
+
+        pred_real_image = pred_real_image_cond
+
+        pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
+                                                xt=noisy_input,
+                                                timestep=timestep_frame.view(-1))
 
 
-        temp_x0 = self.sample_scheduler.step(
-                pred_real_image,
-                t,
-                noisy_input,
-                return_dict=False)[0]# [1, num_channels, num_frames, height, width]
-        return temp_x0
+        # temp_x0 = self.sample_scheduler.step(
+        #         pred_real_image,
+        #         t,
+        #         noisy_input,
+        #         return_dict=False)[0]# [1, num_channels, num_frames, height, width]
+        return pred_real_image
     
     def inference(
         self,
@@ -179,8 +200,7 @@ class SelfForcingTrainingPipeline:
 
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
-
-                self.sample_scheduler.set_timesteps(self.sampling_steps, device="cuda", shift=5)
+                timestep_frame_level = timestep.view(1,num_frames,-1)[:,:,0]
 
                 with torch.no_grad():
                     denoised_pred = self.get_flow_pred(
@@ -189,6 +209,7 @@ class SelfForcingTrainingPipeline:
                         unconditional_dict=unconditional_dict,
                         memory_token = memory_token,
                         timestep=timestep,
+                        timestep_frame=timestep_frame_level,
                         kv_cache=self.kv_cache1,
                         crossattn_cache=self.crossattn_cache,
                         current_start=current_start_frame * self.frame_seq_length,
@@ -196,6 +217,10 @@ class SelfForcingTrainingPipeline:
                         t=current_timestep,
                     ) # output [1, num_channels, num_frames, height, width]
                     noisy_input = denoised_pred
+                    noisy_input = self.generator.scheduler.add_noise(noisy_input,
+                                                                        torch.rand_like(noisy_input),
+                                                                        torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[index+1])
+                
 
                 noisy_input = noisy_input * mask + frame_token * (1-mask)
             
@@ -306,8 +331,6 @@ class SelfForcingTrainingPipeline:
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
 
-                self.sample_scheduler.set_timesteps(4, device="cuda", shift=5)
-
                 if not exit_flag:
                     with torch.no_grad():
                         denoised_pred = self.get_flow_pred(
@@ -331,11 +354,11 @@ class SelfForcingTrainingPipeline:
                         #         [batch_size * current_num_frames], device=noise.device, dtype=torch.long)
                         # )
                         # noisy_input = noisy_input.unflatten(0, (batch_size, current_num_frames)).transpose(1, 2)  # [batch_size, num_channels, current_num_frames, height, width]
-                        noisy_input = self.sample_scheduler.add_noise(
-                            denoised_pred,
-                            torch.randn_like(denoised_pred),
-                            next_timestep * torch.ones([batch_size], device=noise.device, dtype=torch.long),
-                        )
+                        # noisy_input = self.sample_scheduler.add_noise(
+                        #     denoised_pred,
+                        #     torch.randn_like(denoised_pred),
+                        #     next_timestep * torch.ones([batch_size], device=noise.device, dtype=torch.long),
+                        # )
                 else:
                     # for getting real output
                     # with torch.set_grad_enabled(current_start_frame >= start_gradient_frame_index):
