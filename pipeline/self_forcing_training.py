@@ -150,7 +150,6 @@ class SelfForcingTrainingPipeline:
         frame_token: Optional[torch.Tensor] = None,
         memory_token: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-
         batch_size, num_channels, num_frames, height, width = noise.shape
         assert num_frames % self.num_frame_per_block == 0
         num_blocks = num_frames // self.num_frame_per_block
@@ -196,7 +195,8 @@ class SelfForcingTrainingPipeline:
 
 
             # Step 3.1: Spatial denoising loop
-            for index, current_timestep in enumerate(self.denoising_step_list):
+            denoising_step_list = self.denoising_step_list[:2]
+            for index, current_timestep in enumerate(denoising_step_list):
 
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
@@ -217,7 +217,7 @@ class SelfForcingTrainingPipeline:
                         t=current_timestep,
                     ) # output [1, num_channels, num_frames, height, width]
                     noisy_input = denoised_pred
-                    if index != len(self.denoising_step_list)-1:
+                    if index != len(denoising_step_list)-1:
                         noisy_input = self.generator.scheduler.add_noise(noisy_input,
                                                                             torch.rand_like(noisy_input),
                                                                             torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[index+1])
