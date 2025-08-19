@@ -56,6 +56,8 @@ class ODERegression(BaseModel):
             self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
         self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
 
+        print(f"########### denoising list {self.denoising_step_list} ############")
+
 
     # def _initialize_models(self, args, device):
     #     self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
@@ -119,6 +121,44 @@ class ODERegression(BaseModel):
         noisy_input = noisy_input.transpose(2,1)
 
         return noisy_input, timestep
+    
+    @torch.no_grad()
+    def _prepare_generator_input_online(self, target_latent: torch.Tensor, eval = False) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Given a tensor containing the whole ODE sampling trajectories,
+        randomly choose an intermediate timestep and return the latent as well as the corresponding timestep.
+        Input:
+            - ode_latent: a tensor containing the whole ODE sampling trajectories [batch_size, num_denoising_steps, num_frames, num_channels, height, width].
+        Output:
+            - noisy_input: a tensor containing the selected latent [batch_size, num_frames, num_channels, height, width].
+            - timestep: a tensor containing the corresponding timestep [batch_size].
+        """
+        ode_latent = target_latent.transpose(3,2)
+        batch_size, num_denoising_steps, num_frames, num_channels, height, width = target_latent.shape
+
+        # Step 1: Randomly choose a timestep for each frame
+        index = self._get_timestep(
+            0,
+            self.denoising_step_list.shape[0],
+            batch_size,
+            num_frames,
+            self.num_frame_per_block,
+            uniform_timestep=False
+        )
+
+        timestep = self.denoising_step_list[index].to(self.device).to(self.dtype)
+
+        print(f"########### {timestep.view(-1)} ############")
+
+        noisy_input = self.scheduler.add_noise(original_samples=target_latent,
+                                 noise=torch.randn_like(target_latent),
+                                 timesteps=timestep.view(-1))
+    
+
+
+        noisy_input = noisy_input.transpose(2,1)
+
+        return noisy_input, timestep
 
     def generator_loss(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, step) -> Tuple[torch.Tensor, dict]:
         """
@@ -133,9 +173,10 @@ class ODERegression(BaseModel):
         """
         # Step 1: Run generator on noisy latents
         target_latent = ode_latent[:, -1]
+        # target_latent [1,48,21,30,40]
 
-        noisy_input, timestep_frame_level = self._prepare_generator_input(
-            ode_latent=ode_latent)
+        noisy_input, timestep_frame_level = self._prepare_generator_input_online(
+            ode_latent=target_latent)
         # noisy input [1,48,21,30,40]
         timestep = timestep_frame_level.clone()
         timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
