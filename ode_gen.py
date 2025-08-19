@@ -207,12 +207,14 @@ if __name__ == "__main__":
         # )
         torch.save(
             {base_name: trajectory.cpu().detach()},
-            os.path.join(output_folder, f"test.pt")
+            "test.pt"
+            # os.path.join(output_folder, f"test.pt")
         )
         break
 
         print(f"GPU[{global_rank}]: {base_name} {trajectory.shape}")
 
     dist.barrier()
+
         
 
