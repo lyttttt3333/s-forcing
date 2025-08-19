@@ -296,7 +296,7 @@ class Trainer:
 
     def load_batch(self, batch):
         for key in batch.keys():
-            if key != "base_name" and key != "clean_token":
+            if key != "base_name" and key != "clean_token" and key != "ode_latent":
                 path = batch[key][0]
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
