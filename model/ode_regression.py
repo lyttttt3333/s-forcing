@@ -51,10 +51,11 @@ class ODERegression(BaseModel):
         self.scheduler.set_timesteps(50, device=self.device, shift=5)
         full_timestep = self.scheduler.timesteps
         sample_step = [0,36,44,49]
-        self.denoising_step_list = []
-        for step in sample_step:
-            self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
-        self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
+        # self.denoising_step_list = []
+        # for step in sample_step:
+        #     self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
+        denoising_step_list = [1000, 750, 500, 250]
+        self.denoising_step_list = torch.tensor(denoising_step_list).to(self.device).to(torch.int64)
 
         print(f"########### denoising list {self.denoising_step_list} ############")
 
