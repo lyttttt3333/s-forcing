@@ -320,6 +320,7 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         alpha_t, sigma_t = self._sigma_to_alpha_sigma_t(sigma)
 
         if self.predict_x0:
+            print("@@@@@@@@@@@@@@@")
             if self.config.prediction_type == "flow_prediction":
                 sigma_t = self.sigmas[self.step_index]
                 x0_pred = sample - sigma_t * model_output
