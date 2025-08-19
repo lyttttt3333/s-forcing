@@ -63,14 +63,7 @@ class SelfForcingTrainingPipeline:
         #     self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
         # self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
 
-        self.sample_scheduler = FlowUniPCMultistepScheduler(
-            num_train_timesteps=num_train_timesteps,
-            shift=1,
-            use_dynamic_shifting=False)
-        self.sample_scheduler.set_timesteps(
-            self.sampling_steps, device=device, shift=shift)
-        self.denoising_step_list = self.sample_scheduler.timesteps
-        print(f"#### {self.denoising_step_list} #####")
+        self.denoising_step_list = denoising_step_list
 
     def generate_and_sync_list(self, num_blocks, num_denoising_steps, device):
         rank = dist.get_rank() if dist.is_initialized() else 0

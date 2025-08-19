@@ -285,6 +285,8 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         sample: torch.Tensor = None,
         **kwargs,
     ) -> torch.Tensor:
+        print("######",self.config.prediction_type)
+        assert 0
         r"""
         Convert the model output to the corresponding type the UniPC algorithm needs.
 
