@@ -57,8 +57,6 @@ class ODERegression(BaseModel):
         denoising_step_list = [1000, 750, 500, 250]
         self.denoising_step_list = torch.tensor(denoising_step_list).to(self.device).to(torch.int64)
 
-        print(f"########### denoising list {self.denoising_step_list} ############")
-
 
     # def _initialize_models(self, args, device):
     #     self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
