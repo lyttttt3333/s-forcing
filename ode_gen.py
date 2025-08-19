@@ -112,7 +112,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
 def load_batch(batch, dtype, device):
     for key in batch.keys():
-        if key != "base_name" and key != "clean_token":
+        if key != "base_name" and key != "clean_token" and key != "ode_latent":
             path = batch[key]
             tensor = torch.load(path, map_location="cpu").to(dtype).to(device)
             batch[key] = tensor
