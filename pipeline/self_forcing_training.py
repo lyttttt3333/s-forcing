@@ -198,6 +198,8 @@ class SelfForcingTrainingPipeline:
             denoising_step_list = self.denoising_step_list# [:1]
             for index, current_timestep in enumerate(denoising_step_list):
 
+                print(f"##### step {index}")
+
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
                 timestep_frame_level = timestep.view(1,self.num_frame_per_block,-1)[:,:,0]
