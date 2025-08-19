@@ -79,7 +79,7 @@ with torch.no_grad():
     # print(latent.shape)
         video = vae.decode_to_pixel([latent_tensor[i]])
         save_video(video_tensor=video[0],
-                save_path=f"tmp/test_1132_{i}.mp4",
+                save_path=f"tmp/test_1840_{i}.mp4",
                 fps=16)
     for i in range(latent_tensor.shape[0]):
         wandb.log({f"{i}_video": wandb.Video(f"tmp/test_1132_{i}.mp4", fps=16, format="mp4")})
