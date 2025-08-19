@@ -419,6 +419,10 @@ class Trainer:
         while True:
 
             EVALUATION = self.step % self.config.eval_interval == 0
+
+            
+            if EVALUATION:
+                self.generate_video(self.step)
             
             self.generator_optimizer.zero_grad(set_to_none=True)
             extras_list = []
@@ -429,9 +433,7 @@ class Trainer:
             self.generator_optimizer.step()
             if self.generator_ema is not None:
                 self.generator_ema.update(self.model.generator)
-            
-            if EVALUATION:
-                self.generate_video(self.step)
+
 
             # Create EMA params (if not already created)
             if (self.step >= self.config.ema_start_step) and \
