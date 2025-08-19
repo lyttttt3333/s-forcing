@@ -24,6 +24,8 @@ class BaseModel(nn.Module):
                 timesteps = torch.cat((self.scheduler.timesteps.cpu(), torch.tensor([0], dtype=torch.float32)))
                 self.denoising_step_list = timesteps[1000 - self.denoising_step_list]
 
+        print("############# self.denoising_step_list", self.denoising_step_list)
+
     def _initialize_models(self, args, device):
         self.real_model_name = "Wan2.2-TI2V-5B"
         self.fake_model_name = "Wan2.1-T2V-1.3B"
