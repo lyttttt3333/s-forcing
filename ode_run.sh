@@ -1,1 +1,1 @@
-torchrun --nproc_per_node 8 ode_gen.py
+torchrun --nproc_per_node 4 ode_gen.py
