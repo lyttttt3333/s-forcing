@@ -57,7 +57,7 @@ class SelfForcingTrainingPipeline:
                         use_dynamic_shifting=False)
         scheduler.set_timesteps(50, device=device, shift=5)
         full_timestep = scheduler.timesteps
-        sample_step = [0,36,44,49]
+        sample_step = [0]#,36,44,49]
         self.denoising_step_list = []
         for step in sample_step:
             self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
