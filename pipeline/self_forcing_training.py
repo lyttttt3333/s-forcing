@@ -200,7 +200,7 @@ class SelfForcingTrainingPipeline:
 
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
-                timestep_frame_level = timestep.view(1,num_frames,-1)[:,:,0]
+                timestep_frame_level = timestep.view(1,self.num_frame_per_block,-1)[:,:,0]
 
                 with torch.no_grad():
                     denoised_pred = self.get_flow_pred(
@@ -217,9 +217,10 @@ class SelfForcingTrainingPipeline:
                         t=current_timestep,
                     ) # output [1, num_channels, num_frames, height, width]
                     noisy_input = denoised_pred
-                    noisy_input = self.generator.scheduler.add_noise(noisy_input,
-                                                                        torch.rand_like(noisy_input),
-                                                                        torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[index+1])
+                    if index != len(self.denoising_step_list)-1:
+                        noisy_input = self.generator.scheduler.add_noise(noisy_input,
+                                                                            torch.rand_like(noisy_input),
+                                                                            torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[index+1])
                 
 
                 noisy_input = noisy_input * mask + frame_token * (1-mask)
