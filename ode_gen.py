@@ -189,7 +189,7 @@ if __name__ == "__main__":
         conditional_dict = {'prompt_embeds': text_token}
 
 
-        sample_scheduler.set_timesteps(50, device=device, shift=5)
+        sample_scheduler.set_timesteps(4, device=device, shift=5)
 
         
         trajectory = generate_from_latent(real_score=model,
@@ -205,6 +205,10 @@ if __name__ == "__main__":
         #     {base_name: trajectory.cpu().detach()},
         #     os.path.join(output_folder, f"{base_name}.pt")
         # )
+        torch.save(
+            {base_name: trajectory.cpu().detach()},
+            os.path.join(output_folder, f"test.pt")
+        )
         break
 
         print(f"GPU[{global_rank}]: {base_name} {trajectory.shape}")

@@ -285,7 +285,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         sample: torch.Tensor = None,
         **kwargs,
     ) -> torch.Tensor:
-        print("######",self.config.prediction_type)
         r"""
         Convert the model output to the corresponding type the UniPC algorithm needs.
 
@@ -319,7 +318,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         alpha_t, sigma_t = self._sigma_to_alpha_sigma_t(sigma)
 
         if self.predict_x0:
-            print("@@@@@@@@@@@@@@@ true")
             if self.config.prediction_type == "flow_prediction":
                 sigma_t = self.sigmas[self.step_index]
                 x0_pred = sample - sigma_t * model_output
@@ -334,7 +332,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
 
             return x0_pred
         else:
-            print("@@@@@@@@@@@@@@@ false")
             if self.config.prediction_type == "flow_prediction":
                 sigma_t = self.sigmas[self.step_index]
                 epsilon = sample - (1 - sigma_t) * model_output
