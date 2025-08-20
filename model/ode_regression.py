@@ -397,15 +397,11 @@ class ODERegression(BaseModel):
         loss = F.mse_loss(
             pred_real_image, target_latent, reduction="mean").float()
 
-            
-
-        trajectory = torch.cat(trajectory, dim = 0)
-
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
             "timestep": timestep.float().mean(dim=1).detach(),
             "input": noisy_input_initial.detach(),
-            "output": trajectory.detach(),
+            "output": pred_real_image.detach(),
         }
 
         return loss, log_dict
