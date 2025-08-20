@@ -55,6 +55,7 @@ world_size = dist.get_world_size()
 torch.cuda.set_device(rank)
 device = "cuda"
 
+
 input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/ode_latent"
 
 video_files = [
