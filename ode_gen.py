@@ -107,6 +107,11 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             if idx in select_index:
                 trajectory.append(latent.unsqueeze(0))
 
+            latent = real_score.scheduler.add_noise(latent,
+                                                    torch.rand_like(latent),
+                                                    torch.ones([1,21]).to(latent.device) * sample_scheduler.timesteps[idx+1])
+            latent = (1. - mask) * z + mask * latent
+
     trajectory = torch.stack(trajectory, dim=1)
     # trajectory = trajectory[:, select_index]
 
