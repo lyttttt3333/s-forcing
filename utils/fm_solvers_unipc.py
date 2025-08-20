@@ -697,7 +697,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
 
         model_output_convert = self.convert_model_output(
             model_output, sample=sample)
-        return model_output_convert
         if use_corrector:
             print("##### use corrector")
             sample = self.multistep_uni_c_bh_update(
@@ -739,7 +738,8 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         self._step_index += 1  # pyright: ignore
 
         if not return_dict:
-            return (prev_sample,)
+            # return (prev_sample,)
+            return model_output_convert
 
         return SchedulerOutput(prev_sample=prev_sample)
 
