@@ -340,14 +340,14 @@ class ODERegression(BaseModel):
 
         seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
 
-        trajectory = []
+        loss_sum = None
 
-        iteration = step % 3
+        # iteration = step % 3
 
         self.scheduler.set_timesteps(50, device=self.device, shift=5)
         inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
 
-        for idx, t in enumerate(tqdm(inference_timestep)):
+        for idx, t in enumerate(inference_timestep[:-1]):
 
             timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
             timestep_frame_level[:,0] = self.denoising_step_list[-1]
@@ -391,11 +391,15 @@ class ODERegression(BaseModel):
             
             noisy_input = pred_real_image
 
-            if t == iteration:
-                break
+            # if t == iteration:
+            #     break
 
-        loss = F.mse_loss(
-            pred_real_image, target_latent, reduction="mean").float()
+            if loss_sum is None:
+                loss_sum = F.mse_loss(
+                    pred_real_image, ode_latent[:, idx+1], reduction="mean").float()
+            else:
+                loss_sum += F.mse_loss(
+                    pred_real_image, ode_latent[:, idx+1], reduction="mean").float()
 
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
@@ -404,7 +408,7 @@ class ODERegression(BaseModel):
             "output": pred_real_image.detach(),
         }
 
-        return loss, log_dict
+        return loss_sum, log_dict
 
 
     def eval_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
