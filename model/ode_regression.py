@@ -501,12 +501,18 @@ class ODERegression(BaseModel):
                 # pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                 #                                         xt=noisy_input,
                 #                                         timestep=timestep_frame_level.reshape(-1))
-                pred_real_image = self.scheduler.step(
-                    pred_real_image.unsqueeze(0),
-                    t,
-                    noisy_input,
-                    return_dict=False)[0]
-                
+                if False:
+                    pred_real_image = self.scheduler.step(
+                        pred_real_image.unsqueeze(0),
+                        t,
+                        noisy_input,
+                        return_dict=False)[0]
+                else:
+                    pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
+                                                                    sample=noisy_input,
+                                                                    timestep_t1= torch.ones_like(timestep_frame_level) * inference_timestep[idx],
+                                                                    timestep_t2= torch.ones_like(timestep_frame_level) * inference_timestep[idx+1],
+                                                                    )
                 
                 trajectory.append(pred_real_image)
 
