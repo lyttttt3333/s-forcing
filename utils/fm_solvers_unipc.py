@@ -738,8 +738,7 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         self._step_index += 1  # pyright: ignore
 
         if not return_dict:
-            # return (prev_sample,)
-            return model_output_convert
+            return (prev_sample,)
 
         return SchedulerOutput(prev_sample=prev_sample)
 

@@ -120,13 +120,13 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             # prepare for next
             # to [B, C, F, H, W] and add noise and back
-            latent = latent.unsqueeze(0)
-            latent = real_score.scheduler.add_noise(latent,
-                                                    torch.rand_like(latent),
-                                                    torch.ones_like(timestep_frame_level) * sample_scheduler.timesteps[idx+1])
-            latent = latent.squeeze(0)
+            # latent = latent.unsqueeze(0)
+            # latent = real_score.scheduler.add_noise(latent,
+            #                                         torch.rand_like(latent),
+            #                                         torch.ones_like(timestep_frame_level) * sample_scheduler.timesteps[idx+1])
+            # latent = latent.squeeze(0)
 
-            latent = (1. - mask) * z + mask * latent
+            # latent = (1. - mask) * z + mask * latent
 
     trajectory = torch.stack(trajectory, dim=1)
     # trajectory = trajectory[:, select_index]
