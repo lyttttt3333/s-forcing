@@ -222,16 +222,16 @@ if __name__ == "__main__":
                                 device=device,
                                 select_index=[0, 36, 44, 49])
         
-        # torch.save(
-        #     {base_name: trajectory.cpu().detach()},
-        #     os.path.join(output_folder, f"{base_name}.pt")
-        # )
         torch.save(
             {base_name: trajectory.cpu().detach()},
-            "test.pt"
-            # os.path.join(output_folder, f"test.pt")
+            os.path.join(output_folder, f"{base_name}.pt")
         )
-        break
+        # torch.save(
+        #     {base_name: trajectory.cpu().detach()},
+        #     "test.pt"
+        #     # os.path.join(output_folder, f"test.pt")
+        # )
+        # break
 
         print(f"GPU[{global_rank}]: {base_name} {trajectory.shape}")
 
