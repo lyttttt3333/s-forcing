@@ -143,6 +143,8 @@ class ODERegression(BaseModel):
             self.num_frame_per_block,
             uniform_timestep=False
         )
+        if eval:
+            index = 0 * index
 
         index[:, 0] = self.denoising_step_list.shape[0] - 1
 
@@ -331,7 +333,7 @@ class ODERegression(BaseModel):
         with torch.no_grad():
             target_latent = ode_latent[:, -1]
 
-            noisy_input, timestep_frame_level = self._prepare_generator_input(
+            noisy_input, timestep_frame_level = self._prepare_generator_input_online(
                 ode_latent=ode_latent, eval=True)
             # noisy input [1,48,21,30,40]
             noisy_input_initial = noisy_input.clone()
