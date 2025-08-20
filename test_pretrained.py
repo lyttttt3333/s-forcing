@@ -58,16 +58,16 @@ device = "cuda"
 
 input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/ode_latent"
 
-video_files = [
-    os.path.join(input_dir, f)
-    for f in os.listdir(input_dir)
-    if f.lower().endswith(".pt")
-]
-video_files.sort()
+# video_files = [
+#     os.path.join(input_dir, f)
+#     for f in os.listdir(input_dir)
+#     if f.lower().endswith(".pt")
+# ]
+# video_files.sort()
+video_files = [0]
 
 vae = WanVAEWrapper().to(torch.float16).to(device)
 vae.requires_grad_(False)
-print(video_files[0])
 video_files[0] = "test.pt"
 latent = torch.load(video_files[0], map_location="cpu")#.to("cuda")[0].to(torch.bfloat16)
 for key in latent.keys():
