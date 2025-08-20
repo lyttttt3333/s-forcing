@@ -189,10 +189,8 @@ class SelfForcingTrainingPipeline:
 
 
             # Step 3.1: Spatial denoising loop
-            denoising_step_list = self.denoising_step_list# [:1]
+            denoising_step_list = self.denoising_step_list[1:2]
             for index, current_timestep in enumerate(denoising_step_list):
-
-                print(f"##### step {index}")
 
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
