@@ -103,11 +103,12 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                                                     xt=latent_model_input.unsqueeze(0),
                                                     timestep=timestep_frame_level.reshape(-1))
 
-            # temp_x0 = sample_scheduler.step(
-            #     pred_real_image.unsqueeze(0),
-            #     t,
-            #     latent_model_input.unsqueeze(0),
-            #     return_dict=False)[0]
+            temp_x0 = sample_scheduler.step(
+                pred_real_image.unsqueeze(0),
+                t,
+                latent_model_input.unsqueeze(0),
+                return_dict=False)[0]
+            print("########",temp_x0.shape)
             latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
 
@@ -116,6 +117,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             if idx == len(sample_scheduler.timesteps) - 1:
                 break
+
             # prepare for next
             # to [B, C, F, H, W] and add noise and back
             latent = latent.unsqueeze(0)
