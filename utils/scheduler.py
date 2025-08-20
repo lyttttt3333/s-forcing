@@ -155,6 +155,27 @@ class FlowMatchScheduler():
             sigma_ = self.sigmas[timestep_id + 1].reshape(-1, 1, 1, 1)
         prev_sample = sample + model_output * (sigma_ - sigma)
         return prev_sample
+    
+    def step_cross(self, model_output, timestep_t1, timestep_t2, sample, to_final=False):
+        if timestep_t1.ndim == 2:
+            timestep_t1 = timestep_t1.flatten(0, 1)
+        if timestep_t2.ndim == 2:
+            timestep_t2 = timestep_t2.flatten(0, 1)
+        self.sigmas = self.sigmas.to(model_output.device)
+        self.timesteps = self.timesteps.to(model_output.device)
+        timestep_id_t1 = torch.argmin(
+            (self.timesteps.unsqueeze(0) - timestep_t1.unsqueeze(1)).abs(), dim=1)
+        timestep_id_t2 = torch.argmin(
+            (self.timesteps.unsqueeze(0) - timestep_t2.unsqueeze(1)).abs(), dim=1)
+        sigma_t1 = self.sigmas[timestep_id_t1].reshape(-1, 1, 1, 1)
+        sigma_t2 = self.sigmas[timestep_id_t2].reshape(-1, 1, 1, 1)
+        # if to_final or (timestep_id + 1 >= len(self.timesteps)).any():
+        #     sigma_ = 1 if (
+        #         self.inverse_timesteps or self.reverse_sigmas) else 0
+        # else:
+        #     sigma_ = self.sigmas[timestep_id + 1].reshape(-1, 1, 1, 1)
+        prev_sample = sample + model_output * (sigma_t2 - sigma_t1)
+        return prev_sample
 
     def add_noise(self, original_samples, noise, timestep):
         """
