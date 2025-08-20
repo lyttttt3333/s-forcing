@@ -372,13 +372,13 @@ class ODERegression(BaseModel):
                 # pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
                 #                                         xt=noisy_input,
                 #                                         timestep=timestep_frame_level.reshape(-1))
-
+                print("########## before",pred_real_image.shape)
                 pred_real_image = self.scheduler.step(
                     pred_real_image.unsqueeze(0),
                     t,
                     noisy_input,
                     return_dict=False)[0]
-                print("##########",pred_real_image.shape)
+                print("########## after",pred_real_image.shape)
                 trajectory.append(pred_real_image)
 
                 # if i !=2 :
