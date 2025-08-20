@@ -321,7 +321,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
             if self.config.prediction_type == "flow_prediction":
                 sigma_t = self.sigmas[self.step_index]
                 x0_pred = sample - sigma_t * model_output
-                print("UNI model",sigma_t, self.step_index)
             else:
                 raise ValueError(
                     f"prediction_type given as {self.config.prediction_type} must be one of `epsilon`, `sample`,"
@@ -698,7 +697,6 @@ class FlowUniPCMultistepScheduler(SchedulerMixin, ConfigMixin):
         model_output_convert = self.convert_model_output(
             model_output, sample=sample)
         if use_corrector:
-            print("##### use corrector")
             sample = self.multistep_uni_c_bh_update(
                 this_model_output=model_output_convert,
                 last_sample=self.last_sample,
