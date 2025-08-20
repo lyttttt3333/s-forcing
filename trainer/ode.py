@@ -274,7 +274,7 @@ class Trainer:
         #         text_prompts=text_prompts)
 
         # Step 3: Train the generator
-        generator_loss, log_dict = self.model.generator_loss(
+        generator_loss, log_dict = self.model.train_multi_step(
             ode_latent=ode_latent,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
