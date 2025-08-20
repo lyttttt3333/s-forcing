@@ -51,6 +51,8 @@ class ODERegression(BaseModel):
                         use_dynamic_shifting=False)
         self.scheduler.set_timesteps(4, device=self.device, shift=5)
         print("sample_time step", self.scheduler.timesteps)
+        self.denoising_step_list = self.denoising_step_list.to(self.device)
+        print("train_time step", self.denoising_step_list)
 
     # def _initialize_models(self, args, device):
     #     self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
