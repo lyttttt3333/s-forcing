@@ -223,7 +223,7 @@ if __name__ == "__main__":
                                 select_index=[0, 36, 44, 49])
         
         torch.save(
-            {base_name: trajectory.cpu().detach()},
+            trajectory.cpu().detach(),
             os.path.join(output_folder, f"{base_name}.pt")
         )
         # torch.save(
