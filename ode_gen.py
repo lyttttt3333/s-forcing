@@ -109,7 +109,8 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 latent_model_input.unsqueeze(0),
                 return_dict=False)[0]
             print("########",temp_x0.shape)
-            latent = pred_real_image.squeeze(0)
+            latent = temp_x0.squeeze(0)
+            # latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
 
             if idx in select_index:
