@@ -343,6 +343,8 @@ class ODERegression(BaseModel):
 
             trajectory = []
 
+            self.scheduler.set_timesteps(4, device=self.device, shift=5)
+
             for idx, t in enumerate(tqdm(self.scheduler.timesteps)):
 
                 timestep_frame_level = torch.ones_like(timestep_frame_level) * self.scheduler.timesteps[idx]
