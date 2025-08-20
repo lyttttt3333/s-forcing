@@ -161,8 +161,8 @@ class FlowMatchScheduler():
             timestep_t1 = timestep_t1.flatten(0, 1)
         if timestep_t2.ndim == 2:
             timestep_t2 = timestep_t2.flatten(0, 1)
-        self.sigmas = self.sigmas.to(model_output.device)
-        self.timesteps = self.timesteps.to(model_output.device)
+        self.sigmas = self.sigmas.to(model_output.device).to(model_output.dtype)
+        self.timesteps = self.timesteps.to(model_output.device).to(model_output.dtype)
         timestep_id_t1 = torch.argmin(
             (self.timesteps.unsqueeze(0) - timestep_t1.unsqueeze(1)).abs(), dim=1)
         timestep_id_t2 = torch.argmin(
