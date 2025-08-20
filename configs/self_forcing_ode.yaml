@@ -1,4 +1,4 @@
-# generator_ckpt: logs/checkpoint_model_000600/model.pt
+generator_ckpt: logs/checkpoint_model_000200/model.pt
 generator_fsdp_wrap_strategy: size
 real_score_fsdp_wrap_strategy: size
 fake_score_fsdp_wrap_strategy: size
