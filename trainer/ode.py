@@ -268,10 +268,10 @@ class Trainer:
                     f"gen/video_{rank}": wandb.Video(f"tmp/video_{rank}.mp4", caption=f"Input/rank_{rank}", fps=16, format="mp4"),
                 }, step=self.step)
 
-        Step 2: Extract the conditional infos
-        with torch.no_grad():
-            conditional_dict = self.model.text_encoder(
-                text_prompts=text_prompts)
+        # Step 2: Extract the conditional infos
+        # with torch.no_grad():
+        #     conditional_dict = self.model.text_encoder(
+        #         text_prompts=text_prompts)
 
         # Step 3: Train the generator
         generator_loss, log_dict = self.model.train_multi_step(
