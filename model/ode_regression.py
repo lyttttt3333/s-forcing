@@ -410,7 +410,7 @@ class ODERegression(BaseModel):
                 loss_sum += F.mse_loss(
                     pred_real_image, ode_latent[:, idx+1], reduction="mean").float()
                 
-            trajectory_pred.append(pred_real_image)
+            trajectory_pred.append(pred_real_image.detach())
             trajectory_ode.append(ode_latent[:, idx+1])
             trajectory_input.append(noisy_input)
 
