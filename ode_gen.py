@@ -99,16 +99,15 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             ) * real_guidance_scale
 
 
-            pred_real_image = real_score._convert_flow_pred_to_x0(flow_pred=pred_real_image,
-                                                    xt=latent_model_input.unsqueeze(0),
-                                                    timestep=timestep_frame_level.reshape(-1))
+            # pred_real_image = real_score._convert_flow_pred_to_x0(flow_pred=pred_real_image,
+            #                                         xt=latent_model_input.unsqueeze(0),
+            #                                         timestep=timestep_frame_level.reshape(-1))
 
             temp_x0 = sample_scheduler.step(
                 pred_real_image.unsqueeze(0),
                 t,
                 latent_model_input.unsqueeze(0),
                 return_dict=False)[0]
-            print("########",temp_x0.shape)
             latent = temp_x0.squeeze(0)
             # latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
@@ -222,7 +221,7 @@ if __name__ == "__main__":
                                 uncond_dict=unconditional_dict,
                                 cond_dict=conditional_dict,
                                 device=device,
-                                select_index=[0,1,2,3])
+                                select_index=[0,10,20,30,40,49])
                                 #[0, 36, 44, -1])
         
         # torch.save(
