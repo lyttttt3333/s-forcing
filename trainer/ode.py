@@ -187,7 +187,7 @@ class Trainer:
             
     def load_batch(self, batch):
         for key in batch.keys():
-            if key != "base_name" and key != "clean_token" and key != "ode_latent":
+            if key != "base_name" and key != "clean_token":
                 path = batch[key][0]
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor
@@ -195,13 +195,13 @@ class Trainer:
                 path = batch[key][0]
                 tensor = torch.load(path, map_location="cpu").to(self.dtype).to(self.device)
                 batch[key] = tensor.unsqueeze(0)  # Ensure it has batch dimension
-            if key == "ode_latent":
-                path = batch[key][0]
-                tensor = torch.load(path, map_location="cpu")
-                batch[key] = tensor
-        base_name = batch["base_name"][0]
-        ode_latent = batch["ode_latent"][base_name]
-        batch["ode_latent"] = ode_latent.to(self.dtype).to(self.device)
+        #     if key == "ode_latent":
+        #         path = batch[key][0]
+        #         tensor = torch.load(path, map_location="cpu")
+        #         batch[key] = tensor
+        # base_name = batch["base_name"][0]
+        # ode_latent = batch["ode_latent"][base_name]
+        # batch["ode_latent"] = ode_latent.to(self.dtype).to(self.device)
         return batch
 
     def train_one_step(self):
