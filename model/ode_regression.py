@@ -65,7 +65,7 @@ class ODERegression(BaseModel):
     #     self.vae.requires_grad_(False)
 
     @torch.no_grad()
-    def _prepare_generator_input(self, ode_latent: torch.Tensor, eval = False) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _prepare_generator_input(self, ode_latent: torch.Tensor, eval = False, assign=None) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Given a tensor containing the whole ODE sampling trajectories,
         randomly choose an intermediate timestep and return the latent as well as the corresponding timestep.
@@ -90,6 +90,9 @@ class ODERegression(BaseModel):
 
         if eval:
             index = 0 * index
+
+        if assign is not None:
+            index = torch.ones_like(index) * assign
 
         index[:, 0] = self.denoising_step_list.shape[0] - 1
 
@@ -343,11 +346,17 @@ class ODERegression(BaseModel):
         loss_sum = None
 
         # iteration = step % 3
+        trajectory_pred = []
+        trajectory_ode = []
+        trajectory_input = []
 
         self.scheduler.set_timesteps(50, device=self.device, shift=5)
         inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
 
         for idx, t in enumerate(inference_timestep[:-1]):
+
+            noisy_input, timestep_frame_level = self._prepare_generator_input(
+                                    ode_latent=ode_latent, eval=False, assign = idx)
 
             timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
             timestep_frame_level[:,0] = self.denoising_step_list[-1]
@@ -389,7 +398,7 @@ class ODERegression(BaseModel):
             #                                                         torch.rand_like(pred_real_image),
             #                                                         torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[i+1])
             
-            noisy_input = pred_real_image
+            # noisy_input = pred_real_image
 
             # if t == iteration:
             #     break
@@ -400,12 +409,21 @@ class ODERegression(BaseModel):
             else:
                 loss_sum += F.mse_loss(
                     pred_real_image, ode_latent[:, idx+1], reduction="mean").float()
+                
+            trajectory_pred.append(pred_real_image)
+            trajectory_ode.append(ode_latent[:, idx+1])
+            trajectory_input.append(noisy_input)
+
+        trajectory_pred = torch.cat(trajectory_pred, dim=0)
+        trajectory_ode = torch.cat(trajectory_ode, dim=0)
+        trajectory_input = torch.cat(trajectory_input, dim=0)
 
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
             "timestep": timestep.float().mean(dim=1).detach(),
-            "input": noisy_input_initial.detach(),
-            "output": pred_real_image.detach(),
+            "input": trajectory_input.detach(),
+            "output": trajectory_pred.detach(),
+            "ground_truth": trajectory_ode.detach()
         }
 
         return loss_sum, log_dict

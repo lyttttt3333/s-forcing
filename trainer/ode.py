@@ -317,17 +317,33 @@ class Trainer:
         self.generator_optimizer.step()
 
         if VISUALIZE:
-            input = log_dict["input"][0]
-            output = log_dict["output"][0]
-            ground_truth = ode_latent[0, -1]
+            input1 = log_dict["input"][0]
+            input2 = log_dict["input"][1]
+            input3 = log_dict["input"][2]
+            output1 = log_dict["output"][0]
+            output2 = log_dict["output"][1]
+            output3 = log_dict["output"][2]
+            ground_truth1 = log_dict["ground_truth"][0]
+            ground_truth2 = log_dict["ground_truth"][1]
+            ground_truth3 = log_dict["ground_truth"][2]
         
             rank = dist.get_rank()
             
-            input_video = self.model.vae.decode_to_pixel([input])[0]
-            output_video = self.model.vae.decode_to_pixel([output])[0]
-            ground_truth_video = self.model.vae.decode_to_pixel([ground_truth])[0]
+            input_video1 = self.model.vae.decode_to_pixel([input1])[0]
+            input_video2 = self.model.vae.decode_to_pixel([input2])[0]
+            input_video3 = self.model.vae.decode_to_pixel([input3])[0]
+            output_video1 = self.model.vae.decode_to_pixel([output1])[0]
+            output_video2 = self.model.vae.decode_to_pixel([output2])[0]
+            output_video3 = self.model.vae.decode_to_pixel([output3])[0]
+            ground_truth_video1 = self.model.vae.decode_to_pixel([ground_truth1])[0]
+            ground_truth_video2 = self.model.vae.decode_to_pixel([ground_truth2])[0]
+            ground_truth_video3 = self.model.vae.decode_to_pixel([ground_truth3])[0]
             
-            video = torch.cat([input_video,output_video,ground_truth_video],dim=-1)
+            video_row1 = torch.cat([input_video1,input_video2,input_video3],dim=-1)
+            video_row2 = torch.cat([output_video1,output_video2,output_video3],dim=-1)
+            video_row3 = torch.cat([ground_truth_video1,ground_truth_video2,ground_truth_video3],dim=-1)
+            video = torch.cat([video_row1, video_row2, video_row3],dim=-2)
+            
             os.makedirs("tmp", exist_ok=True)
             save_video(video, f"tmp/video_train_{rank}.mp4", fps=16)
         
