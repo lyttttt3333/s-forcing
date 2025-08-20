@@ -61,7 +61,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
         trajectory = []
 
-        print("##########", sample_scheduler.timesteps)
+        # print("##########", sample_scheduler.timesteps)
 
         for idx, t in enumerate(tqdm(sample_scheduler.timesteps)):
 
@@ -111,7 +111,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             latent = (1. - mask) * z + mask * latent
 
             if idx in select_index:
-                print(t)
+                # print(t)
                 trajectory.append(latent.unsqueeze(0))
 
             if idx == len(sample_scheduler.timesteps) - 1:
