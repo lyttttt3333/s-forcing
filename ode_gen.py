@@ -212,7 +212,7 @@ if __name__ == "__main__":
         conditional_dict = {'prompt_embeds': text_token}
 
 
-        sample_scheduler.set_timesteps(50, device=device, shift=5)
+        sample_scheduler.set_timesteps(36, device=device, shift=5)
 
         
         trajectory = generate_from_latent(real_score=model,
