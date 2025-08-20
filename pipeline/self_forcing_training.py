@@ -51,19 +51,23 @@ class SelfForcingTrainingPipeline:
 
         self.scheduler = self.generator.get_scheduler()
 
-        # scheduler = FlowUniPCMultistepScheduler(
-        #                 num_train_timesteps=1000,
-        #                 shift=1,
-        #                 use_dynamic_shifting=False)
-        # scheduler.set_timesteps(50, device=device, shift=5)
-        # full_timestep = scheduler.timesteps
-        # sample_step = [0]#,36,44,49]
-        # self.denoising_step_list = []
-        # for step in sample_step:
-        #     self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
-        # self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
+        scheduler = FlowUniPCMultistepScheduler(
+                        num_train_timesteps=1000,
+                        shift=1,
+                        use_dynamic_shifting=False)
+        scheduler.set_timesteps(4, device=device, shift=5)
+        full_timestep = scheduler.timesteps
+        sample_step = [0,36,44,49]
+        self.denoising_step_list = []
+        for step in sample_step:
+            self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
+        self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
 
-        self.denoising_step_list = denoising_step_list
+        print("#######",self.denoising_step_list)
+        self.sample_scheduler = scheduler
+
+
+        # self.denoising_step_list = denoising_step_list
 
     def generate_and_sync_list(self, num_blocks, num_denoising_steps, device):
         rank = dist.get_rank() if dist.is_initialized() else 0
@@ -124,16 +128,16 @@ class SelfForcingTrainingPipeline:
 
         pred_real_image = pred_real_image_cond
 
-        pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
-                                                xt=noisy_input,
-                                                timestep=timestep_frame.view(-1))
+        # pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
+        #                                         xt=noisy_input,
+        #                                         timestep=timestep_frame.view(-1))
 
 
-        # temp_x0 = self.sample_scheduler.step(
-        #         pred_real_image,
-        #         t,
-        #         noisy_input,
-        #         return_dict=False)[0]# [1, num_channels, num_frames, height, width]
+        pred_real_image = self.sample_scheduler.step(
+                pred_real_image,
+                t,
+                noisy_input,
+                return_dict=False)[0]# [1, num_channels, num_frames, height, width]
         return pred_real_image
     
     def inference(
@@ -211,10 +215,10 @@ class SelfForcingTrainingPipeline:
                         t=current_timestep,
                     ) # output [1, num_channels, num_frames, height, width]
                     noisy_input = denoised_pred
-                    if index != len(denoising_step_list)-1:
-                        noisy_input = self.generator.scheduler.add_noise(noisy_input,
-                                                                            torch.rand_like(noisy_input),
-                                                                            torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[index+1])
+                    # if index != len(denoising_step_list)-1:
+                    #     noisy_input = self.generator.scheduler.add_noise(noisy_input,
+                    #                                                         torch.rand_like(noisy_input),
+                    #                                                         torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[index+1])
                 
 
                 noisy_input = noisy_input * mask + frame_token * (1-mask)
