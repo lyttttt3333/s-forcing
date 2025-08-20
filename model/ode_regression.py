@@ -470,7 +470,7 @@ class ODERegression(BaseModel):
             self.scheduler.set_timesteps(50, device=self.device, shift=5)
             inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
 
-            for idx, t in enumerate(tqdm(inference_timestep)):
+            for idx, t in enumerate(tqdm(inference_timestep[:3])):
 
                 timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
                 timestep_frame_level[:,0] = self.denoising_step_list[-1]
