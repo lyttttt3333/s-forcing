@@ -1053,7 +1053,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             grid_sizes=grid_sizes,
             freqs=self.freqs,
             context=context,
-            context_lens=context_lens
+            context_lens=context_lens,
             block_mask=self.block_mask)
 
         def create_custom_forward(module):
