@@ -175,7 +175,7 @@ class ODERegression(BaseModel):
         # target_latent [1,48,21,30,40]
 
         noisy_input, timestep_frame_level = self._prepare_generator_input(
-            target_latent=target_latent, eval=True)
+            ode_latent=ode_latent)
         # noisy input [1,48,21,30,40]
         timestep = timestep_frame_level.clone()
         timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
