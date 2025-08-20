@@ -345,7 +345,7 @@ class ODERegression(BaseModel):
 
             for idx, t in enumerate(tqdm(self.scheduler.timesteps)):
 
-                timestep_frame_level = torch.ones_like(timestep_frame_level) * self.denoising_step_list[i]
+                timestep_frame_level = torch.ones_like(timestep_frame_level) * self.scheduler.timesteps[idx]
                 timestep_frame_level[:,0] = self.denoising_step_list[-1]
 
                 timestep = timestep_frame_level.clone()
