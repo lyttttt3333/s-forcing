@@ -5,6 +5,7 @@ import torch
 from model.base import BaseModel
 from utils.wan_wrapper import WanDiffusionWrapper, WanTextEncoder, WanVAEWrapper
 from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
+from tqdm import tqdm
 
 
 class ODERegression(BaseModel):
@@ -48,15 +49,8 @@ class ODERegression(BaseModel):
                         num_train_timesteps=1000,
                         shift=1,
                         use_dynamic_shifting=False)
-        self.scheduler.set_timesteps(50, device=self.device, shift=5)
-        full_timestep = self.scheduler.timesteps
-        sample_step = [0,36,44,49]
-        # self.denoising_step_list = []
-        # for step in sample_step:
-        #     self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
-        # denoising_step_list = [1000, 750, 500, 250]
-        self.denoising_step_list = self.denoising_step_list.to(self.device).to(torch.int64)
-
+        self.scheduler.set_timesteps(4, device=self.device, shift=5)
+        print("sample_time step", self.scheduler.timesteps)
 
     # def _initialize_models(self, args, device):
     #     self.generator = WanDiffusionWrapper(**getattr(args, "model_kwargs", {}), is_causal=True)
@@ -347,7 +341,7 @@ class ODERegression(BaseModel):
 
             trajectory = []
 
-            for i in range(3):
+            for idx, t in enumerate(tqdm(self.scheduler.timesteps)):
 
                 timestep_frame_level = torch.ones_like(timestep_frame_level) * self.denoising_step_list[i]
                 timestep_frame_level[:,0] = self.denoising_step_list[-1]
@@ -357,7 +351,7 @@ class ODERegression(BaseModel):
                 # timestep_frame_level [1,21]
                 # timestep [1,21,300] -> [1,21*300]
 
-                pred_real_image_cond = self.generator(
+                pred_real_image = self.generator(
                     noisy_image_or_video=noisy_input,
                     conditional_dict=conditional_dict,
                     timestep=timestep,
@@ -375,18 +369,22 @@ class ODERegression(BaseModel):
                 #     pred_real_image_cond - pred_real_image_uncond
                 # ) * 5
 
-                pred_real_image = pred_real_image_cond
+                # pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
+                #                                         xt=noisy_input,
+                #                                         timestep=timestep_frame_level.reshape(-1))
 
-                pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
-                                                        xt=noisy_input,
-                                                        timestep=timestep_frame_level.reshape(-1))
-                
+                pred_real_image = self.scheduler.step(
+                    pred_real_image.unsqueeze(0),
+                    t,
+                    noisy_input,
+                    return_dict=False)[0]
+                print("##########",pred_real_image.shape)
                 trajectory.append(pred_real_image)
 
-                if i !=2 :
-                    pred_real_image = self.generator.scheduler.add_noise(pred_real_image,
-                                                                        torch.rand_like(pred_real_image),
-                                                                        torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[i+1])
+                # if i !=2 :
+                #     pred_real_image = self.generator.scheduler.add_noise(pred_real_image,
+                #                                                         torch.rand_like(pred_real_image),
+                #                                                         torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[i+1])
                 
                 noisy_input = pred_real_image
 
