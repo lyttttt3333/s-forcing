@@ -220,98 +220,98 @@ class ODERegression(BaseModel):
 
         return loss, log_dict
     
-    def train_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, step) -> Tuple[torch.Tensor, dict]:
-        """
-        Generate image/videos from noisy latents and compute the ODE regression loss.
-        Input:
-            - ode_latent: a tensor containing the ODE latents [batch_size, num_denoising_steps, num_frames, num_channels, height, width].
-            They are ordered from most noisy to clean latents.
-            - conditional_dict: a dictionary containing the conditional information (e.g. text embeddings, image embeddings).
-        Output:
-            - loss: a scalar tensor representing the generator loss.
-            - log_dict: a dictionary containing additional information for loss timestep breakdown.
-        """
-        # Step 1: Run generator on noisy latents
-        target_latent = ode_latent[:, -1]
+    # def train_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, step) -> Tuple[torch.Tensor, dict]:
+    #     """
+    #     Generate image/videos from noisy latents and compute the ODE regression loss.
+    #     Input:
+    #         - ode_latent: a tensor containing the ODE latents [batch_size, num_denoising_steps, num_frames, num_channels, height, width].
+    #         They are ordered from most noisy to clean latents.
+    #         - conditional_dict: a dictionary containing the conditional information (e.g. text embeddings, image embeddings).
+    #     Output:
+    #         - loss: a scalar tensor representing the generator loss.
+    #         - log_dict: a dictionary containing additional information for loss timestep breakdown.
+    #     """
+    #     # Step 1: Run generator on noisy latents
+    #     target_latent = ode_latent[:, -1]
 
-        noisy_input, timestep_frame_level = self._prepare_generator_input(
-            ode_latent=ode_latent, eval=True)
-        # noisy input [1,48,21,30,40]
-        noisy_input_initial = noisy_input.clone()
+    #     noisy_input, timestep_frame_level = self._prepare_generator_input(
+    #         ode_latent=ode_latent, eval=True)
+    #     # noisy input [1,48,21,30,40]
+    #     noisy_input_initial = noisy_input.clone()
 
-        # noisy_input = torch.randn_like(noisy_input)
+    #     # noisy_input = torch.randn_like(noisy_input)
 
-        timestep = timestep_frame_level.clone()
-        timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
-        timestep = timestep.reshape(1,-1)
+    #     timestep = timestep_frame_level.clone()
+    #     timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
+    #     timestep = timestep.reshape(1,-1)
 
-        seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
+    #     seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
 
-        trajectory = []
+    #     trajectory = []
 
-        iteration = 2
-        for i in range(iteration+1):
+    #     iteration = 2
+    #     for i in range(iteration+1):
 
-            timestep_frame_level = torch.ones_like(timestep_frame_level) * self.denoising_step_list[i]
-            timestep_frame_level[:,0] = self.denoising_step_list[-1]
+    #         timestep_frame_level = torch.ones_like(timestep_frame_level) * self.denoising_step_list[i]
+    #         timestep_frame_level[:,0] = self.denoising_step_list[-1]
 
-            timestep = timestep_frame_level.clone()
-            timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
-            # timestep_frame_level [1,21]
-            # timestep [1,21,300] -> [1,21*300]
+    #         timestep = timestep_frame_level.clone()
+    #         timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
+    #         # timestep_frame_level [1,21]
+    #         # timestep [1,21,300] -> [1,21*300]
 
 
 
-            pred_real_image_cond = self.generator(
-                noisy_image_or_video=noisy_input,
-                conditional_dict=conditional_dict,
-                timestep=timestep,
-                seq_len=seq_len,
-            ).to(torch.bfloat16)
+    #         pred_real_image_cond = self.generator(
+    #             noisy_image_or_video=noisy_input,
+    #             conditional_dict=conditional_dict,
+    #             timestep=timestep,
+    #             seq_len=seq_len,
+    #         ).to(torch.bfloat16)
 
-            pred_real_image_uncond = self.generator(
-                noisy_image_or_video=noisy_input,
-                conditional_dict=unconditional_dict,
-                timestep=timestep,
-                seq_len=seq_len,
-            ).to(torch.bfloat16)
+    #         pred_real_image_uncond = self.generator(
+    #             noisy_image_or_video=noisy_input,
+    #             conditional_dict=unconditional_dict,
+    #             timestep=timestep,
+    #             seq_len=seq_len,
+    #         ).to(torch.bfloat16)
 
-            pred_real_image = pred_real_image_cond + (
-                pred_real_image_cond - pred_real_image_uncond
-            ) * 5
+    #         pred_real_image = pred_real_image_cond + (
+    #             pred_real_image_cond - pred_real_image_uncond
+    #         ) * 5
 
-            pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
-                                                    xt=noisy_input,
-                                                    timestep=timestep_frame_level.reshape(-1))
+    #         pred_real_image = self.generator._convert_flow_pred_to_x0(flow_pred=pred_real_image,
+    #                                                 xt=noisy_input,
+    #                                                 timestep=timestep_frame_level.reshape(-1))
 
-            noisy_input = pred_real_image.clone()
+    #         noisy_input = pred_real_image.clone()
             
-            if i !=2 :
-                noisy_input = self.generator.scheduler.add_noise(noisy_input,
-                                                                    torch.rand_like(noisy_input),
-                                                                    torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[i+1])
-                noisy_input = noisy_input.detach()
+    #         if i !=2 :
+    #             noisy_input = self.generator.scheduler.add_noise(noisy_input,
+    #                                                                 torch.rand_like(noisy_input),
+    #                                                                 torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[i+1])
+    #             noisy_input = noisy_input.detach()
             
             
 
-            # trajectory.append(pred_real_image)
-        # mask = timestep_frame_level != (self.denoising_step_list.shape[0] - 1)
-        # mask = mask.view(-1)
+    #         # trajectory.append(pred_real_image)
+    #     # mask = timestep_frame_level != (self.denoising_step_list.shape[0] - 1)
+    #     # mask = mask.view(-1)
 
-        # loss = F.mse_loss(
-        #     pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
-        loss = F.mse_loss(
-            pred_real_image, target_latent, reduction="mean").float()
-        # trajectory = torch.cat(trajectory, dim = 0)
+    #     # loss = F.mse_loss(
+    #     #     pred_real_image[:,:,mask,:,:], target_latent[:,:,mask,:,:], reduction="mean").float()
+    #     loss = F.mse_loss(
+    #         pred_real_image, target_latent, reduction="mean").float()
+    #     # trajectory = torch.cat(trajectory, dim = 0)
 
-        log_dict = {
-            "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
-            "timestep": timestep.float().mean(dim=1).detach(),
-            "input": noisy_input_initial.detach(),
-            "output": pred_real_image.detach(),
-        }
+    #     log_dict = {
+    #         "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
+    #         "timestep": timestep.float().mean(dim=1).detach(),
+    #         "input": noisy_input_initial.detach(),
+    #         "output": pred_real_image.detach(),
+    #     }
 
-        return loss, log_dict
+    #     return loss, log_dict
     
     def train_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, step) -> Tuple[torch.Tensor, dict]:
         """
@@ -326,6 +326,7 @@ class ODERegression(BaseModel):
         """
         # Step 1: Run generator on noisy latents
         target_latent = ode_latent[:, -1]
+        # noisy input [1,4,48,21,30,40]
 
         noisy_input, timestep_frame_level = self._prepare_generator_input(
             ode_latent=ode_latent, eval=True)
@@ -340,6 +341,8 @@ class ODERegression(BaseModel):
         seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
 
         trajectory = []
+
+        iteration = step % 3
 
         self.scheduler.set_timesteps(50, device=self.device, shift=5)
         inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
@@ -355,7 +358,7 @@ class ODERegression(BaseModel):
             # timestep [1,21,300] -> [1,21*300]
 
             pred_real_image = self.generator(
-                noisy_image_or_video=noisy_input,
+                noisy_image_or_video=noisy_input.detach(),
                 conditional_dict=conditional_dict,
                 timestep=timestep,
                 seq_len=seq_len,
@@ -388,6 +391,9 @@ class ODERegression(BaseModel):
             
             noisy_input = pred_real_image
 
+            if t == iteration:
+                break
+
         loss = F.mse_loss(
             pred_real_image, target_latent, reduction="mean").float()
 
@@ -402,7 +408,7 @@ class ODERegression(BaseModel):
             "output": trajectory.detach(),
         }
 
-        return log_dict
+        return loss, log_dict
 
 
     def eval_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
