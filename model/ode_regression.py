@@ -183,7 +183,7 @@ class ODERegression(BaseModel):
             - log_dict: a dictionary containing additional information for loss timestep breakdown.
         """
         # Step 1: Run generator on noisy latents
-        target_latent = ode_latent[:, -1]
+        # target_latent = ode_latent[:, -1]
         # target_latent [1,48,21,30,40]
 
         noisy_input, noisy_input_next, timestep_frame_level, timestep_frame_level_next = self._prepare_generator_input(
@@ -220,7 +220,7 @@ class ODERegression(BaseModel):
             pred_real_image[:,:,mask,:,:], noisy_input_next[:,:,mask,:,:], reduction="mean").float()
 
         log_dict = {
-            "unnormalized_loss": F.mse_loss(pred_real_image, target_latent, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
+            "unnormalized_loss": F.mse_loss(pred_real_image, noisy_input_next, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
             "timestep": timestep.float().mean(dim=1).detach(),
             "input": noisy_input.detach(),
             "output": pred_real_image.detach(),
