@@ -55,7 +55,7 @@ class SelfForcingTrainingPipeline:
                         num_train_timesteps=1000,
                         shift=1,
                         use_dynamic_shifting=False)
-        scheduler.set_timesteps(4, device=device, shift=5)
+        scheduler.set_timesteps(50, device=device, shift=5)
         full_timestep = scheduler.timesteps
         sample_step = [0,36,44,49]
         self.denoising_step_list = []
@@ -99,7 +99,8 @@ class SelfForcingTrainingPipeline:
                     kv_cache,
                     crossattn_cache,
                     current_start,
-                    seq_len):
+                    seq_len,
+                    idx):
 
         pred_real_image_cond = self.generator(
             noisy_image_or_video=noisy_input,
@@ -133,11 +134,11 @@ class SelfForcingTrainingPipeline:
         #                                         timestep=timestep_frame.view(-1))
 
 
-        pred_real_image = self.sample_scheduler.step(
-                pred_real_image,
-                t,
-                noisy_input,
-                return_dict=False)[0]# [1, num_channels, num_frames, height, width]
+        pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
+                                                        sample=noisy_input,
+                                                        timestep_t1= torch.ones_like(timestep_frame) * self.denoising_step_list[idx],
+                                                        timestep_t2= torch.ones_like(timestep_frame) * self.denoising_step_list[idx+1],
+                                                        )
         return pred_real_image
     
     def inference(
@@ -193,7 +194,7 @@ class SelfForcingTrainingPipeline:
 
 
             # Step 3.1: Spatial denoising loop
-            denoising_step_list = self.denoising_step_list[:2]
+            denoising_step_list = self.denoising_step_list
             for index, current_timestep in enumerate(denoising_step_list):
 
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
@@ -213,6 +214,7 @@ class SelfForcingTrainingPipeline:
                         current_start=current_start_frame * self.frame_seq_length,
                         seq_len=seq_len,
                         t=current_timestep,
+                        idx=index,
                     ) # output [1, num_channels, num_frames, height, width]
                     noisy_input = denoised_pred
                     # if index != len(denoising_step_list)-1:
