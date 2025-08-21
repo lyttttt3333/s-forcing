@@ -274,8 +274,6 @@ class SelfForcingTrainingPipeline:
         return_sim_step: bool = False,
     ) -> torch.Tensor:
 
-        
-
         batch_size, num_channels, num_frames, height, width = noise.shape
         print(f"num_frames: {num_frames}, num_channels: {num_channels}, height: {height}, width: {width}")
         assert num_frames % self.num_frame_per_block == 0
