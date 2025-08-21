@@ -508,6 +508,12 @@ class ODERegression(BaseModel):
                         noisy_input,
                         return_dict=False)[0]
                 else:
+                    if idx == inference_timestep.shape[0]:
+                        t1 = inference_timestep[idx]
+                        t2 = 0
+                    else:
+                        t1 = inference_timestep[idx]
+                        t2 = inference_timestep[idx + 1]
                     pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
                                                                     sample=noisy_input,
                                                                     timestep_t1= torch.ones_like(timestep_frame_level) * inference_timestep[idx],
