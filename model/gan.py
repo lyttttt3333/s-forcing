@@ -5,7 +5,6 @@ from typing import Tuple
 import torch
 
 from model.base import SelfForcingModel
-from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 
 
 class GAN(SelfForcingModel):
@@ -56,24 +55,6 @@ class GAN(SelfForcingModel):
         self.r2_weight = getattr(args, "r2_weight", 0.0)
         self.r1_sigma = getattr(args, "r1_sigma", 0.01)
         self.r2_sigma = getattr(args, "r2_sigma", 0.01)
-
-        # if getattr(self.scheduler, "alphas_cumprod", None) is not None:
-        #     self.scheduler.alphas_cumprod = self.scheduler.alphas_cumprod.to(device)
-        # else:
-        #     self.scheduler.alphas_cumprod = None
-
-        
-        # sampling_steps = 4
-        # num_train_timesteps = 1000
-        # shift = 5
-        # device = "cuda"
-
-        # self.scheduler = FlowUniPCMultistepScheduler(
-        #     num_train_timesteps=num_train_timesteps,
-        #     shift=1,
-        #     use_dynamic_shifting=False)
-        # self.scheduler.set_timesteps(
-        #     sampling_steps, device=device, shift=shift)
 
     def _run_cls_pred_branch(self,
                              noisy_image_or_video: torch.Tensor,

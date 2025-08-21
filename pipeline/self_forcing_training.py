@@ -347,6 +347,7 @@ class SelfForcingTrainingPipeline:
                             current_start=current_start_frame * self.frame_seq_length,
                             seq_len=seq_len,
                             t=current_timestep,
+                            idx=index
                         ) # output [1, num_channels, num_frames, height, width]
                         next_timestep = self.denoising_step_list[index + 1]
                         # denoised_pred = denoised_pred.transpose(1, 2).flatten(0, 1)  # [batch_size * current_num_frames, num_channels, height, width]
@@ -378,6 +379,7 @@ class SelfForcingTrainingPipeline:
                                 current_start=current_start_frame * self.frame_seq_length,
                                 seq_len=seq_len,
                                 t=current_timestep,
+                                idx=index
                             )
                     else:
                         denoised_pred = self.get_flow_pred(
@@ -391,6 +393,7 @@ class SelfForcingTrainingPipeline:
                             current_start=current_start_frame * self.frame_seq_length,
                             seq_len=seq_len,
                             t=current_timestep,
+                            idx=index
                         )
                     break
 
