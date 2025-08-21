@@ -333,6 +333,7 @@ class SelfForcingTrainingPipeline:
 
                 temp_ts = (mask[0][0][:, ::2, ::2] * current_timestep).flatten()
                 timestep = temp_ts.unsqueeze(0)
+                timestep_frame_level = timestep.view(1,self.num_frame_per_block,-1)[:,:,0]
 
                 if not exit_flag:
                     with torch.no_grad():
@@ -342,6 +343,7 @@ class SelfForcingTrainingPipeline:
                             unconditional_dict=unconditional_dict,
                             memory_token = memory_token,
                             timestep=timestep,
+                            timestep_frame=timestep_frame_level,
                             kv_cache=self.kv_cache1,
                             crossattn_cache=self.crossattn_cache,
                             current_start=current_start_frame * self.frame_seq_length,
@@ -374,6 +376,7 @@ class SelfForcingTrainingPipeline:
                                 unconditional_dict=unconditional_dict,
                                 memory_token = memory_token,
                                 timestep=timestep,
+                                timestep_frame=timestep_frame_level,
                                 kv_cache=self.kv_cache1,
                                 crossattn_cache=self.crossattn_cache,
                                 current_start=current_start_frame * self.frame_seq_length,
@@ -388,6 +391,7 @@ class SelfForcingTrainingPipeline:
                             unconditional_dict=unconditional_dict,
                             memory_token = memory_token,
                             timestep=timestep,
+                            timestep_frame=timestep_frame_level,
                             kv_cache=self.kv_cache1,
                             crossattn_cache=self.crossattn_cache,
                             current_start=current_start_frame * self.frame_seq_length,
