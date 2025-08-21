@@ -337,7 +337,6 @@ class Trainer:
             memory_token=memory_token,
             clean_token=clean_token,
         )
-        print("############# begin generator loss")
         generator_loss.backward()
         generator_grad_norm = self.model.generator.clip_grad_norm_(
             self.max_grad_norm_generator)
@@ -383,10 +382,6 @@ class Trainer:
 
                 output_path = os.path.join("tmp", f"teacher_{self.step:06d}_{base_name}.mp4")
                 f.write(f"{base_name},{output_path}\n")
-
-                # print(video.shape) 
-                # print(video.dtype)  
-                # print(video.min().item(), video.max().item()) 
 
                 save_video(video, output_path, fps=15, quality=5)
             

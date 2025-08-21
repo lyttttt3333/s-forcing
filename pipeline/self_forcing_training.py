@@ -63,7 +63,6 @@ class SelfForcingTrainingPipeline:
             self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
         self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
 
-        print("#######",self.denoising_step_list)
         self.sample_scheduler = scheduler
 
 
@@ -275,7 +274,6 @@ class SelfForcingTrainingPipeline:
     ) -> torch.Tensor:
 
         batch_size, num_channels, num_frames, height, width = noise.shape
-        print(f"num_frames: {num_frames}, num_channels: {num_channels}, height: {height}, width: {width}")
         assert num_frames % self.num_frame_per_block == 0
         num_blocks = num_frames // self.num_frame_per_block
         num_output_frames = num_frames
