@@ -81,7 +81,7 @@ class ODERegression(BaseModel):
         # Step 1: Randomly choose a timestep for each frame
         index = self._get_timestep(
             0,
-            self.denoising_step_list.shape[0],
+            self.denoising_step_list.shape[0]-1,
             batch_size,
             num_frames,
             self.num_frame_per_block,
@@ -121,7 +121,17 @@ class ODERegression(BaseModel):
         if not return_next:
             return noisy_input, timestep
         else:
-            return noisy_input, timestep
+            index_next = index + 1
+            index_next[:, 0] = self.denoising_step_list.shape[0] - 1
+            
+            noisy_input_next = torch.gather(
+                ode_latent, dim=1,
+                index=index_next.reshape(batch_size, 1, num_frames, 1, 1, 1).expand(
+                    -1, -1, -1, num_channels, height, width).to(self.device)
+            ).squeeze(1)
+
+            timestep_next = self.denoising_step_list[index_next].to(self.device).to(self.dtype)
+            return noisy_input, noisy_input_next, timestep, timestep_next
     
     @torch.no_grad()
     def _prepare_generator_input_online(self, target_latent: torch.Tensor, eval = False) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -178,7 +188,7 @@ class ODERegression(BaseModel):
         # target_latent [1,48,21,30,40]
 
         noisy_input, noisy_input_next, timestep_frame_level, timestep_frame_level_next = self._prepare_generator_input(
-            ode_latent=ode_latent)
+            ode_latent=ode_latent, return_next=True)
         # noisy input [1,48,21,30,40]
         timestep = timestep_frame_level.clone()
         timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
