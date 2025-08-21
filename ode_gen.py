@@ -220,7 +220,7 @@ if __name__ == "__main__":
                                 uncond_dict=unconditional_dict,
                                 cond_dict=conditional_dict,
                                 device=device,
-                                select_index=[0, 36, 44, 49])
+                                select_index=[0, 33, 41, 46, 49])
         
         torch.save(
             trajectory.cpu().detach(),
