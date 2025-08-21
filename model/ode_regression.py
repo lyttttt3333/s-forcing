@@ -514,14 +514,14 @@ class ODERegression(BaseModel):
                                                                     timestep_t2= torch.ones_like(timestep_frame_level) * inference_timestep[idx+1],
                                                                     )
                 
-                trajectory.append(pred_real_image)
+                trajectory.append(pred_real_image.clone())
 
                 # if i !=2 :
                 #     pred_real_image = self.generator.scheduler.add_noise(pred_real_image,
                 #                                                         torch.rand_like(pred_real_image),
                 #                                                         torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[i+1])
                 
-                noisy_input = pred_real_image
+                noisy_input = pred_real_image.clone()
 
                 
 
