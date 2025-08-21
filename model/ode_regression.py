@@ -516,8 +516,8 @@ class ODERegression(BaseModel):
                         t2 = inference_timestep[idx + 1]
                     pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
                                                                     sample=noisy_input,
-                                                                    timestep_t1= torch.ones_like(timestep_frame_level) * inference_timestep[idx],
-                                                                    timestep_t2= torch.ones_like(timestep_frame_level) * inference_timestep[idx+1],
+                                                                    timestep_t1= torch.ones_like(timestep_frame_level) * t1,
+                                                                    timestep_t2= torch.ones_like(timestep_frame_level) * t2,
                                                                     )
                 
                 trajectory.append(pred_real_image.clone())
