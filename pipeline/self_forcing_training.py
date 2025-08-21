@@ -134,10 +134,10 @@ class SelfForcingTrainingPipeline:
         #                                         timestep=timestep_frame.view(-1))
 
 
-        try:
+        if self.denoising_step_list.shape[0] - 1 >= idx + 1:
             t1 = self.denoising_step_list[idx]
             t2 = self.denoising_step_list[idx + 1]
-        except:
+        else:
             t1 = self.denoising_step_list[idx]
             t2 = 0
         pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
@@ -223,10 +223,6 @@ class SelfForcingTrainingPipeline:
                         idx=index,
                     ) # output [1, num_channels, num_frames, height, width]
                     noisy_input = denoised_pred
-                    # if index != len(denoising_step_list)-1:
-                    #     noisy_input = self.generator.scheduler.add_noise(noisy_input,
-                    #                                                         torch.rand_like(noisy_input),
-                    #                                                         torch.ones_like(timestep_frame_level.view(-1)) * self.denoising_step_list[index+1])
                 
 
                 noisy_input = noisy_input * mask + frame_token * (1-mask)
