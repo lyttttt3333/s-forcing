@@ -269,7 +269,7 @@ class GAN(SelfForcingModel):
                 timestep=critic_timestep[0].unsqueeze(0)
             )
 
-            r1_grad = (noisy_real_logit_perturbed - noisy_real_logit) / self.r1_sigma
+            r1_grad = (noisy_real_logit_perturbed - noisy_real_logit) #/ self.r1_sigma
             r1_loss = self.r1_weight * torch.mean((r1_grad)**2)
         else:
             r1_loss = torch.zeros_like(gan_D_loss)
@@ -285,7 +285,7 @@ class GAN(SelfForcingModel):
                 timestep=critic_timestep[0].unsqueeze(0)
             )
 
-            r2_grad = (noisy_fake_logit_perturbed - noisy_fake_logit) / self.r2_sigma
+            r2_grad = (noisy_fake_logit_perturbed - noisy_fake_logit) #/ self.r2_sigma
             r2_loss = self.r2_weight * torch.mean((r2_grad)**2)
         else:
             r2_loss = torch.zeros_like(gan_D_loss)
