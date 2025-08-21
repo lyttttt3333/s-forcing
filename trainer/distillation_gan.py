@@ -308,7 +308,7 @@ class Trainer:
             #     image_shape = [48,1,30,40]
             #     batch[key] = torch.zeros(image_shape).to(self.dtype).to(self.device)
         return batch
-
+    
     def fwdbwd_one_step(self, batch, train_generator):
         batch = self.load_batch(batch)
         frame_token = batch["frame_token"]
@@ -329,23 +329,46 @@ class Trainer:
             unconditional_dict = {'prompt_embeds': embed}
 
         # Step 3: Store gradients for the generator (if training the generator)
-        generator_loss = self.model.generator_loss(
+        if train_generator:
+            generator_loss = self.model.generator_loss(
+                image_or_video_shape=self.image_or_video_shape,
+                conditional_dict=conditional_dict,
+                unconditional_dict=unconditional_dict,
+                frame_token=frame_token,
+                memory_token=memory_token,
+                clean_token=clean_token,
+            )
+            print("############# begin generator loss")
+            generator_loss.backward()
+            generator_grad_norm = self.model.generator.clip_grad_norm_(
+                self.max_grad_norm_generator)
+
+            generator_log_dict = {}
+            generator_log_dict.update({"generator_loss": generator_loss,
+                                       "generator_grad_norm": generator_grad_norm})
+
+            return generator_log_dict
+        else:
+            generator_log_dict = {}
+
+        # Step 4: Store gradients for the critic (if training the critic)
+        critic_loss, critic_log_dict = self.model.critic_loss(
             image_or_video_shape=self.image_or_video_shape,
             conditional_dict=conditional_dict,
             unconditional_dict=unconditional_dict,
+            real_image_or_video=clean_token,
             frame_token=frame_token,
-            memory_token=memory_token,
-            clean_token=clean_token,
+            memory_token=memory_token
         )
-        generator_loss.backward()
-        generator_grad_norm = self.model.generator.clip_grad_norm_(
-            self.max_grad_norm_generator)
 
-        generator_log_dict = {}
-        generator_log_dict.update({"generator_loss": generator_loss,
-                                    "generator_grad_norm": generator_grad_norm})
+        critic_loss.backward()
+        critic_grad_norm = self.model.fake_score.clip_grad_norm_(
+            self.max_grad_norm_critic)
 
-        return generator_log_dict
+        critic_log_dict.update({"critic_loss": critic_loss,
+                                "critic_grad_norm": critic_grad_norm})
+
+        return critic_log_dict
 
     
     def generate_video(self, step):
@@ -413,22 +436,41 @@ class Trainer:
 
         while True:
 
+            self.in_discriminator_warmup = self.step < self.discriminator_warmup_steps
+
+            # Only update generator and critic outside the warmup phase
+            TRAIN_GENERATOR = not self.in_discriminator_warmup and self.step % self.config.dfake_gen_update_ratio == 0
             EVALUATION = self.step % self.config.eval_interval == 0
 
+            if TRAIN_GENERATOR:
+                print("(Gen) Training step %d" % self.step)
+            else:
+                print("(Dis) Training step %d" % self.step)
+
+
+            
+            if TRAIN_GENERATOR:
+                self.generator_optimizer.zero_grad(set_to_none=True)
+                extras_list = []
+                batch = next(self.dataloader)
+                extra = self.fwdbwd_one_step(batch, True)
+                extras_list.append(extra)
+                generator_log_dict = merge_dict_list(extras_list)
+                self.generator_optimizer.step()
+                if self.generator_ema is not None:
+                    self.generator_ema.update(self.model.generator)
             
             if EVALUATION:
                 self.generate_video(self.step)
-            
-            self.generator_optimizer.zero_grad(set_to_none=True)
+
+            # Train the critic
+            self.critic_optimizer.zero_grad(set_to_none=True)
             extras_list = []
             batch = next(self.dataloader)
-            extra = self.fwdbwd_one_step(batch, True)
+            extra = self.fwdbwd_one_step(batch, False)
             extras_list.append(extra)
-            generator_log_dict = merge_dict_list(extras_list)
-            self.generator_optimizer.step()
-            if self.generator_ema is not None:
-                self.generator_ema.update(self.model.generator)
-
+            critic_log_dict = merge_dict_list(extras_list)
+            self.critic_optimizer.step()
 
             # Create EMA params (if not already created)
             if (self.step >= self.config.ema_start_step) and \
@@ -444,10 +486,18 @@ class Trainer:
             # Logging
             if self.is_main_process:
                 wandb_loss_dict = {}
+                if TRAIN_GENERATOR:
+                    wandb_loss_dict.update(
+                        {
+                            "generator_loss": generator_log_dict["generator_loss"].mean().item(),
+                            "generator_grad_norm": generator_log_dict["generator_grad_norm"].mean().item(),
+                        }
+                    )
+
                 wandb_loss_dict.update(
                     {
-                        "generator_loss": generator_log_dict["generator_loss"].mean().item(),
-                        "generator_grad_norm": generator_log_dict["generator_grad_norm"].mean().item(),
+                        "critic_loss": critic_log_dict["critic_loss"].mean().item(),
+                        "critic_grad_norm": critic_log_dict["critic_grad_norm"].mean().item()
                     }
                 )
 
