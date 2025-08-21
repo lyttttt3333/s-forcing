@@ -265,7 +265,7 @@ class ODERegression(BaseModel):
         self.scheduler.set_timesteps(50, device=self.device, shift=5)
         inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
 
-        for idx, t in enumerate(inference_timestep[:-1]):
+        for idx, t in enumerate(inference_timestep):
 
             noisy_input, timestep_frame_level = self._prepare_generator_input(
                                     ode_latent=ode_latent, eval=False, assign = idx)
