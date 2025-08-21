@@ -176,7 +176,7 @@ def init_model(device):
 
 if __name__ == "__main__":
 
-    output_folder = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/ode_latent"
+    output_folder = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/ode_latent_5steps"
     # dist.init_process_group(
     #     backend="nccl",         # 可选：nccl（GPU）、gloo（CPU/GPU）、mpi
     #     init_method="env://",   # 用环境变量指定地址和端口
