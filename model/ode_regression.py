@@ -129,6 +129,8 @@ class ODERegression(BaseModel):
                     -1, -1, -1, num_channels, height, width).to(self.device)
             ).squeeze(1)
 
+            noisy_input_next = noisy_input_next.transpose(2,1)
+
             timestep_next = self.denoising_step_list[index_next].to(self.device).to(self.dtype)
             return noisy_input, noisy_input_next, timestep, timestep_next
     
@@ -217,7 +219,7 @@ class ODERegression(BaseModel):
         mask = mask.view(-1)
 
         loss = F.mse_loss(
-            pred_real_image[:,:,mask,:,:], noisy_input_next[:,:,mask,:,:], reduction="mean").float()
+            pred_real_image, noisy_input_next, reduction="mean").float()
 
         log_dict = {
             "unnormalized_loss": F.mse_loss(pred_real_image, noisy_input_next, reduction='none').mean(dim=[1, 2, 3, 4]).detach(),
@@ -453,4 +455,5 @@ class ODERegression(BaseModel):
             }
 
             return log_dict
+        
 
