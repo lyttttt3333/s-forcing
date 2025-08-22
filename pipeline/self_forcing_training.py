@@ -493,8 +493,8 @@ class SelfForcingTrainingPipeline:
             timestep_t2[:,0] = self.denoising_step_list[-1]
             pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
                                                             sample=noisy_input,
-                                                            timestep_t1= torch.ones_like(timestep_frame_level) * t1,
-                                                            timestep_t2= torch.ones_like(timestep_frame_level) * t2,
+                                                            timestep_t1= timestep_t1,
+                                                            timestep_t2= timestep_t2,
                                                             )
             
 
