@@ -56,7 +56,7 @@ model_kwargs:
   local_attn_size: 9
 num_class: 2
 resume_path: null
-discriminator_warmup_steps: 30
+discriminator_warmup_steps: 0
 eval_interval: 100
 r1_weight: 10
 r2_weight: 10
