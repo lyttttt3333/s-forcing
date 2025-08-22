@@ -221,7 +221,7 @@ class SelfForcingModel(BaseModel):
             )
         
         else:
-            return self.inference_pipeline.inference_with_trajectory(
+            return self.inference_pipeline.inference_with_causal_block(
                 noise = noise,
                 conditional_dict =conditional_dict,
                 unconditional_dict = unconditional_dict,

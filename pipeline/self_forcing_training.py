@@ -15,8 +15,8 @@ class SelfForcingTrainingPipeline:
                  vae,
                  num_frame_per_block=3,
                  independent_first_frame: bool = False,
-                 same_step_across_blocks: bool = False,
-                 last_step_only: bool = False,
+                 same_step_across_blocks: bool = True,
+                 last_step_only: bool = True,
                  num_max_frames: int = 21,
                  context_noise: int = 0,
                  **kwargs):
@@ -500,7 +500,10 @@ class SelfForcingTrainingPipeline:
 
             noisy_input = pred_real_image
 
-        return noisy_input
+        denoised_timestep_from = self.denoising_step_list[0]
+        denoised_timestep_to = self.denoising_step_list[-1]
+
+        return noisy_input, denoised_timestep_from, denoised_timestep_to
 
     def detach_kv_cache(self):
         """

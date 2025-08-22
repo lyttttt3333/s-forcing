@@ -307,7 +307,7 @@ class GAN(SelfForcingModel):
                             memory_token,
                             clean_token=None) -> torch.Tensor:
         with torch.no_grad():
-            latent_video = self._consistency_backward_simulation(
+            latent_video, _, _ = self._consistency_backward_simulation(
                 noise=torch.randn(image_or_video_shape,
                                 device=self.device, dtype=self.dtype),
                 conditional_dict = conditional_dict,
