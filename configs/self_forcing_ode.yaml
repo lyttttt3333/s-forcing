@@ -54,7 +54,7 @@ resume_path: null
 discriminator_warmup_steps: 50
 eval_interval: 100
 r1_weight: 100
-r2_weight: 30
+r2_weight: 0
 denoising_step_list:
 - 1000
 - 750
