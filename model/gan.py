@@ -263,7 +263,8 @@ class GAN(SelfForcingModel):
             concat_time_embeddings=self.concat_time_embeddings
         )
         noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
-        print(f"noisy_fake_logit: {noisy_fake_logit}, noisy_real_logit: {noisy_real_logit}")
+        noisy_fake_logit = noisy_fake_logit[0,0]
+        noisy_real_logit = noisy_real_logit[0,0]
 
         relative_real_logit = noisy_real_logit - noisy_fake_logit
         gan_D_loss = F.softplus(-relative_real_logit.float()).mean()
@@ -303,8 +304,8 @@ class GAN(SelfForcingModel):
 
         critic_log_dict = {
             "critic_timestep": critic_timestep.detach(),
-            'noisy_real_logit': noisy_real_logit.detach(),
-            'noisy_fake_logit': noisy_fake_logit.detach(),
+            'real_logit': noisy_real_logit.detach(),
+            'fake_logit': noisy_fake_logit.detach(),
         }
 
         loss = gan_D_loss  + r1_loss + r2_loss

@@ -509,7 +509,9 @@ class Trainer:
                 wandb_loss_dict.update(
                     {
                         "critic_loss": critic_log_dict["critic_loss"].mean().item(),
-                        "critic_grad_norm": critic_log_dict["critic_grad_norm"].mean().item()
+                        "critic_grad_norm": critic_log_dict["critic_grad_norm"].mean().item(),
+                        "real_logit": critic_log_dict["real_logit"].mean().item(),
+                        "fake_logit": critic_log_dict["fake_logit"].mean().item(),
                     }
                 )
 
