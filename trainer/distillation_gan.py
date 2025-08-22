@@ -512,6 +512,7 @@ class Trainer:
                         "critic_grad_norm": critic_log_dict["critic_grad_norm"].mean().item(),
                         "real_logit": critic_log_dict["real_logit"].mean().item(),
                         "fake_logit": critic_log_dict["fake_logit"].mean().item(),
+                        "relative_logit":  - critic_log_dict["fake_logit"].mean().item() + critic_log_dict["real_logit"].mean().item(),
                     }
                 )
 
