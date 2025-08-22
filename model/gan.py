@@ -85,6 +85,7 @@ class GAN(SelfForcingModel):
         unconditional_dict: dict,
         frame_token: torch.Tensor = None,
         memory_token: torch.Tensor = None,
+        initial_noise: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noise and compute the DMD loss.
@@ -107,6 +108,7 @@ class GAN(SelfForcingModel):
             unconditional_dict=unconditional_dict,
             frame_token=frame_token,
             memory_token=memory_token,
+            initial_noise=initial_noise,
         )
 
         # denoised_timestep_from = None

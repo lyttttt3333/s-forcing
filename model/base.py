@@ -114,7 +114,8 @@ class SelfForcingModel(BaseModel):
         conditional_dict: dict,
         unconditional_dict: dict,
         frame_token: torch.tensor = None,
-        memory_token: torch.tensor = None
+        memory_token: torch.tensor = None,
+        initial_noise: torch.Tensor = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Optionally simulate the generator's input from noise using backward simulation
@@ -138,10 +139,15 @@ class SelfForcingModel(BaseModel):
 
         noise_shape = image_or_video_shape.copy()
 
+        if initial_noise is None:
+            noise = torch.randn(noise_shape,
+                              device=self.device, dtype=self.dtype)
+        else:
+            noise = initial_noise.to(self.device, dtype=self.dtype)
+
 
         pred_image_or_video, denoised_timestep_from, denoised_timestep_to = self._consistency_backward_simulation(
-            noise=torch.randn(noise_shape,
-                              device=self.device, dtype=self.dtype),
+            noise=noise,
             conditional_dict = conditional_dict,
             unconditional_dict = unconditional_dict,
             frame_token = frame_token,

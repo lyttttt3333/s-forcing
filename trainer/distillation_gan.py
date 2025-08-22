@@ -319,6 +319,7 @@ class Trainer:
             device=self.device, dtype=self.dtype)
         # [1, 4, 48, 21, 30, 40]
         clean_token = ode_latent[:,-1]
+        initial_noise = ode_latent[:,0]
 
         self.model.eval()  
 
@@ -341,6 +342,7 @@ class Trainer:
                 frame_token=frame_token,
                 memory_token=memory_token,
                 clean_token=clean_token,
+                initial_noise=initial_noise
             )
             print("############# begin generator loss")
             generator_loss.backward()
