@@ -264,7 +264,7 @@ class ODERegression(BaseModel):
         self.scheduler.set_timesteps(50, device=self.device, shift=5)
         inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
 
-        for idx, t in enumerate(inference_timestep):
+        for idx, t in enumerate(inference_timestep[:3]):
 
             noisy_input, timestep_frame_level = self._prepare_generator_input(
                                     ode_latent=ode_latent, eval=False, assign = idx)
@@ -305,10 +305,16 @@ class ODERegression(BaseModel):
                     noisy_input,
                     return_dict=False)[0]
             else:
+                if idx == inference_timestep.shape[0]:
+                    t1 = inference_timestep[idx]
+                    t2 = 0
+                else:
+                    t1 = inference_timestep[idx]
+                    t2 = inference_timestep[idx + 1]
                 pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
                                                                 sample=noisy_input,
-                                                                timestep_t1= torch.ones_like(timestep_frame_level) * inference_timestep[idx],
-                                                                timestep_t2= torch.ones_like(timestep_frame_level) * inference_timestep[idx+1],
+                                                                timestep_t1= torch.ones_like(timestep_frame_level) * t1,
+                                                                timestep_t2= torch.ones_like(timestep_frame_level) * t2,
                                                                 )
 
             # if i !=2 :
@@ -365,6 +371,7 @@ class ODERegression(BaseModel):
             noisy_input, timestep_frame_level = self._prepare_generator_input(
                 ode_latent=ode_latent, eval=True)
             # noisy input [1,48,21,30,40]
+            noisy_input = torch.randn_like(noisy_input)
             noisy_input_initial = noisy_input.clone()
             # noisy_input = torch.randn_like(noisy_input)
 
