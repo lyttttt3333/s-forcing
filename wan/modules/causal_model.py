@@ -947,7 +947,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             self.freqs = self.freqs.to(device)
 
         # Construct blockwise causal attn mask
-        if False:
+        if True:
             self.block_mask = None
         else:
             if self.block_mask is None:
@@ -1053,8 +1053,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             grid_sizes=grid_sizes,
             freqs=self.freqs,
             context=context,
-            context_lens=context_lens,
-            block_mask=self.block_mask)
+            context_lens=context_lens,)
+            #block_mask=self.block_mask)
 
         def create_custom_forward(module):
             def custom_forward(*inputs, **kwargs):
