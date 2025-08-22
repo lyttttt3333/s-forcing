@@ -451,6 +451,58 @@ class SelfForcingTrainingPipeline:
 
         return output, denoised_timestep_from, denoised_timestep_to
 
+    def inference_with_causal_block(
+        self,
+        noise: torch.Tensor,
+        conditional_dict: dict,
+        unconditional_dict: dict,
+        frame_token: Optional[torch.Tensor] = None,
+        memory_token: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        
+        noisy_input = noise
+        # noisy input [1,48,21,30,40]
+        timestep_frame_level = torch.ones([1, 21], device=noisy_input.device)
+
+        seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
+
+        self.scheduler.set_timesteps(50, device=self.device, shift=5)
+        inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
+
+        for idx, t in enumerate(inference_timestep[:3]):
+
+            timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
+            timestep_frame_level[:,0] = self.denoising_step_list[-1]
+
+            timestep = timestep_frame_level.clone()
+            timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
+            # timestep_frame_level [1,21]
+            # timestep [1,21,300] -> [1,21*300]
+
+            pred_real_image = self.generator(
+                noisy_image_or_video=noisy_input.detach(),
+                conditional_dict=conditional_dict,
+                timestep=timestep,
+                seq_len=seq_len,
+            ).to(torch.bfloat16)
+
+            if idx == inference_timestep.shape[0]:
+                t1 = inference_timestep[idx]
+                t2 = 0
+            else:
+                t1 = inference_timestep[idx]
+                t2 = inference_timestep[idx + 1]
+            pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
+                                                            sample=noisy_input,
+                                                            timestep_t1= torch.ones_like(timestep_frame_level) * t1,
+                                                            timestep_t2= torch.ones_like(timestep_frame_level) * t2,
+                                                            )
+            
+
+            noisy_input = pred_real_image
+
+        return noisy_input, None, None
+
     def detach_kv_cache(self):
         """
         Detach all tensors in kv_cache1 from the computation graph.
