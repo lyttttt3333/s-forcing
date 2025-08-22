@@ -50,7 +50,6 @@ class ODERegression(BaseModel):
                         shift=1,
                         use_dynamic_shifting=False)
         self.scheduler.set_timesteps(4, device=self.device, shift=5)
-        print("sample_time step", self.scheduler.timesteps)
         self.denoising_step_list = torch.tensor([999, 660, 405, 92]).to(self.device)
 
     # def _initialize_models(self, args, device):
@@ -163,8 +162,6 @@ class ODERegression(BaseModel):
 
         timestep = self.denoising_step_list[index].to(self.device).to(self.dtype)
         timestep[0,0] = 0
-
-        # print(f"########### {timestep.view(-1)} {timestep.shape} ############")
 
         noisy_input = self.generator.scheduler.add_noise(original_samples=target_latent,
                                  noise=torch.randn_like(target_latent),

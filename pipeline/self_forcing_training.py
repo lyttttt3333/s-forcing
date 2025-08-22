@@ -62,7 +62,6 @@ class SelfForcingTrainingPipeline:
         for step in sample_step:
             self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
         self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
-        print("#####",self.denoising_step_list)
 
         self.sample_scheduler = scheduler
 
@@ -486,8 +485,6 @@ class SelfForcingTrainingPipeline:
                 seq_len=seq_len,
             ).to(torch.bfloat16)
 
-            print("########### 111 pred_real_image shape",pred_real_image.shape)
-
             if idx == self.denoising_step_list.shape[0]:
                 t1 = self.denoising_step_list[idx]
                 t2 = 0
@@ -499,8 +496,6 @@ class SelfForcingTrainingPipeline:
                                                             timestep_t1= torch.ones_like(timestep_frame_level) * t1,
                                                             timestep_t2= torch.ones_like(timestep_frame_level) * t2,
                                                             )
-            
-            print("########### 222 pred_real_image shape",pred_real_image.shape)
             
 
             noisy_input = pred_real_image
