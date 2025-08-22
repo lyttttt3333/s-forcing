@@ -62,6 +62,7 @@ class SelfForcingTrainingPipeline:
         for step in sample_step:
             self.denoising_step_list.append(full_timestep[step].to(torch.int64).unsqueeze(0))
         self.denoising_step_list = torch.cat(self.denoising_step_list, dim = 0)
+        print("#####",self.denoising_step_list)
 
         self.sample_scheduler = scheduler
 
@@ -466,8 +467,7 @@ class SelfForcingTrainingPipeline:
 
         seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
 
-        self.scheduler.set_timesteps(50, device=self.device, shift=5)
-        inference_timestep = torch.tensor([999, 660, 405, 92]).to(self.scheduler.timesteps)
+        inference_timestep = torch.tensor([999, 660, 405, 92]).to(noisy_input.device)
 
         for idx, t in enumerate(inference_timestep[:3]):
 
