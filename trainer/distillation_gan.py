@@ -390,6 +390,10 @@ class Trainer:
                 text_token = batch["text_token"]
                 memory_token = batch["memory_token"]
                 clean_token = batch["clean_token"]
+                ode_latent = batch["ode_latent"].to(
+                    device=self.device, dtype=self.dtype)
+                    # [1, 4, 48, 21, 30, 40]
+                clean_token = ode_latent[:,-1]
 
                 conditional_dict = {'prompt_embeds': text_token}
                 embed = self.global_embed_dict["prompt_embeds"].to(device=self.device, dtype=self.dtype)
