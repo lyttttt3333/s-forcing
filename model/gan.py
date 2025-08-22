@@ -222,19 +222,21 @@ class GAN(SelfForcingModel):
 
         critic_timestep = critic_timestep.clamp(self.min_step, self.max_step)
 
-        critic_noise = torch.randn_like(generated_image)
-        noisy_fake_latent = self.scheduler.add_noise(
-            generated_image,
-            critic_noise,
-            critic_timestep.flatten(0, 1)
-        )
+        # critic_noise = torch.randn_like(generated_image)
+        # noisy_fake_latent = self.scheduler.add_noise(
+        #     generated_image,
+        #     critic_noise,
+        #     critic_timestep.flatten(0, 1)
+        # )
+        noisy_fake_latent = generated_image
 
         # Step 4: Compute the real GAN discriminator loss
-        noisy_real_latent = self.scheduler.add_noise(
-            real_image_or_video,
-            critic_noise,
-            critic_timestep.flatten(0, 1)
-        )
+        # noisy_real_latent = self.scheduler.add_noise(
+        #     real_image_or_video,
+        #     critic_noise,
+        #     critic_timestep.flatten(0, 1)
+        # )
+        noisy_real_latent = real_image_or_video
 
         # conditional_dict_cloned = copy.deepcopy(conditional_dict)
         # conditional_dict_cloned["prompt_embeds"] = torch.concatenate(
@@ -258,6 +260,7 @@ class GAN(SelfForcingModel):
             concat_time_embeddings=self.concat_time_embeddings
         )
         noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
+        print(f"noisy_fake_logit: {noisy_fake_logit}, noisy_real_logit: {noisy_real_logit}")
 
         relative_real_logit = noisy_real_logit - noisy_fake_logit
         gan_D_loss = F.softplus(-relative_real_logit.float()).mean()
