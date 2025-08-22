@@ -307,11 +307,16 @@ class GAN(SelfForcingModel):
                             unconditional_dict,
                             frame_token,
                             memory_token,
-                            clean_token=None) -> torch.Tensor:
+                            clean_token=None,
+                            initial_noise = None) -> torch.Tensor:
+        if initial_noise is None:
+            torch.randn(image_or_video_shape,
+                                device=self.device, dtype=self.dtype)
+        else:
+            initial_noise = initial_noise.to(self.device, dtype=self.dtype)
         with torch.no_grad():
             latent_video, _, _ = self._consistency_backward_simulation(
-                noise=torch.randn(image_or_video_shape,
-                                device=self.device, dtype=self.dtype),
+                noise=initial_noise,
                 conditional_dict = conditional_dict,
                 unconditional_dict = unconditional_dict,
                 frame_token = frame_token,
