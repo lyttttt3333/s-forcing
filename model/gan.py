@@ -135,21 +135,23 @@ class GAN(SelfForcingModel):
         critic_timestep = critic_timestep.clamp(self.min_step, self.max_step)
 
         critic_noise = torch.randn_like(pred_image)
-        noisy_fake_latent = self.scheduler.add_noise(
-            pred_image,
-            critic_noise,
-            critic_timestep.flatten(0, 1)
-        )
+        # noisy_fake_latent = self.scheduler.add_noise(
+        #     pred_image,
+        #     critic_noise,
+        #     critic_timestep.flatten(0, 1)
+        # )
+        noisy_fake_latent = pred_image
 
 
         # Step 4: Compute the real GAN discriminator loss
         real_image_or_video = clean_token.clone()
         critic_noise = torch.randn_like(real_image_or_video)
-        noisy_real_latent = self.scheduler.add_noise(
-            real_image_or_video,
-            critic_noise,
-            critic_timestep.flatten(0, 1)
-        )
+        # noisy_real_latent = self.scheduler.add_noise(
+        #     real_image_or_video,
+        #     critic_noise,
+        #     critic_timestep.flatten(0, 1)
+        # )
+        noisy_real_latent = real_image_or_video
 
         critic_timestep = torch.concatenate((critic_timestep, critic_timestep), dim=0)
         noisy_latent = torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0)
