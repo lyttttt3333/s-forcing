@@ -270,7 +270,7 @@ class ODERegression(BaseModel):
                                     ode_latent=ode_latent, eval=False, assign = idx)
 
             timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
-            timestep_frame_level[:,0] = self.denoising_step_list[-1]
+            timestep_frame_level[:,0] = 0
 
             timestep = timestep_frame_level.clone()
             timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
@@ -308,13 +308,18 @@ class ODERegression(BaseModel):
                 if idx == inference_timestep.shape[0]:
                     t1 = inference_timestep[idx]
                     t2 = 0
+                    timestep_t1= torch.ones_like(timestep_frame_level) * t1
+                    timestep_t2= torch.ones_like(timestep_frame_level) * t2
                 else:
                     t1 = inference_timestep[idx]
                     t2 = inference_timestep[idx + 1]
+                    timestep_t1= torch.ones_like(timestep_frame_level) * t1
+                    timestep_t2= torch.ones_like(timestep_frame_level) * t2
+                timestep_t2[:,0] = 0
                 pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
                                                                 sample=noisy_input,
-                                                                timestep_t1= torch.ones_like(timestep_frame_level) * t1,
-                                                                timestep_t2= torch.ones_like(timestep_frame_level) * t2,
+                                                                timestep_t1= timestep_t1,
+                                                                timestep_t2= timestep_t2,
                                                                 )
 
             # if i !=2 :
@@ -391,7 +396,7 @@ class ODERegression(BaseModel):
             for idx, t in enumerate(tqdm(inference_timestep[:3])):
 
                 timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
-                timestep_frame_level[:,0] = self.denoising_step_list[-1]
+                timestep_frame_level[:,0] = 0
 
                 timestep = timestep_frame_level.clone()
                 timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
@@ -429,13 +434,19 @@ class ODERegression(BaseModel):
                     if idx == inference_timestep.shape[0]:
                         t1 = inference_timestep[idx]
                         t2 = 0
+                        timestep_t1= torch.ones_like(timestep_frame_level) * t1
+                        timestep_t2= torch.ones_like(timestep_frame_level) * t2
                     else:
                         t1 = inference_timestep[idx]
                         t2 = inference_timestep[idx + 1]
+                        timestep_t1= torch.ones_like(timestep_frame_level) * t1
+                        timestep_t2= torch.ones_like(timestep_frame_level) * t2
+                    timestep_t1[:,0] = 0
+                    timestep_t2[:,0] = 0
                     pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
                                                                     sample=noisy_input,
-                                                                    timestep_t1= torch.ones_like(timestep_frame_level) * t1,
-                                                                    timestep_t2= torch.ones_like(timestep_frame_level) * t2,
+                                                                    timestep_t1= timestep_t1,
+                                                                    timestep_t2= timestep_t2,
                                                                     )
                 
                 trajectory.append(pred_real_image.clone())
