@@ -164,7 +164,7 @@ class GAN(SelfForcingModel):
             concat_time_embeddings=self.concat_time_embeddings
         )
         noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
-        print(f"noisy_fake_logit: {noisy_fake_logit}, noisy_real_logit: {noisy_real_logit}")
+        # print(f"noisy_fake_logit: {noisy_fake_logit}, noisy_real_logit: {noisy_real_logit}")
 
         relative_fake_logit = noisy_fake_logit - noisy_real_logit
         gan_G_loss = F.softplus(-relative_fake_logit.float()).mean() * self.gan_g_weight
@@ -254,7 +254,6 @@ class GAN(SelfForcingModel):
         critic_timestep = torch.concatenate((critic_timestep, critic_timestep), dim=0)
         critic_timestep = critic_timestep * 0
         noisy_latent = torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0)
-        print("#########", noisy_latent.shape)
         _, _, noisy_logit = self.fake_score(
             noisy_image_or_video=noisy_latent,
             conditional_dict=conditional_dict,
