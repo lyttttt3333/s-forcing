@@ -53,8 +53,8 @@ class GAN(SelfForcingModel):
         self.gan_d_weight = getattr(args, "gan_d_weight", 1e-2)
         self.r1_weight = getattr(args, "r1_weight", 0.0)
         self.r2_weight = getattr(args, "r2_weight", 0.0)
-        self.r1_sigma = getattr(args, "r1_sigma", 0.01)
-        self.r2_sigma = getattr(args, "r2_sigma", 0.01)
+        self.r1_sigma = getattr(args, "r1_sigma", 0.1)
+        self.r2_sigma = getattr(args, "r2_sigma", 0.1)
 
     def _run_cls_pred_branch(self,
                              noisy_image_or_video: torch.Tensor,
