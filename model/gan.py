@@ -163,6 +163,7 @@ class GAN(SelfForcingModel):
             concat_time_embeddings=self.concat_time_embeddings
         )
         noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
+        print(f"noisy_fake_logit: {noisy_fake_logit}, noisy_real_logit: {noisy_real_logit}")
 
         relative_fake_logit = noisy_fake_logit - noisy_real_logit
         gan_G_loss = F.softplus(-relative_fake_logit.float()).mean() * self.gan_g_weight
