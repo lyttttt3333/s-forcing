@@ -462,6 +462,7 @@ class SelfForcingTrainingPipeline:
     ) -> torch.Tensor:
         
         noisy_input = noise
+        noisy_input[:,:,:0,:,:] = frame_token.unsqueeze(0)
         # noisy input [1,48,21,30,40]
         timestep_frame_level = torch.ones([1, 21], device=noisy_input.device)
 
