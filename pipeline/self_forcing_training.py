@@ -467,11 +467,10 @@ class SelfForcingTrainingPipeline:
 
         seq_len = int(noisy_input.shape[2]*noisy_input.shape[3]*noisy_input.shape[4]/4)
 
-        inference_timestep = torch.tensor([999, 660, 405, 92]).to(noisy_input.device)
 
-        for idx, t in enumerate(inference_timestep[:3]):
+        for idx, t in enumerate(self.denoising_step_list[:3]):
 
-            timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
+            timestep_frame_level = torch.ones_like(timestep_frame_level) * self.denoising_step_list[idx]
             timestep_frame_level[:,0] = self.denoising_step_list[-1]
 
             timestep = timestep_frame_level.clone()
@@ -486,22 +485,26 @@ class SelfForcingTrainingPipeline:
                 seq_len=seq_len,
             ).to(torch.bfloat16)
 
-            if idx == inference_timestep.shape[0]:
-                t1 = inference_timestep[idx]
+            print("########### 111 pred_real_image shape",pred_real_image.shape)
+
+            if idx == self.denoising_step_list.shape[0]:
+                t1 = self.denoising_step_list[idx]
                 t2 = 0
             else:
-                t1 = inference_timestep[idx]
-                t2 = inference_timestep[idx + 1]
+                t1 = self.denoising_step_list[idx]
+                t2 = self.denoising_step_list[idx + 1]
             pred_real_image = self.generator.scheduler.step_cross(model_output=pred_real_image,
                                                             sample=noisy_input,
                                                             timestep_t1= torch.ones_like(timestep_frame_level) * t1,
                                                             timestep_t2= torch.ones_like(timestep_frame_level) * t2,
                                                             )
             
+            print("########### 222 pred_real_image shape",pred_real_image.shape)
+            
 
             noisy_input = pred_real_image
 
-        return noisy_input, None, None
+        return noisy_input[0], None, None
 
     def detach_kv_cache(self):
         """
