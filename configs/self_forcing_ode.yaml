@@ -48,7 +48,7 @@ num_frame_per_block: 3
 load_raw_video: false
 model_kwargs:
   timestep_shift: 5.0
-  local_attn_size: 9
+  local_attn_size: -1
 num_class: 2
 resume_path: null
 discriminator_warmup_steps: 50
