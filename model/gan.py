@@ -154,6 +154,7 @@ class GAN(SelfForcingModel):
         noisy_real_latent = real_image_or_video
 
         critic_timestep = torch.concatenate((critic_timestep, critic_timestep), dim=0)
+        critic_timestep = critic_timestep * 0
         noisy_latent = torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0)
         _, _, noisy_logit = self.fake_score(
             noisy_image_or_video=noisy_latent,
@@ -251,6 +252,7 @@ class GAN(SelfForcingModel):
         # noisy_fake_logit, noisy_real_logit = noisy_logit.chunk(2, dim=0)
 
         critic_timestep = torch.concatenate((critic_timestep, critic_timestep), dim=0)
+        critic_timestep = critic_timestep * 0
         noisy_latent = torch.concatenate((noisy_fake_latent, noisy_real_latent), dim=0)
         _, _, noisy_logit = self.fake_score(
             noisy_image_or_video=noisy_latent,
