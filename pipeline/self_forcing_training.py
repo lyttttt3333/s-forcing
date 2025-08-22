@@ -504,7 +504,7 @@ class SelfForcingTrainingPipeline:
 
             noisy_input = pred_real_image
 
-        return noisy_input[0], None, None
+        return noisy_input
 
     def detach_kv_cache(self):
         """
