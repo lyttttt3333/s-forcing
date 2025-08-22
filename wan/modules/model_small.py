@@ -602,14 +602,6 @@ class WanModel(ModelMixin, ConfigMixin):
                                 padding=4,
                                 groups=1
                             )
-        self.up_adapter = nn.Conv3d(
-                                in_channels=16,
-                                out_channels=48,
-                                kernel_size=9,  # 1x1x1卷积，仅调整通道数不改变空间维度
-                                stride=1,
-                                padding=4,
-                                groups=1
-                            )
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
         self.blocks = nn.ModuleList([
@@ -800,11 +792,10 @@ class WanModel(ModelMixin, ConfigMixin):
 
         if classify_mode:
             out = torch.stack(x)
-            out = self.up_adapter(out)
             return out, final_x
 
         out = torch.stack(x)
-        return self.up_adapter(out)
+        return out
 
     def _forward_classify(
         self,
@@ -908,7 +899,7 @@ class WanModel(ModelMixin, ConfigMixin):
         # unpatchify
         x = self.unpatchify(x, grid_sizes, c=self.dim // 4)
         out = torch.stack(x)
-        return self.up_adapter(out)
+        return out
 
     def unpatchify(self, x, grid_sizes, c=None):
         r"""
