@@ -316,6 +316,7 @@ class GAN(SelfForcingModel):
                 memory_token = memory_token,
                 inference=True,
             )
+            print("############ 333", latent_video.shape)
             # denoised_timestep_from = None
             # denoised_timestep_to = None
 
