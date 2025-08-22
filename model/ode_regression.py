@@ -371,7 +371,7 @@ class ODERegression(BaseModel):
             noisy_input, timestep_frame_level = self._prepare_generator_input(
                 ode_latent=ode_latent, eval=True)
             # noisy input [1,48,21,30,40]
-            noisy_input = torch.randn_like(noisy_input)
+            noisy_input[:,:,1:,:,:] = torch.randn_like(noisy_input[:,:,1:,:,:])
             noisy_input_initial = noisy_input.clone()
             # noisy_input = torch.randn_like(noisy_input)
 
