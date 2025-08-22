@@ -449,8 +449,6 @@ class Trainer:
             # Only update generator and critic outside the warmup phase
             TRAIN_GENERATOR = not self.in_discriminator_warmup and self.step % self.config.dfake_gen_update_ratio == 0
             EVALUATION = self.step % self.config.eval_interval == 0
-            if self.step <= 10:
-                EVALUATION = True
 
             if TRAIN_GENERATOR:
                 print("(Gen) Training step %d" % self.step)
