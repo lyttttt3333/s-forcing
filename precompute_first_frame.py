@@ -4,7 +4,7 @@ import torch
 import torch.distributed as dist
 import os
 
-from utils.wan_wrapper import WanVAEWrapper
+from utils.wan_wrapper import WanVAEWrapper_small
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
 
@@ -100,7 +100,7 @@ def main():
     device = "cuda"
 
     input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
-    output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/frame_token"
+    output_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/frame_token_2.1"
     os.makedirs(output_dir, exist_ok=True)
     video_files = [
         os.path.join(input_dir, f)
@@ -109,7 +109,7 @@ def main():
     ]
     video_files.sort()
 
-    vae = WanVAEWrapper().to(torch.float16).to(device)
+    vae = WanVAEWrapper_small().to(torch.float16).to(device)
 
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
@@ -120,6 +120,7 @@ def main():
         print(latent.shape)
         torch.save(latent, save_path)
         print(f"[GPU {rank}] done {base_name}")
+        break
 
 if __name__ == "__main__":
     main()
