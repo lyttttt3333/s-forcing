@@ -148,7 +148,7 @@ def load_batch(batch, dtype, device):
 def init_model(device):
     # model = WanDiffusionWrapper()
     # model.requires_grad_(False)
-    model = WanDiffusionWrapper_small(model_name="Wan2.2-TI2V-5B", is_causal=False)
+    model = WanDiffusionWrapper_small(model_name="Wan2.1-T2V-1.3B", is_causal=False)
         
     model = fsdp_wrap(
         model,
