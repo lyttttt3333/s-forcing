@@ -36,14 +36,15 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
     oh = 480
     F = 84
     real_guidance_scale = 5.0
+    frame_num = (F - 1) // vae_stride[0] + 1
     
-    seq_len = ((F - 1) // vae_stride[0] + 1) * (
+    seq_len = frame_num * (
         oh // vae_stride[1]) * (ow // vae_stride[2]) // (
             patch_size[1] * patch_size[2])
     seq_len = int(math.ceil(seq_len / sp_size)) * sp_size
 
     noise = torch.randn(
-        1, 16, (F - 1) // vae_stride[0] + 1,
+        1, 16, frame_num,
         oh // vae_stride[1],
         ow // vae_stride[2],
         dtype=torch.bfloat16,
@@ -67,17 +68,18 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
         for idx, t in enumerate(tqdm(sample_scheduler.timesteps)):
 
             latent_model_input = latent.to(device)
-            timestep = [t]
+            # timestep = [t]
 
-            timestep = torch.stack(timestep).to(device)
-            temp_ts = (mask[0][:, ::2, ::2] * timestep).flatten()
-            temp_ts = torch.cat([
-                temp_ts,
-                temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
-            ])
-            timestep = temp_ts.unsqueeze(0)
+            # timestep = torch.stack(timestep).to(device)
+            # temp_ts = (mask[0][:, ::2, ::2] * timestep).flatten()
+            # temp_ts = torch.cat([
+            #     temp_ts,
+            #     temp_ts.new_ones(seq_len - temp_ts.size(0)) * timestep
+            # ])
+            # timestep = temp_ts.unsqueeze(0)
 
-            timestep_frame_level = timestep.view(1,21,-1)[:,:,0]
+            timestep_frame_level = torch.ones([1,frame_num], dtype=torch.int64, device=device) * t
+            timestep_frame_level = sample_scheduler.timesteps[-1]
 
 
             pred_real_image_cond = real_score(
