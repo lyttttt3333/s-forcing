@@ -247,7 +247,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         # X0 prediction
         if kv_cache is not None:
             flow_pred = self.model(
-                noisy_image_or_video.permute(0, 2, 1, 3, 4),
+                noisy_image_or_video,
                 t=input_timestep, context=context,
                 seq_len=self.seq_len,
                 kv_cache=kv_cache,
@@ -255,19 +255,19 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                 current_start=current_start,
                 cache_start=cache_start,
                 memory_condition = memory_condition,
-            ).permute(0, 2, 1, 3, 4)
+            )
         else:
             
             if clean_x is not None:
                 # teacher forcing
                 flow_pred = self.model(
-                    noisy_image_or_video.permute(0, 2, 1, 3, 4),
+                    noisy_image_or_video,
                     t=input_timestep, context=context,
                     seq_len=self.seq_len,
-                    clean_x=clean_x.permute(0, 2, 1, 3, 4),
+                    clean_x=clean_x,
                     aug_t=aug_t,
                     memory_condition = memory_condition,
-                ).permute(0, 2, 1, 3, 4)
+                )
             else:
                 if classify_mode:
                     flow_pred, logits = self.model(
@@ -284,11 +284,11 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                     flow_pred = flow_pred
                 else:
                     flow_pred = self.model(
-                        noisy_image_or_video.permute(0, 2, 1, 3, 4),
+                        noisy_image_or_video,
                         t=input_timestep, context=context,
                         seq_len=self.seq_len,
                         memory_condition = memory_condition,
-                    ).permute(0, 2, 1, 3, 4)
+                    )# .permute(0, 2, 1, 3, 4)
 
 
 
