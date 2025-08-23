@@ -80,6 +80,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             timestep_frame_level = torch.ones([1,frame_num], dtype=torch.int64, device=device) * t
             timestep_frame_level = sample_scheduler.timesteps[-1]
+            print(f"idx: {idx}, timestep: {timestep_frame_level}")
 
 
             pred_real_image_cond = real_score(
@@ -100,8 +101,6 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 pred_real_image_cond - pred_real_image_uncond
             ) * real_guidance_scale
 
-            print(f"idx: {idx}, timestep: {t}, pred_real_image shape: {pred_real_image.shape}")
-
 
             # pred_real_image = real_score._convert_flow_pred_to_x0(flow_pred=pred_real_image,
             #                                         xt=latent_model_input.unsqueeze(0),
@@ -113,6 +112,8 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 latent_model_input,
                 return_dict=False)[0]
             latent = temp_x0.squeeze(0)
+
+            print("#####",latent.shape)
             # latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
 
