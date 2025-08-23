@@ -284,8 +284,6 @@ class ODERegression(BaseModel):
                 seq_len=seq_len,
             ).to(torch.bfloat16)
 
-            print("############", pred_real_image.shape)
-
             # pred_real_image_uncond = self.generator(
             #     noisy_image_or_video=noisy_input,
             #     conditional_dict=unconditional_dict,
@@ -411,8 +409,6 @@ class ODERegression(BaseModel):
                     timestep=timestep_frame_level,
                     seq_len=seq_len,
                 ).to(torch.bfloat16)
-
-                print("############", pred_real_image.shape)
 
                 # pred_real_image_uncond = self.generator(
                 #     noisy_image_or_video=noisy_input,
