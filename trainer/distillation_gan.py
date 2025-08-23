@@ -79,6 +79,8 @@ class Trainer:
         self.is_main_process = global_rank == 0
         self.causal = config.causal
         self.disable_wandb = config.disable_wandb
+        self.accumulation_iteration = config.total_batch_size
+        self.accumulation_steps = self.accumulation_iteration * self.world_size
 
         # use a random seed for the training
         if config.seed == 0:
@@ -344,6 +346,7 @@ class Trainer:
                 clean_token=clean_token,
                 initial_noise=initial_noise
             )
+            generator_loss = generator_loss / self.accumulation_steps
             print("############# begin generator loss")
             generator_loss.backward()
             generator_grad_norm = self.model.generator.clip_grad_norm_(
@@ -366,7 +369,7 @@ class Trainer:
             frame_token=frame_token,
             memory_token=memory_token
         )
-
+        critic_loss = critic_loss / self.accumulation_steps
         critic_loss.backward()
         critic_grad_norm = self.model.fake_score.clip_grad_norm_(
             self.max_grad_norm_critic)
@@ -464,11 +467,13 @@ class Trainer:
             if TRAIN_GENERATOR:
                 self.generator_optimizer.zero_grad(set_to_none=True)
                 extras_list = []
-                batch = next(self.dataloader)
-                extra = self.fwdbwd_one_step(batch, True)
-                extras_list.append(extra)
+                for i in range(self.accumulation_iteration):
+                    batch = next(self.dataloader)
+                    extra = self.fwdbwd_one_step(batch, True)
+                    extras_list.append(extra)
                 generator_log_dict = merge_dict_list(extras_list)
                 self.generator_optimizer.step()
+                self.generator_optimizer.zero_grad(set_to_none=True)
                 if self.generator_ema is not None:
                     self.generator_ema.update(self.model.generator)
             
@@ -478,11 +483,13 @@ class Trainer:
             # Train the critic
             self.critic_optimizer.zero_grad(set_to_none=True)
             extras_list = []
-            batch = next(self.dataloader)
-            extra = self.fwdbwd_one_step(batch, False)
-            extras_list.append(extra)
+            for i in range(self.accumulation_iteration):
+                batch = next(self.dataloader)
+                extra = self.fwdbwd_one_step(batch, False)
+                extras_list.append(extra)
             critic_log_dict = merge_dict_list(extras_list)
             self.critic_optimizer.step()
+            self.critic_optimizer.zero_grad(set_to_none=True)
 
             # Create EMA params (if not already created)
             if (self.step >= self.config.ema_start_step) and \
