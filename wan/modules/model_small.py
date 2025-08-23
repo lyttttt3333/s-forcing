@@ -603,6 +603,16 @@ class WanModel(ModelMixin, ConfigMixin):
                                 padding=4,
                                 groups=1
                             )
+
+        self.up_adapter = nn.ConvTranspose3d(
+            in_channels=16,
+            out_channels=48,
+            kernel_size=9,
+            stride=1,
+            padding=4,
+            output_padding=0,
+            groups=1
+        )
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
         self.blocks = nn.ModuleList([
@@ -796,6 +806,7 @@ class WanModel(ModelMixin, ConfigMixin):
             return out, final_x
 
         out = torch.stack(x)
+        out = self.up_adapter(x)
         return out
 
     def _forward_classify(
