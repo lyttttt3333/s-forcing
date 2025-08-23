@@ -79,6 +79,8 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             timestep_frame_level = timestep.view(1,21,-1)[:,:,0]
 
+            print(latent_model_input.shape, "########")
+
             pred_real_image_cond = real_score(
                 noisy_image_or_video=latent_model_input.unsqueeze(0),
                 conditional_dict=cond_dict,
