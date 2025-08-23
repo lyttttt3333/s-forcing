@@ -289,7 +289,7 @@ class CausalWanAttentionBlock(nn.Module):
         freqs,
         context,
         context_lens,
-        block_mask,
+        block_mask=None,
         kv_cache=None,
         crossattn_cache=None,
         current_start=0,
