@@ -303,8 +303,6 @@ class CausalWanAttentionBlock(nn.Module):
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
-        print("x shape", x.shape)
-        print("e shape", e.shape)
         num_frames, frame_seqlen = e.shape[1], x.shape[1] // e.shape[1]
         # assert e.dtype == torch.float32
         # with amp.autocast(dtype=torch.float32):
@@ -362,6 +360,7 @@ class CausalHead(nn.Module):
         """
         # assert e.dtype == torch.float32
         # with amp.autocast(dtype=torch.float32):
+        print("########",x.shape, e.shape)
         num_frames, frame_seqlen = e.shape[1], x.shape[1] // e.shape[1]
         e = (self.modulation.unsqueeze(1) + e).chunk(2, dim=2)
         x = (self.head(self.norm(x).unflatten(dim=1, sizes=(num_frames, frame_seqlen)) * (1 + e[1]) + e[0]))
@@ -1044,7 +1043,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # arguments
         kwargs = dict(
-            e=e0,
+            e=e0.unsqueeze(0),
             seq_lens=seq_lens,
             grid_sizes=grid_sizes,
             freqs=self.freqs,
