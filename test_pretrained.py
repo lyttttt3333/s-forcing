@@ -84,7 +84,7 @@ with torch.no_grad():
                 save_path=f"tmp/test_0200_{i}.mp4",
                 fps=16)
     for i in range(latent_tensor.shape[0]):
-        wandb.log({f"{i}_video": wandb.Video(f"tmp/test_1840_{i}.mp4", fps=16, format="mp4")})
+        wandb.log({f"{i}_video": wandb.Video(f"tmp/test_0200_{i}.mp4", fps=16, format="mp4")})
 
 # output_path = "pred_video.mp4"
 # save_video(video[0], output_path, fps=16, quality=5)
