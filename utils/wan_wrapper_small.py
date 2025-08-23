@@ -243,9 +243,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         else:
             input_timestep = timestep.view(-1)
 
-        print(f"Input timestep shape: {input_timestep.shape}")
-        print(f"Input noisy_image_or_video shape: {noisy_image_or_video.shape}")
-
         logits = None
         # X0 prediction
         if kv_cache is not None:
