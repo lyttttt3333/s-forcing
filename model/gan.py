@@ -315,6 +315,9 @@ class GAN(SelfForcingModel):
             "critic_timestep": critic_timestep.detach(),
             'real_logit': noisy_real_logit.detach(),
             'fake_logit': noisy_fake_logit.detach(),
+            'gan_D_loss': gan_D_loss.detach(),
+            'r1_loss': r1_loss.detach(),
+            'r2_loss': r2_loss.detach(),
         }
 
         loss = gan_D_loss  + r1_loss + r2_loss
