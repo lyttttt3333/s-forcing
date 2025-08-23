@@ -242,7 +242,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         #     input_timestep = timestep[:, 0]
         # else:
         input_timestep = timestep.view(-1)
-        print(f"input_timestep: {input_timestep.shape}")
 
         logits = None
         # X0 prediction

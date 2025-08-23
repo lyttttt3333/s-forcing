@@ -112,7 +112,6 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 return_dict=False)[0]
             latent = temp_x0.squeeze(0)
 
-            print("#####",latent.shape)
             # latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
 
