@@ -100,8 +100,6 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 pred_real_image_cond - pred_real_image_uncond
             ) * real_guidance_scale
 
-            print("pred_real_image shape:", pred_real_image.shape)
-
 
             # pred_real_image = real_score._convert_flow_pred_to_x0(flow_pred=pred_real_image,
             #                                         xt=latent_model_input.unsqueeze(0),
@@ -113,11 +111,9 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 latent_model_input,
                 return_dict=False)[0]
             latent = temp_x0
-            print("temp_x0 shape:", temp_x0.shape)
 
             # latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
-            print("latent shape",latent.shape)
 
             if idx in select_index:
                 # print(t)
@@ -136,7 +132,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             # latent = (1. - mask) * z + mask * latent
 
-    trajectory = torch.stack(trajectory, dim=1)
+    trajectory = torch.stack(trajectory, dim=0)
     # trajectory = trajectory[:, select_index]
 
     return trajectory
