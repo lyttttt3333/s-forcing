@@ -241,7 +241,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         if self.uniform_timestep:
             input_timestep = timestep[:, 0]
         else:
-            input_timestep = timestep
+            input_timestep = timestep.view(-1)
 
         print(f"Input timestep shape: {input_timestep.shape}")
         print(f"Input noisy_image_or_video shape: {noisy_image_or_video.shape}")
