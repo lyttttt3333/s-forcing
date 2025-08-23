@@ -238,10 +238,11 @@ class WanDiffusionWrapper_small(torch.nn.Module):
             context = prompt_embeds
 
         # [B, F] -> [B]
-        if self.uniform_timestep:
-            input_timestep = timestep[:, 0]
-        else:
-            input_timestep = timestep.view(-1)
+        # if self.uniform_timestep:
+        #     input_timestep = timestep[:, 0]
+        # else:
+        input_timestep = timestep.view(-1)
+        print(f"input_timestep: {input_timestep.shape}")
 
         logits = None
         # X0 prediction
