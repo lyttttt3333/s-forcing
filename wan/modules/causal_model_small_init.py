@@ -303,8 +303,6 @@ class CausalWanAttentionBlock(nn.Module):
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
-        print("x shape", x.shape)
-        print("e shape", e.shape)
         num_frames, frame_seqlen = e.shape[1], x.shape[1] // e.shape[1]
         # assert e.dtype == torch.float32
         # with amp.autocast(dtype=torch.float32):
@@ -366,29 +364,6 @@ class CausalHead(nn.Module):
         e = (self.modulation.unsqueeze(1) + e).chunk(2, dim=2)
         x = (self.head(self.norm(x).unflatten(dim=1, sizes=(num_frames, frame_seqlen)) * (1 + e[1]) + e[0]))
         return x
-
-
-class DimensionReductionAdapter(nn.Module):
-    def __init__(self, input_dim=2048, output_dim=1536, use_activation=True):
-        super().__init__()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-
-        self.main_proj = nn.Linear(input_dim, output_dim)
-        
-        self.use_activation = use_activation
-        if use_activation:
-            self.activation = nn.GELU()  
-            self.norm = nn.LayerNorm(output_dim) 
-        
-    def forward(self, x):
-        print(x.shape)
-        x = self.main_proj(x)
-        if self.use_activation:
-            x = self.activation(x)
-            x = self.norm(x)
-        return x
-
 
 
 class CausalWanModel(ModelMixin, ConfigMixin):
@@ -484,34 +459,11 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         self.text_embedding = nn.Sequential(
             nn.Linear(text_dim, dim), nn.GELU(approximate='tanh'),
             nn.Linear(dim, dim))
-        self.state_proj = nn.Sequential(
-            nn.Linear(2048, dim), nn.GELU(approximate='tanh'),
-            nn.Linear(dim, dim))
 
         self.time_embedding = nn.Sequential(
             nn.Linear(freq_dim, dim), nn.SiLU(), nn.Linear(dim, dim))
         self.time_projection = nn.Sequential(
             nn.SiLU(), nn.Linear(dim, dim * 6))
-
-        self.down_adapter = nn.Conv3d(
-                                in_channels=48,
-                                out_channels=16,
-                                kernel_size=9,  # 1x1x1卷积，仅调整通道数不改变空间维度
-                                stride=1,
-                                padding=4,
-                                groups=1
-                            )
-        self.up_adapter = nn.Conv3d(
-                                in_channels=16,
-                                out_channels=48,
-                                kernel_size=9,  # 1x1x1卷积，仅调整通道数不改变空间维度
-                                stride=1,
-                                padding=4,
-                                groups=1
-                            )
-
-
-        #DimensionReductionAdapter()
 
         # blocks
         cross_attn_type = 't2v_cross_attn' if model_type == 't2v' else 'i2v_cross_attn'
@@ -768,8 +720,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         kv_cache: dict = None,
         crossattn_cache: dict = None,
         current_start: int = 0,
-        cache_start: int = 0,
-        memory_condition = False
+        cache_start: int = 0
     ):
         r"""
         Run the diffusion model with kv caching.
@@ -807,8 +758,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             x = [torch.cat([u, v], dim=0) for u, v in zip(x, y)]
 
         # embeddings
-        x = [self.down_adapter(u.unsqueeze(0)) for u in x]
-        x = [self.patch_embedding(u) for u in x]
+        x = [self.patch_embedding(u.unsqueeze(0)) for u in x]
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])
         x = [u.flatten(2).transpose(1, 2) for u in x]
@@ -832,33 +782,20 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # context
         context_lens = None
-        if not memory_condition:
-            context = self.text_embedding(
-                torch.stack([
-                    torch.cat(
-                        [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
-                    for u in context
-                ]))
+        context = self.text_embedding(
+            torch.stack([
+                torch.cat(
+                    [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
+                for u in context
+            ]))
 
-            if clip_fea is not None:
-                context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
-                context = torch.concat([context_clip, context], dim=1)
-        else:
-            text_context, state_context = context
-            text_context = self.text_embedding(
-                    torch.stack([
-                        torch.cat(
-                            [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
-                        for u in text_context
-                    ]))
-            state_context = self.state_proj(
-                    torch.stack([ u for u in state_context ]))
-            context = torch.concat([text_context, state_context], dim=1)
-
+        if clip_fea is not None:
+            context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
+            context = torch.concat([context_clip, context], dim=1)
 
         # arguments
         kwargs = dict(
-            e=e0.unsqueeze(0),
+            e=e0,
             seq_lens=seq_lens,
             grid_sizes=grid_sizes,
             freqs=self.freqs,
@@ -890,7 +827,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                 kwargs.update(
                     {
                         "kv_cache": kv_cache[block_index],
-                        #"crossattn_cache": crossattn_cache[block_index],
+                        "crossattn_cache": crossattn_cache[block_index],
                         "current_start": current_start,
                         "cache_start": cache_start
                     }
@@ -901,8 +838,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         x = self.head(x, e.unflatten(dim=0, sizes=t.shape).unsqueeze(2))
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
-        out = torch.stack(x)
-        return self.up_adapter(out)
+        return torch.stack(x)
 
     def _forward_train(
         self,
@@ -914,7 +850,6 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         aug_t=None,
         clip_fea=None,
         y=None,
-        memory_condition = False
     ):
         r"""
         Forward pass through the diffusion model
@@ -975,8 +910,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             x = [torch.cat([u, v], dim=0) for u, v in zip(x, y)]
 
         # embeddings
-        x = [self.down_adapter(u.unsqueeze(0)) for u in x]
-        x = [self.patch_embedding(u) for u in x]
+        x = [self.patch_embedding(u.unsqueeze(0)) for u in x]
 
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])
@@ -998,33 +932,20 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
 
         # context
-        # context
         context_lens = None
-        if not memory_condition:
-            context = self.text_embedding(
-                torch.stack([
-                    torch.cat(
-                        [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
-                    for u in context
-                ]))
+        context = self.text_embedding(
+            torch.stack([
+                torch.cat(
+                    [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
+                for u in context
+            ]))
 
-            if clip_fea is not None:
-                context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
-                context = torch.concat([context_clip, context], dim=1)
-        else:
-            text_context, state_context = context
-            text_context = self.text_embedding(
-                    torch.stack([
-                        torch.cat(
-                            [u, u.new_zeros(self.text_len - u.size(0), u.size(1))])
-                        for u in text_context
-                    ]))
-            state_context = self.state_proj(
-                    torch.stack([ u for u in state_context ]))
-            context = torch.concat([text_context, state_context], dim=1)
+        if clip_fea is not None:
+            context_clip = self.img_emb(clip_fea)  # bs x 257 x dim
+            context = torch.concat([context_clip, context], dim=1)
 
         if clean_x is not None:
-            clean_x = [self.patch_embedding(u) for u in clean_x]
+            clean_x = [self.patch_embedding(u.unsqueeze(0)) for u in clean_x]
             clean_x = [u.flatten(2).transpose(1, 2) for u in clean_x]
 
             seq_lens_clean = torch.tensor([u.size(1) for u in clean_x], dtype=torch.long)
@@ -1075,8 +996,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
-        out = torch.stack(x)
-        return self.up_adapter(out)
+        return torch.stack(x)
 
     def forward(
         self,
@@ -1136,5 +1056,3 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # init output layer
         nn.init.zeros_(self.head.head.weight)
-
-
