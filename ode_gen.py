@@ -7,7 +7,7 @@ from utils.distributed import EMA_FSDP, fsdp_wrap, fsdp_state_dict, launch_distr
 from peft import PeftModel, LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from model import CausVid, DMD, SiD, GAN, DMD_GEN
 from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
-from utils.wan_wrapper import WanDiffusionWrapper
+from utils.wan_wrapper_small import WanDiffusionWrapper_small
 
 from utils.misc import (
     set_seed,
@@ -81,7 +81,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             pred_real_image_cond = real_score(
                 noisy_image_or_video=latent_model_input.unsqueeze(0),
                 conditional_dict=cond_dict,
-                timestep=timestep,
+                timestep=timestep_frame_level,
                 seq_len=seq_len,
             )
 
@@ -145,8 +145,11 @@ def load_batch(batch, dtype, device):
     return batch
 
 def init_model(device):
-    model = WanDiffusionWrapper()
-    model.requires_grad_(False)
+    fake_model_name = "Wan2.1-T2V-1.3B"
+
+
+    generator = WanDiffusionWrapper_small(model_name=fake_model_name, is_causal=False)
+    generator.model.requires_grad_(False)
         
     model = fsdp_wrap(
         model,
@@ -222,16 +225,16 @@ if __name__ == "__main__":
                                 device=device,
                                 select_index=[0, 33, 41, 46, 49])
         
-        torch.save(
-            trajectory.cpu().detach(),
-            os.path.join(output_folder, f"{base_name}.pt")
-        )
         # torch.save(
-        #     {base_name: trajectory.cpu().detach()},
-        #     "test.pt"
-        #     # os.path.join(output_folder, f"test.pt")
+        #     trajectory.cpu().detach(),
+        #     os.path.join(output_folder, f"{base_name}.pt")
         # )
-        # break
+        torch.save(
+            {base_name: trajectory.cpu().detach()},
+            "test.pt"
+            # os.path.join(output_folder, f"test.pt")
+        )
+        break
 
         print(f"GPU[{global_rank}]: {base_name} {trajectory.shape}")
 

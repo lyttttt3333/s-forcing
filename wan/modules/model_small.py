@@ -716,6 +716,8 @@ class WanModel(ModelMixin, ConfigMixin):
             sinusoidal_embedding_1d(self.freq_dim, t).type_as(x))
         e0 = self.time_projection(e).unflatten(1, (6, self.dim))
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
+        e = e.unsqueeze(0)
+        e0 = e0.unsqueeze(0)
 
         # context
         context_lens = None
@@ -795,7 +797,7 @@ class WanModel(ModelMixin, ConfigMixin):
                 final_x = cls_pred_branch(final_x.view(final_x.shape[0], -1))
 
         # head
-        x = self.head(x, e)
+        x = self.head(x, e.unsqueeze(2))
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
