@@ -168,7 +168,15 @@ def init_model(device):
 
     meta_path = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/meta.csv"
     root_path = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025"
-    dataset = MixedDataset(meta_path, root_path)
+    input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
+    video_files = [
+        os.path.basename(f).split(".")[0]
+        for f in os.listdir(input_dir)
+        if f.lower().endswith(".mp4")
+    ]
+    video_files.sort()
+    video_files = video_files[:8]
+    dataset = MixedDataset(meta_path, root_path, base_name_list= video_files)
 
     return model, scheduler, unconditional_dict, dataset
     
@@ -198,16 +206,6 @@ if __name__ == "__main__":
 
     if global_rank == 0:
         os.makedirs(output_folder, exist_ok=True)
-
-    input_dir = "/lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/videos"
-    video_files = [
-        os.path.basename(f).split(".")[0]
-        for f in os.listdir(input_dir)
-        if f.lower().endswith(".mp4")
-    ]
-    video_files.sort()
-    video_files = video_files[:8]
-    print(video_files)
 
     for index in tqdm(range(int(math.ceil(len(dataset) / dist.get_world_size()))), disable=dist.get_rank() != 0):
         prompt_index = index * dist.get_world_size() + dist.get_rank()

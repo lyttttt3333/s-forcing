@@ -40,11 +40,13 @@ class TextDataset(Dataset):
         return self.prompt_list
 
 class MixedDataset(Dataset):
-    def __init__(self, meta_path, root_dir):
+    def __init__(self, meta_path, root_dir, base_name_list=None):
 
         df = pd.read_csv(meta_path)
-        self.base_name_list = df["basename"].astype(str).tolist()[:8]
-        print(self.base_name_list)
+        if base_name_list is None:
+            self.base_name_list = df["basename"].astype(str).tolist()[:8]
+        else:
+            self.base_name_list = base_name_list
         self.root_dir = root_dir
 
     def __len__(self):
