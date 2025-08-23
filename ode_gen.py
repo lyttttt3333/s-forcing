@@ -80,7 +80,6 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             timestep_frame_level = torch.ones([1,frame_num], dtype=torch.int64, device=device) * t
             timestep_frame_level[:,0] = sample_scheduler.timesteps[-1]
-            print(f"idx: {idx}, timestep: {timestep_frame_level}")
 
 
             pred_real_image_cond = real_score(
