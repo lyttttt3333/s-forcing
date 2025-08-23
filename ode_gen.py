@@ -31,7 +31,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
     z = frame_token
     sp_size = 1
     patch_size = (1, 2, 2)
-    vae_stride = (4, 16, 16)
+    vae_stride = (4, 8, 8)
     ow = 640
     oh = 480
     F = 84
