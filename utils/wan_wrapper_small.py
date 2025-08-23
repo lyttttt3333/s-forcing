@@ -227,7 +227,8 @@ class WanDiffusionWrapper_small(torch.nn.Module):
         clean_x: Optional[torch.Tensor] = None,
         aug_t: Optional[torch.Tensor] = None,
         cache_start: Optional[int] = None,
-        memory_condition = False
+        memory_condition = False,
+        seq_len = None,
     ) -> torch.Tensor:
         prompt_embeds = conditional_dict["prompt_embeds"]
         if memory_condition:

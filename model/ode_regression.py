@@ -227,7 +227,7 @@ class ODERegression(BaseModel):
 
         return loss, log_dict
 
-    def train_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict, step) -> Tuple[torch.Tensor, dict]:
+    def train_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noisy latents and compute the ODE regression loss.
         Input:
@@ -360,7 +360,7 @@ class ODERegression(BaseModel):
         return loss_sum, log_dict
 
 
-    def eval_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict, unconditional_dict:dict) -> Tuple[torch.Tensor, dict]:
+    def eval_multi_step(self, ode_latent: torch.Tensor, conditional_dict: dict) -> Tuple[torch.Tensor, dict]:
         """
         Generate image/videos from noisy latents and compute the ODE regression loss.
         Input:
