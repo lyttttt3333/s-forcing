@@ -360,7 +360,6 @@ class CausalHead(nn.Module):
         """
         # assert e.dtype == torch.float32
         # with amp.autocast(dtype=torch.float32):
-        print("########",x.shape, e.shape)
         num_frames, frame_seqlen = e.shape[1], x.shape[1] // e.shape[1]
         e = (self.modulation.unsqueeze(1) + e).chunk(2, dim=2)
         x = (self.head(self.norm(x).unflatten(dim=1, sizes=(num_frames, frame_seqlen)) * (1 + e[1]) + e[0]))
@@ -381,7 +380,6 @@ class DimensionReductionAdapter(nn.Module):
             self.norm = nn.LayerNorm(output_dim) 
         
     def forward(self, x):
-        print(x.shape)
         x = self.main_proj(x)
         if self.use_activation:
             x = self.activation(x)
