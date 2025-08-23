@@ -252,7 +252,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
             flow_pred = self.model(
                 noisy_image_or_video,
                 t=input_timestep, context=context,
-                seq_len=self.seq_len,
+                seq_len=seq_len,
                 kv_cache=kv_cache,
                 crossattn_cache=crossattn_cache,
                 current_start=current_start,
@@ -267,7 +267,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                 flow_pred = self.model(
                     noisy_image_or_video,
                     t=input_timestep, context=context,
-                    seq_len=self.seq_len,
+                    seq_len=seq_len,
                     clean_x=clean_x,
                     aug_t=aug_t,
                     memory_condition = memory_condition,
@@ -277,7 +277,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                     flow_pred, logits = self.model(
                         noisy_image_or_video,
                         t=input_timestep, context=context,
-                        seq_len=self.seq_len,
+                        seq_len=seq_len,
                         classify_mode=True,
                         register_tokens=self._register_tokens,
                         cls_pred_branch=self._cls_pred_branch,
@@ -290,9 +290,8 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                     flow_pred = self.model(
                         noisy_image_or_video,
                         t=input_timestep, context=context,
-                        seq_len=self.seq_len,
-                        memory_condition = memory_condition,
                         seq_len=seq_len,
+                        memory_condition = memory_condition,
                     )# .permute(0, 2, 1, 3, 4)
 
 
