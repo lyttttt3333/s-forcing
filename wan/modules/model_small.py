@@ -333,6 +333,7 @@ class WanAttentionBlock(nn.Module):
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
+        print("### attention block input", x.shape, e.shape)
         # assert e.dtype == torch.float32
         # with amp.autocast(dtype=torch.float32):
         e = (self.modulation + e).chunk(6, dim=1)
@@ -342,7 +343,6 @@ class WanAttentionBlock(nn.Module):
         y = self.self_attn(
             self.norm1(x) * (1 + e[1]) + e[0], seq_lens, grid_sizes,
             freqs)
-        print("### self attention output", y.shape)
         # with amp.autocast(dtype=torch.float32):
         x = x + y * e[2]
 
