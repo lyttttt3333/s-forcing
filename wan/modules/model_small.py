@@ -872,6 +872,8 @@ class WanModel(ModelMixin, ConfigMixin):
             sinusoidal_embedding_1d(self.freq_dim, t).type_as(x))
         e0 = self.time_projection(e).unflatten(1, (6, self.dim))
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
+        print("### e0 shape", e0.shape)
+        print("### e shape", e.shape)
 
         # context
         context_lens = None
