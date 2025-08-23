@@ -87,7 +87,7 @@ def encode_images(vae:WanVAE, img, device):
     # to tensor
     img = TF.to_tensor(cropped).sub_(0.5).div_(0.5).to(device).unsqueeze(1)
     img.to(torch.bfloat16)
-    z = vae.encode([img])[0]
+    z = vae.encode([img])[0].unsqueeze(0)
     return z 
 
 

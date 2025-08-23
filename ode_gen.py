@@ -43,7 +43,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
     seq_len = int(math.ceil(seq_len / sp_size)) * sp_size
 
     noise = torch.randn(
-        16, (F - 1) // vae_stride[0] + 1,
+        1, 16, (F - 1) // vae_stride[0] + 1,
         oh // vae_stride[1],
         ow // vae_stride[2],
         dtype=torch.bfloat16,
@@ -57,7 +57,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
         # sample videos
         latent = noise # shape [48, 21, 40, 60]
         mask = torch.ones_like(noise)
-        mask[:, 0] = 0
+        mask[:, :, 0] = 0
         latent = (1. - mask) * z + mask * latent
 
         trajectory = []
@@ -79,17 +79,16 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             timestep_frame_level = timestep.view(1,21,-1)[:,:,0]
 
-            print(latent_model_input.shape, "########")
 
             pred_real_image_cond = real_score(
-                noisy_image_or_video=latent_model_input.unsqueeze(0),
+                noisy_image_or_video=latent_model_input,
                 conditional_dict=cond_dict,
                 timestep=timestep_frame_level,
                 seq_len=seq_len,
             )
 
             pred_real_image_uncond = real_score(
-                noisy_image_or_video=latent_model_input.unsqueeze(0),
+                noisy_image_or_video=latent_model_input,
                 conditional_dict=uncond_dict,
                 timestep=timestep_frame_level,
                 seq_len=seq_len,
@@ -99,6 +98,8 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 pred_real_image_cond - pred_real_image_uncond
             ) * real_guidance_scale
 
+            print(f"idx: {idx}, timestep: {t}, pred_real_image shape: {pred_real_image.shape}")
+
 
             # pred_real_image = real_score._convert_flow_pred_to_x0(flow_pred=pred_real_image,
             #                                         xt=latent_model_input.unsqueeze(0),
@@ -107,7 +108,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
             temp_x0 = sample_scheduler.step(
                 pred_real_image.unsqueeze(0),
                 t,
-                latent_model_input.unsqueeze(0),
+                latent_model_input,
                 return_dict=False)[0]
             latent = temp_x0.squeeze(0)
             # latent = pred_real_image.squeeze(0)
