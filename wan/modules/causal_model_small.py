@@ -897,7 +897,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
                 x = block(x, **kwargs)
 
         # head
-        x = self.head(x, e.unflatten(dim=0, sizes=t.shape).unsqueeze(2))
+        x = self.head(x, e.unflatten(dim=0, sizes=t.shape).unsqueeze(0).unsqueeze(2))
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
         out = torch.stack(x)
