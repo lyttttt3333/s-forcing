@@ -828,7 +828,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         e0 = self.time_projection(e).unflatten(
             1, (6, self.dim)).unflatten(dim=0, sizes=t.shape)
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
-        print("######",e.shape, e0.shape)
+        e = e.unsqueeze(0)
+        e0 = e0.unsqueeze(0)
 
         # context
         context_lens = None
@@ -997,7 +998,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             1, (6, self.dim)).unflatten(dim=0, sizes=t.shape)
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
-        print("######",e.shape, e0.shape)
+        e = e.unsqueeze(0)
+        e0 = e0.unsqueeze(0)
 
         # context
         # context
@@ -1046,7 +1048,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # arguments
         kwargs = dict(
-            e=e0.unsqueeze(0),
+            e=e0,
             seq_lens=seq_lens,
             grid_sizes=grid_sizes,
             freqs=self.freqs,
