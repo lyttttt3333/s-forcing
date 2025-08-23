@@ -4,7 +4,7 @@ import torch
 import torch.distributed as dist
 import os
 
-from utils.wan_wrapper import WanVAEWrapper_small
+from wan.modules.vae_small import WanVAE
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy 
 
@@ -109,7 +109,7 @@ def main():
     ]
     video_files.sort()
 
-    vae = WanVAEWrapper_small().to(torch.float16).to(device)
+    vae = WanVAE().to(torch.float16).to(device)
 
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
