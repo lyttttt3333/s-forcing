@@ -7,6 +7,7 @@ from utils.distributed import EMA_FSDP, fsdp_wrap, fsdp_state_dict, launch_distr
 from peft import PeftModel, LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from model import CausVid, DMD, SiD, GAN, DMD_GEN
 from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
+from utils.wan_wrapper import WanDiffusionWrapper
 from utils.wan_wrapper_small import WanDiffusionWrapper_small
 
 from utils.misc import (
@@ -145,11 +146,9 @@ def load_batch(batch, dtype, device):
     return batch
 
 def init_model(device):
-    fake_model_name = "Wan2.1-T2V-1.3B"
-
-
-    generator = WanDiffusionWrapper_small(model_name=fake_model_name, is_causal=False)
-    generator.model.requires_grad_(False)
+    # model = WanDiffusionWrapper()
+    # model.requires_grad_(False)
+    model = WanDiffusionWrapper_small(model_name="Wan2.2-TI2V-5B", is_causal=False)
         
     model = fsdp_wrap(
         model,
