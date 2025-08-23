@@ -72,7 +72,7 @@ class WanVAEWrapper_small(torch.nn.Module):
         self.std = torch.tensor(std, dtype=torch.float32)
 
         # init model
-        vae_path = "wan_models/Wan2.1-TI2V-5B/Wan2.2_VAE.pth"
+        vae_path = "wan_models/Wan2.1-T2V-1.3B/Wan2.1_VAE.pth"
         print(f"Load from {vae_path}")
         self.model = _video_vae(
             pretrained_path=vae_path,
