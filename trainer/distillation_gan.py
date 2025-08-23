@@ -80,7 +80,6 @@ class Trainer:
         self.causal = config.causal
         self.disable_wandb = config.disable_wandb
         self.accumulation_iteration = config.total_batch_size
-        self.accumulation_steps = self.accumulation_iteration * self.world_size
 
         # use a random seed for the training
         if config.seed == 0:
@@ -346,7 +345,7 @@ class Trainer:
                 clean_token=clean_token,
                 initial_noise=initial_noise
             )
-            generator_loss = generator_loss / self.accumulation_steps
+            generator_loss = generator_loss / self.accumulation_iteration
             print("############# begin generator loss")
             generator_loss.backward()
             generator_grad_norm = self.model.generator.clip_grad_norm_(
@@ -369,7 +368,7 @@ class Trainer:
             frame_token=frame_token,
             memory_token=memory_token
         )
-        critic_loss = critic_loss / self.accumulation_steps
+        critic_loss = critic_loss / self.accumulation_iteration
         critic_loss.backward()
         critic_grad_norm = self.model.fake_score.clip_grad_norm_(
             self.max_grad_norm_critic)
