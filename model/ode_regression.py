@@ -398,7 +398,7 @@ class ODERegression(BaseModel):
             for idx, t in enumerate(tqdm(inference_timestep[:3])):
 
                 timestep_frame_level = torch.ones_like(timestep_frame_level) * inference_timestep[idx]
-                timestep_frame_level[:,0] = 0
+                timestep_frame_level[:,0] = inference_timestep[-1]
 
                 timestep = timestep_frame_level.clone()
                 timestep = timestep.unsqueeze(-1).expand(-1, -1, int(noisy_input.shape[3]*noisy_input.shape[4]/4))
@@ -408,7 +408,7 @@ class ODERegression(BaseModel):
                 pred_real_image = self.generator(
                     noisy_image_or_video=noisy_input,
                     conditional_dict=conditional_dict,
-                    timestep=timestep,
+                    timestep=timestep_frame_level,
                     seq_len=seq_len,
                 ).to(torch.bfloat16)
 
