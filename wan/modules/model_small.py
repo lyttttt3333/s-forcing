@@ -344,6 +344,7 @@ class WanAttentionBlock(nn.Module):
 
         # cross-attention & ffn function
         def cross_attn_ffn(x, context, context_lens, e):
+            print(f"cross_attn_ffn: {context.shape}, {x.shape}")
             x = x + self.cross_attn(self.norm3(x), context, context_lens)
             y = self.ffn(self.norm2(x) * (1 + e[4]) + e[3])
             # with amp.autocast(dtype=torch.float32):
