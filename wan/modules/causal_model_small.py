@@ -858,7 +858,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # arguments
         kwargs = dict(
-            e=e0,
+            e=e0.unsqueeze(0),
             seq_lens=seq_lens,
             grid_sizes=grid_sizes,
             freqs=self.freqs,
@@ -1044,7 +1044,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # arguments
         kwargs = dict(
-            e=e0,
+            e=e0.unsqueeze(0),
             seq_lens=seq_lens,
             grid_sizes=grid_sizes,
             freqs=self.freqs,
