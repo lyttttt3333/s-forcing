@@ -252,7 +252,6 @@ class WanDiffusionWrapper_small(torch.nn.Module):
             flow_pred = self.model(
                 noisy_image_or_video,
                 t=input_timestep, context=context,
-                seq_len=seq_len,
                 kv_cache=kv_cache,
                 crossattn_cache=crossattn_cache,
                 current_start=current_start,
