@@ -46,7 +46,7 @@ def get_first_frame_as_pil(video_path: str) -> Image.Image:
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return Image.fromarray(frame_rgb)
 
-def encode_images(vae, img, device):
+def encode_images(vae:WanVAE, img, device):
     # ih, iw = img.height, img.width
     # patch_size = (1, 2, 2)
     # vae_stride = (4, 16, 16)
@@ -87,7 +87,7 @@ def encode_images(vae, img, device):
     # to tensor
     img = TF.to_tensor(cropped).sub_(0.5).div_(0.5).to(device).unsqueeze(1)
     img.to(torch.bfloat16)
-    z = vae.encode_to_latent([img])[0]
+    z = vae.encode([img])[0]
     return z 
 
 
@@ -109,7 +109,7 @@ def main():
     ]
     video_files.sort()
 
-    vae = WanVAE().to(torch.float16).to(device)
+    vae = WanVAE(dtype=torch.float16,device=device)
 
     for i in range(rank, len(video_files), world_size):
         video_path = video_files[i]
