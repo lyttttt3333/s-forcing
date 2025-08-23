@@ -114,10 +114,11 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
 
             # latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
+            print(latent.shape)
 
             if idx in select_index:
                 # print(t)
-                trajectory.append(latent.unsqueeze(0))
+                trajectory.append(latent)
 
             if idx == len(sample_scheduler.timesteps) - 1:
                 break
