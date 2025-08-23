@@ -74,6 +74,7 @@ latent = torch.load(video_files[0], map_location="cpu")#.to("cuda")[0].to(torch.
 for key in latent.keys():
     latent_tensor = latent[key]
 latent_tensor = latent_tensor.to("cuda").to(torch.bfloat16)[0]
+print(latent_tensor.shape)
 # latent = torch.zeros([48, 21, 30, 40], device="cuda", dtype=torch.bfloat16) 
 # video = torch.zeros([3, 4, 480, 640], device="cuda", dtype=torch.bfloat16) 
 with torch.no_grad():
