@@ -513,6 +513,9 @@ class Trainer:
                         "real_logit": critic_log_dict["real_logit"].mean().item(),
                         "fake_logit": critic_log_dict["fake_logit"].mean().item(),
                         "relative_logit":  - critic_log_dict["fake_logit"].mean().item() + critic_log_dict["real_logit"].mean().item(),
+                        "r1_loss": critic_log_dict["r1_loss"].mean().item(),
+                        "r2_loss": critic_log_dict["r2_loss"].mean().item(),
+                        "gan_D_loss": critic_log_dict["gan_D_loss"].mean().item(),
                     }
                 )
 
