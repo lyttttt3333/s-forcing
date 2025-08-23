@@ -823,11 +823,18 @@ class CausalWanModel(ModelMixin, ConfigMixin):
 
         # time embeddings
         # with amp.autocast(dtype=torch.float32):
+        # e = self.time_embedding(
+        #     sinusoidal_embedding_1d(self.freq_dim, t.flatten()).type_as(x))
+        # e0 = self.time_projection(e).unflatten(
+        #     1, (6, self.dim)).unflatten(dim=0, sizes=t.shape)
+        bt = t.size(0)
+        t = t.flatten()
         e = self.time_embedding(
-            sinusoidal_embedding_1d(self.freq_dim, t.flatten()).type_as(x))
-        e0 = self.time_projection(e).unflatten(
-            1, (6, self.dim)).unflatten(dim=0, sizes=t.shape)
+            sinusoidal_embedding_1d(self.freq_dim,
+                                    t).unflatten(0, (bt, seq_len)).float())
+        e0 = self.time_projection(e).unflatten(2, (6, self.dim))
         # assert e.dtype == torch.float32 and e0.dtype == torch.float32
+        print("######",e.shape, e0.shape)
 
         # context
         context_lens = None
