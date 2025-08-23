@@ -100,21 +100,24 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
                 pred_real_image_cond - pred_real_image_uncond
             ) * real_guidance_scale
 
+            print("pred_real_image shape:", pred_real_image.shape)
+
 
             # pred_real_image = real_score._convert_flow_pred_to_x0(flow_pred=pred_real_image,
             #                                         xt=latent_model_input.unsqueeze(0),
             #                                         timestep=timestep_frame_level.reshape(-1))
 
             temp_x0 = sample_scheduler.step(
-                pred_real_image.unsqueeze(0),
+                pred_real_image,
                 t,
                 latent_model_input,
                 return_dict=False)[0]
-            latent = temp_x0.squeeze(0)
+            latent = temp_x0
+            print("temp_x0 shape:", temp_x0.shape)
 
             # latent = pred_real_image.squeeze(0)
             latent = (1. - mask) * z + mask * latent
-            print(latent.shape)
+            print("latent shape",latent.shape)
 
             if idx in select_index:
                 # print(t)
