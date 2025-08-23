@@ -197,7 +197,7 @@ class ODERegression(BaseModel):
         pred_real_image_cond = self.generator(
             noisy_image_or_video=noisy_input,
             conditional_dict=conditional_dict,
-            timestep=timestep,
+            timestep=timestep_frame_level,
             seq_len=seq_len,
         ).to(torch.bfloat16)
 
@@ -280,7 +280,7 @@ class ODERegression(BaseModel):
             pred_real_image = self.generator(
                 noisy_image_or_video=noisy_input.detach(),
                 conditional_dict=conditional_dict,
-                timestep=timestep,
+                timestep=timestep_frame_level,
                 seq_len=seq_len,
             ).to(torch.bfloat16)
 
@@ -408,7 +408,7 @@ class ODERegression(BaseModel):
                 pred_real_image = self.generator(
                     noisy_image_or_video=noisy_input,
                     conditional_dict=conditional_dict,
-                    timestep=timestep,
+                    timestep=timestep_frame_level,
                     seq_len=seq_len,
                 ).to(torch.bfloat16)
 
