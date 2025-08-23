@@ -258,6 +258,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                 current_start=current_start,
                 cache_start=cache_start,
                 memory_condition = memory_condition,
+                seq_len=seq_len,
             )
         else:
             
@@ -291,6 +292,7 @@ class WanDiffusionWrapper_small(torch.nn.Module):
                         t=input_timestep, context=context,
                         seq_len=self.seq_len,
                         memory_condition = memory_condition,
+                        seq_len=seq_len,
                     )# .permute(0, 2, 1, 3, 4)
 
 
