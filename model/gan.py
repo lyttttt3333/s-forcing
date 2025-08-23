@@ -75,6 +75,8 @@ class GAN(SelfForcingModel):
             concat_time_embeddings=self.concat_time_embeddings
         )
 
+        noisy_logit = noisy_logit.reshape(-1)[0] 
+
         return noisy_logit
 
     def generator_loss(
