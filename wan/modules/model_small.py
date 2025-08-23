@@ -132,6 +132,7 @@ class WanSelfAttention(nn.Module):
             grid_sizes(Tensor): Shape [B, 3], the second dimension contains (F, H, W)
             freqs(Tensor): Rope freqs, shape [1024, C / num_heads / 2]
         """
+        print("### self attention input", x.shape)
         b, s, n, d = *x.shape[:2], self.num_heads, self.head_dim
 
         # query, key, value function
@@ -341,6 +342,7 @@ class WanAttentionBlock(nn.Module):
         y = self.self_attn(
             self.norm1(x) * (1 + e[1]) + e[0], seq_lens, grid_sizes,
             freqs)
+        print("### self attention output", y.shape)
         # with amp.autocast(dtype=torch.float32):
         x = x + y * e[2]
 
