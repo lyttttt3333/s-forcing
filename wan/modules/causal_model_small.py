@@ -1075,7 +1075,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             x = x[:, x.shape[1] // 2:]
 
         # head
-        x = self.head(x, e.unflatten(dim=0, sizes=t.shape).unsqueeze(2))
+        x = self.head(x, e)
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
