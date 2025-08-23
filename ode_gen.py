@@ -241,7 +241,7 @@ if __name__ == "__main__":
         #     os.path.join(output_folder, f"{base_name}.pt")
         # )
         torch.save(
-            {base_name: trajectory.cpu().detach()},
+            trajectory.cpu().detach(),
             "test.pt"
             # os.path.join(output_folder, f"test.pt")
         )
