@@ -457,7 +457,7 @@ class Trainer:
             TRAIN_GENERATOR = not self.in_discriminator_warmup and self.step % self.config.dfake_gen_update_ratio == 0
             EVALUATION = self.step % self.config.eval_interval == 0
 
-            if TRAIN_GENERATOR:
+            if TRAIN_GENERATOR and self.is_main_process:
                 print("(Gen) Training step %d" % self.step)
             else:
                 print("(Dis) Training step %d" % self.step)
@@ -467,7 +467,11 @@ class Trainer:
             if TRAIN_GENERATOR:
                 self.generator_optimizer.zero_grad(set_to_none=True)
                 extras_list = []
-                for i in range(self.accumulation_iteration):
+                if self.is_main_process:
+                    iterator = tqdm(range(self.accumulation_iteration))
+                else:
+                    iterator = range(self.accumulation_iteration)
+                for i in iterator:
                     batch = next(self.dataloader)
                     extra = self.fwdbwd_one_step(batch, True)
                     extras_list.append(extra)
@@ -483,7 +487,11 @@ class Trainer:
             # Train the critic
             self.critic_optimizer.zero_grad(set_to_none=True)
             extras_list = []
-            for i in range(self.accumulation_iteration):
+            if self.is_main_process:
+                iterator = tqdm(range(self.accumulation_iteration))
+            else:
+                iterator = range(self.accumulation_iteration)
+            for i in iterator:
                 batch = next(self.dataloader)
                 extra = self.fwdbwd_one_step(batch, False)
                 extras_list.append(extra)
