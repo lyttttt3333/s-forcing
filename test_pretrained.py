@@ -69,7 +69,7 @@ video_files = [0]
 # vae = WanVAEWrapper().to(torch.float16).to(device)
 vae = WanVAE(dtype=torch.float16,device=device)
 # vae.requires_grad_(False)
-video_files[0] = "test-3.pt"
+video_files[0] = "test-2.pt"
 latent = torch.load(video_files[0], map_location="cpu")#.to("cuda")[0].to(torch.bfloat16)
 latent_tensor = latent.to("cuda").to(torch.bfloat16)[-1]
 print(latent_tensor.shape)
