@@ -34,7 +34,7 @@ data_path: prompts/MovieGenVideoBench_extended.txt
 batch_size: 1
 ema_weight: 0.99
 ema_start_step: 200
-total_batch_size: 32
+total_batch_size: 64
 log_iters: 10
 meta_path: /lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025/meta.csv
 root_dir: /lustre/fsw/portfolios/av/users/shiyil/jfxiao/AirVuz-V2-08052025
