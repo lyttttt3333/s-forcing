@@ -42,7 +42,7 @@ def generate_from_latent(real_score, sample_scheduler, frame_token, uncond_dict,
     seq_len = int(math.ceil(seq_len / sp_size)) * sp_size
 
     noise = torch.randn(
-        48, (F - 1) // vae_stride[0] + 1,
+        16, (F - 1) // vae_stride[0] + 1,
         oh // vae_stride[1],
         ow // vae_stride[2],
         dtype=torch.bfloat16,
