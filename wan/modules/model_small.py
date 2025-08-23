@@ -796,7 +796,7 @@ class WanModel(ModelMixin, ConfigMixin):
                 final_x = cls_pred_branch(final_x.view(final_x.shape[0], -1))
 
         # head
-        x = self.head(x, e.unsqueeze(2))
+        x = self.head(x, e)
 
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
