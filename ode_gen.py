@@ -240,6 +240,7 @@ if __name__ == "__main__":
         #     trajectory.cpu().detach(),
         #     os.path.join(output_folder, f"{base_name}.pt")
         # )
+        print(f"GPU[{global_rank}]: {base_name} {trajectory.shape}")
         torch.save(
             trajectory.cpu().detach(),
             "test.pt"
