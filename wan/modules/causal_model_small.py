@@ -804,8 +804,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             x = [torch.cat([u, v], dim=0) for u, v in zip(x, y)]
 
         # embeddings
-        x = [self.down_adapter(u.unsqueeze(0)) for u in x]
-        x = [self.patch_embedding(u) for u in x]
+        # x = [self.down_adapter(u.unsqueeze(0)) for u in x]
+        x = [self.patch_embedding(u.unsqueeze(0)) for u in x]
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])
         x = [u.flatten(2).transpose(1, 2) for u in x]
@@ -901,7 +901,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
         out = torch.stack(x)
-        return self.up_adapter(out)
+        return out #self.up_adapter(out)
 
     def _forward_train(
         self,
@@ -974,8 +974,8 @@ class CausalWanModel(ModelMixin, ConfigMixin):
             x = [torch.cat([u, v], dim=0) for u, v in zip(x, y)]
 
         # embeddings
-        x = [self.down_adapter(u.unsqueeze(0)) for u in x]
-        x = [self.patch_embedding(u) for u in x]
+        # x = [self.down_adapter(u.unsqueeze(0)) for u in x]
+        x = [self.patch_embedding(u.unsqueeze(0)) for u in x]
 
         grid_sizes = torch.stack(
             [torch.tensor(u.shape[2:], dtype=torch.long) for u in x])
@@ -1078,7 +1078,7 @@ class CausalWanModel(ModelMixin, ConfigMixin):
         # unpatchify
         x = self.unpatchify(x, grid_sizes)
         out = torch.stack(x)
-        return self.up_adapter(out)
+        return out # self.up_adapter(out)
 
     def forward(
         self,
