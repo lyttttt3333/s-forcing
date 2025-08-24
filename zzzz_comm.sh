@@ -1,0 +1,1 @@
+git clone https://huggingface.co/Wan-AI/Wan2.1-VACE-1.3B
