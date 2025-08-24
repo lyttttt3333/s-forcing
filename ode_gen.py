@@ -9,6 +9,8 @@ from model import CausVid, DMD, SiD, GAN, DMD_GEN
 from utils.fm_solvers_unipc import FlowUniPCMultistepScheduler
 from utils.wan_wrapper import WanDiffusionWrapper
 from utils.wan_wrapper_small import WanDiffusionWrapper_small
+from wan.modules.vace import VaceWanModel
+
 
 from utils.misc import (
     set_seed,
@@ -152,7 +154,9 @@ def load_batch(batch, dtype, device):
 def init_model(device):
     # model = WanDiffusionWrapper()
     # model.requires_grad_(False)
-    model = WanDiffusionWrapper_small(model_name="Wan2.1-T2V-1.3B", is_causal=True)
+    # model = WanDiffusionWrapper_small(model_name="Wan2.1-T2V-1.3B", is_causal=True)
+    model_name = "Wan2.1-VACE-1.3B"
+    model = VaceWanModel.from_pretrained(f"wan_models/{model_name}/")
         
     model = fsdp_wrap(
         model,
